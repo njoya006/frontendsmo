@@ -145,6 +145,11 @@ img {
     letter-spacing: 0.025em;
     position: relative;
     overflow: hidden;
+    text-decoration: none;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
 }
 
 .btn::before {
@@ -1002,114 +1007,107 @@ footer {
 }
 
 @media (max-width: 768px) {
-    .nav-links, .auth-buttons {
-        display: none;
-    }
-    
-    .mobile-menu-btn {
-        display: block;
-    }
-    
-    /* Enable mobile menu elements only on mobile */
-    .mobile-menu-overlay,
-    .mobile-menu {
-        display: block;
-    }
-    
-    nav {
-        padding: 16px 0;
-    }
-    
-    .logo {
-        font-size: 24px;
-    }
-    
-    .logo i {
-        font-size: 28px;
-        margin-right: 8px;
-    }
-    
-    .hero {
-        padding: 120px 0 60px;
-    }
-    
-    .hero h1 {
-        font-size: 36px;
-    }
-    
-    .hero p {
+    /* Fix button responsiveness */
+    .btn {
+        padding: 14px 20px;
         font-size: 16px;
+        min-height: 48px;
+        width: 100%;
+        max-width: 280px;
     }
     
-    .features h2, .how-it-works h2, .testimonials h2, .cta h2 {
-        font-size: 30px;
-        margin-bottom: 40px;
+    .btn-sm {
+        padding: 10px 16px;
+        font-size: 14px;
+        min-height: 40px;
     }
     
-    .testimonial-slider {
-        padding: 0 20px;
+    .btn-large {
+        padding: 16px 24px;
+        font-size: 18px;
+        min-height: 52px;
     }
     
-    .slider-controls {
-        display: none;
+    /* Enhanced Mobile Button Responsiveness - Global Fix */
+    /* Ensure all buttons are touch-friendly */
+    .btn, button, .action-btn, .action-card {
+        min-height: 48px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+    }
+    
+    /* Fix auth buttons in navigation */
+    .auth-buttons .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        min-height: 44px;
+    }
+    
+    /* Recipe page button fixes */
+    .recipe-card {
+        touch-action: manipulation;
+        cursor: pointer;
+    }
+    
+    .recipe-card:active {
+        transform: scale(0.98);
+    }
+    
+    /* Form buttons */
+    .form-group .btn {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 16px;
+        margin-top: 10px;
+    }
+    
+    /* Search and filter buttons */
+    .search-filters .btn {
+        padding: 10px 16px;
+        font-size: 14px;
+        margin: 5px;
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    /* Modal and popup buttons */
+    .modal .btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    /* Card action buttons */
+    .card .btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    /* Navigation button improvements */
+    .pagination .btn {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px;
     }
 }
 
-@media (max-width: 576px) {
-    .mobile-menu {
-        width: 100%;
-        right: -100%;
-    }
-    
-    .mobile-menu.active {
-        right: 0;
-    }
-    
-    .mobile-nav-links a {
-        padding: 20px 24px;
-        font-size: 17px;
-        min-height: 56px;
-    }
-    
-    .mobile-auth-buttons .btn {
+@media (max-width: 480px) {
+    /* Extra small screens - even more touch-friendly */
+    .btn {
         padding: 16px 20px;
         font-size: 16px;
-        min-height: 48px;
+        min-height: 52px;
     }
     
-    .hero {
-        padding: 120px 0 60px;
+    .btn-sm {
+        padding: 12px 16px;
+        font-size: 14px;
+        min-height: 44px;
     }
     
-    .hero h1 {
-        font-size: 28px;
-    }
-    
-    .hero-buttons {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .hero-buttons .btn {
-        margin-right: 0;
-        width: 100%;
-    }
-    
-    .footer-content {
-        grid-template-columns: 1fr;
-    }
-    
-    .newsletter-form {
-        flex-direction: column;
-    }
-    
-    .newsletter-form input {
-        border-radius: 5px;
-        margin-bottom: 10px;
-    }
-    
-    .newsletter-form button {
-        border-radius: 5px;
-        width: 100%;
+    .btn-large {
+        padding: 18px 24px;
+        font-size: 18px;
+        min-height: 56px;
     }
 }

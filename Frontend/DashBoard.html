@@ -520,7 +520,11 @@
             color: var(--primary-color);
         }        @media (max-width: 768px) {
             .dashboard {
-                padding: 60px 0 20px !important;
+                padding: 80px 0 20px !important;
+            }
+            
+            .container {
+                padding: 0 15px !important;
             }
             
             .dashboard-header {
@@ -565,6 +569,7 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 1rem;
+                margin-bottom: 20px;
             }
             
             .section-header h2 {
@@ -577,6 +582,13 @@
                 width: 100%;
             }
             
+            .section-actions .btn {
+                flex: 1;
+                padding: 10px 16px;
+                font-size: 14px;
+                min-height: 44px;
+            }
+            
             .action-buttons {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
@@ -584,6 +596,7 @@
             
             .action-btn {
                 padding: 1rem 0.75rem;
+                min-height: 80px;
             }
             
             .action-btn i {
@@ -592,6 +605,11 @@
             
             .action-btn span {
                 font-size: 0.8rem;
+            }
+            
+            .dashboard-main {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
             }
             
             .days-grid {
@@ -614,15 +632,49 @@
             .recent-activity {
                 padding: 1.5rem;
             }
+            
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .action-card {
+                padding: 1.5rem 1rem;
+                min-height: 120px;
+            }
+            
+            .action-icon {
+                font-size: 24px;
+                margin-bottom: 12px;
+            }
+            
+            .action-card h3 {
+                font-size: 14px;
+                margin-bottom: 8px;
+            }
+            
+            .action-card p {
+                font-size: 11px;
+            }
+            
+            .recipes-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 1rem;
+            }
         }
 
         @media (max-width: 480px) {
             .dashboard {
-                padding: 60px 0 15px !important;
+                padding: 70px 0 15px !important;
+            }
+            
+            .container {
+                padding: 0 10px !important;
             }
             
             .dashboard-header {
                 padding: 1rem !important;
+                margin-bottom: 1rem !important;
             }
             
             .dashboard-header h1 {
@@ -640,6 +692,12 @@
             
             .action-buttons {
                 grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .action-btn {
+                padding: 1.25rem 1rem;
+                min-height: 90px;
             }
             
             .section-header h2 {
@@ -647,8 +705,28 @@
             }
             
             .btn-sm {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.8rem;
+                padding: 8px 12px;
+                font-size: 12px;
+                min-height: 40px;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .action-card {
+                padding: 1.25rem 1rem;
+                min-height: 100px;
+            }
+            
+            .recipes-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .recipe-card {
+                max-width: 100%;
             }
         }
             
