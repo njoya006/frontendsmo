@@ -40,54 +40,58 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to get properly formatted image URL with fallback
     function getImageUrl(imageUrl, fallbackUrl) {
-        // Always return fallback for now since backend images are unreliable
-        // This ensures users always see working images
-        console.log(`🔄 Using fallback image instead of: ${imageUrl}`);
-        return fallbackUrl;
+        if (!imageUrl) return fallbackUrl;
+        
+        // If it's already a full URL, return as is
+        if (imageUrl.startsWith('http')) return imageUrl;
+        
+        // If it's a relative path, construct the full URL
+        if (imageUrl.startsWith('/')) {
+            return `https://njoya.pythonanywhere.com${imageUrl}`;
+        }
+        
+        // If it's just a filename, add the media path
+        return `https://njoya.pythonanywhere.com/media/${imageUrl}`;
     }
     
     // Helper function to get recipe image with fallback
     function getRecipeImageUrl(recipe) {
-        // Always use a random attractive fallback image
-        const result = getRandomRecipeImage();
-        console.log(`🖼️ Using fallback recipe image: ${result}`);
-        return result;
+        const imageUrl = recipe.image || recipe.photo || recipe.recipe_image;
+        const backendUrl = getImageUrl(imageUrl, null);
+        // Return backend URL if available, otherwise fallback
+        return backendUrl || getRandomRecipeImage();
     }
     
     // Helper function to get profile image with fallback
     function getProfileImageUrl(contributor) {
-        // Always use a random attractive profile fallback
-        const result = getRandomProfileImage();
-        console.log(`👤 Using fallback profile image: ${result}`);
-        return result;
+        if (!contributor) return getRandomProfileImage();
+        
+        const imageUrl = contributor.profile_photo || contributor.avatar || contributor.photo;
+        const backendUrl = getImageUrl(imageUrl, null);
+        // Return backend URL if available, otherwise fallback
+        return backendUrl || getRandomProfileImage();
     }
     
     // Helper function to create image element with error handling
     function createImageWithFallback(src, alt, style, fallbackSrc) {
-        // Determine if this is a profile image and use appropriate fallback
+        // Use the provided src first, with proper error handling
         const isProfile = alt === 'Profile' || style.includes('border-radius') || style.includes('50%');
-        const finalSrc = isProfile ? getRandomProfileImage() : getRandomRecipeImage();
-        return `<img src="${finalSrc}" alt="${alt}" style="${style}" data-original-src="${src}">`;
+        const finalFallback = isProfile ? getRandomProfileImage() : getRandomRecipeImage();
+        return `<img src="${src}" alt="${alt}" style="${style}" 
+                     onerror="this.onerror=null; this.src='${finalFallback}';" 
+                     data-original-src="${src}">`;
     }
     
     // ======= GLOBAL IMAGE ERROR HANDLING =======
     
     // Add global error handling for all images on the page
     function addGlobalImageErrorHandling() {
-        console.log('🛡️ Setting up robust image error handling...');
-        
-        // Handle all existing images immediately
+        // Handle all existing images - but only add error handlers, don't replace immediately
         document.querySelectorAll('img').forEach(img => {
-            // If image doesn't already have a fallback src, apply one
-            if (!img.src.includes('unsplash.com')) {
-                const isProfile = img.alt === 'Profile' || img.style.borderRadius.includes('50%') || img.classList.contains('profile');
-                img.src = isProfile ? getRandomProfileImage() : getRandomRecipeImage();
-                console.log(`🔄 Applied immediate fallback to image: ${isProfile ? 'profile' : 'recipe'}`);
-            }
-            
             // Add error handler for future failures
             if (!img.dataset.errorHandled) {
                 img.addEventListener('error', function() {
+                    console.log('🔄 Image failed to load, applying fallback:', this.src);
                     const isProfile = this.alt === 'Profile' || this.style.borderRadius.includes('50%');
                     this.src = isProfile ? getRandomProfileImage() : getRandomRecipeImage();
                     this.dataset.errorHandled = 'true';
