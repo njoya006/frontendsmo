@@ -360,10 +360,17 @@ class LanguageManager {
                 switcher.appendChild(button);
             });
             
-            // Try to insert in navigation or header
-            const nav = document.querySelector('nav') || document.querySelector('header');
-            if (nav) {
+            // Try to insert in navigation right section, then nav, then header
+            const navRight = document.querySelector('.nav-right');
+            const nav = document.querySelector('nav');
+            const header = document.querySelector('header');
+            
+            if (navRight) {
+                navRight.appendChild(switcher);
+            } else if (nav) {
                 nav.appendChild(switcher);
+            } else if (header) {
+                header.appendChild(switcher);
             }
         }
     }

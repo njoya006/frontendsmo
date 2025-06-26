@@ -215,7 +215,31 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 0;
+    padding: 16px 0;
+    position: relative;
+    gap: 20px;
+    min-height: 60px;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.nav-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 0 0 auto;
+    justify-content: flex-end;
 }
 
 .logo {
@@ -298,14 +322,100 @@ nav {
     width: 80%;
 }
 
+.auth-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
 .auth-buttons .btn {
-    margin-left: 15px;
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Hide mobile menu button on desktop */
+.mobile-menu-btn {
+    display: none;
+}
+
+/* Language Switcher Styling */
+.language-switcher {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.lang-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    background: var(--white-color);
+    color: var(--dark-color);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 12px;
+    transition: var(--transition);
+    white-space: nowrap;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+}
+
+.lang-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.lang-btn.active {
+    background: var(--primary-color);
+    color: var(--white-color);
+    border-color: var(--primary-color);
 }
 
 /* Mobile-specific styles moved to media query */
 
 /* Only show mobile menu elements on mobile screens */
 @media (max-width: 768px) {
+    /* Hide desktop navigation elements on mobile */
+    .nav-links,
+    .auth-buttons,
+    .language-switcher {
+        display: none !important;
+    }
+    
+    /* Show mobile menu button on mobile */
+    .mobile-menu-btn {
+        display: flex !important;
+    }
+    
+    /* Adjust nav layout for mobile */
+    nav {
+        min-height: 50px;
+        padding: 12px 0;
+    }
+    
+    .nav-left {
+        flex: 1;
+    }
+    
+    .nav-center {
+        display: none;
+    }
+    
+    .nav-right {
+        justify-content: flex-end;
+        gap: 10px;
+        flex: 0 0 auto;
+    }
+    
+    /* Logo adjustments for mobile */
+    .logo {
+        font-size: 24px;
+    }
+    
+    .logo i {
+        font-size: 28px;
+    }
+    
     /* Mobile Menu Button - Enhanced for touch */
     .mobile-menu-btn {
         display: block;
@@ -913,33 +1023,37 @@ footer {
     font-size: 14px;
 }
 
-/* Language Switcher Styles */
+/* Language Switcher Styles - Fixed positioning */
 .language-switcher {
     display: flex;
-    gap: var(--spacing-xs);
+    gap: 8px;
     align-items: center;
-    margin-left: var(--spacing-lg);
+    margin-left: 15px;
+    z-index: 1002;
 }
 
 .lang-btn {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: 6px;
+    padding: 6px 12px;
     border: 1px solid var(--gray-lighter);
     background: var(--white-color);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--gray-color);
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-height: 32px;
 }
 
 .lang-btn:hover {
-    background: var(--light-color);
+    background: var(--primary-light);
     border-color: var(--primary-color);
     color: var(--primary-color);
+    transform: scale(1.05);
 }
 
 .lang-btn.active {
@@ -949,7 +1063,7 @@ footer {
 }
 
 .lang-btn.active:hover {
-    background: var(--primary-light);
+    background: var(--primary-dark);
 }
 
 /* Mobile Language Switcher */
