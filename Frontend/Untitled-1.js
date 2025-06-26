@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://frontendsmo.vercel.app';
+const API_BASE_URL = 'https://njoya.pythonanywhere.com';
 
 document.addEventListener('DOMContentLoaded', () => {
     const prevWeekBtn = document.getElementById('prevWeek');

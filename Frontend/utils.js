@@ -1,7 +1,7 @@
 // Recipe Search and API Utilities for ChopSmo
 
 class RecipeAPI {
-    constructor(baseUrl = 'https://frontendsmo.vercel.app') {
+    constructor(baseUrl = 'https://njoya.pythonanywhere.com') {
         this.baseUrl = baseUrl;
         this.authToken = this.getAuthToken();
     }

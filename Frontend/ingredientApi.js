@@ -3,7 +3,7 @@
 
 export async function fetchAllIngredientNames() {
     try {
-        const response = await fetch('https://frontendsmo.vercel.app/api/ingredients/', {
+        const response = await fetch('https://njoya.pythonanywhere.com/api/ingredients/', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

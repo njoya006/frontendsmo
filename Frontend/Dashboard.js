@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         try {
-            const response = await fetch('https://frontendsmo.vercel.app/api/users/profile/', {
+            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Token ${token}`,

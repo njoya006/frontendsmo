@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://frontendsmo.vercel.app/';
+const API_BASE_URL = 'https://njoya.pythonanywhere.com/';
 document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Toggle (same as index.js)
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');

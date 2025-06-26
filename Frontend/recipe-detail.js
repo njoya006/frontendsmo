@@ -3,14 +3,14 @@ class RecipeDetailManager {
     constructor() {        // Check if utils.js is loaded, use fallback if not
         if (typeof RecipeAPI !== 'undefined') {            // Try to find the correct Django server URL
             this.possibleUrls = [
-                'https://frontendsmo.vercel.app',
+                'https://njoya.pythonanywhere.com',
                 'http://localhost:8000',
                 'http://127.0.0.1:9000',
                 'http://localhost:9000'
             ];
             
-            // Start with Vercel deployment
-            this.recipeAPI = new RecipeAPI('https://frontendsmo.vercel.app');
+            // Start with PythonAnywhere deployment
+            this.recipeAPI = new RecipeAPI('https://njoya.pythonanywhere.com');
             this.useAPI = true;
             
             console.log('RecipeAPI initialized with base URL:', this.recipeAPI.baseUrl);

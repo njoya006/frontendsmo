@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             const data = await fetchWithSpinnerToast(
-                'https://frontendsmo.vercel.app/api/users/profile/',
+                'https://njoya.pythonanywhere.com/api/users/profile/',
                 {
                     method: 'GET',
                     headers: {
@@ -171,10 +171,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
                         // Full URL - use as is
                     } else if (photoUrl.startsWith('/media/')) {
-                        photoUrl = `https://frontendsmo.vercel.app${photoUrl}`;
+                        photoUrl = `https://njoya.pythonanywhere.com${photoUrl}`;
                     } else if (photoUrl) {
                         // Relative path or filename
-                        photoUrl = `https://frontendsmo.vercel.app/media/${photoUrl.replace(/^media\/?/, '')}`;
+                        photoUrl = `https://njoya.pythonanywhere.com/media/${photoUrl.replace(/^media\/?/, '')}`;
                     }
                     
                     // Set the image with error handling
@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Submit form data
                 const data = await fetchWithSpinnerToast(
-                    'https://frontendsmo.vercel.app/api/users/profile/',
+                    'https://njoya.pythonanywhere.com/api/users/profile/',
                     {
                         method: 'PATCH',
                         headers: {
@@ -562,7 +562,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const allergies = Array.from(dietaryForm.querySelectorAll('input[name="allergies"]:checked')).map(cb => cb.value).join(',');
             const dislikes = document.getElementById('dislikes').value;
             try {
-                const response = await fetch('https://frontendsmo.vercel.app/api/users/preferences/', {
+                const response = await fetch('https://njoya.pythonanywhere.com/api/users/preferences/', {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',

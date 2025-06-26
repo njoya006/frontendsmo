@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setLoading(true);
 
         try {
-            const response = await fetch('https://frontendsmo.vercel.app/api/users/login/', {
+            const response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

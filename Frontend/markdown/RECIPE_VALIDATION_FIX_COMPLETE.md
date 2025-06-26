@@ -138,7 +138,7 @@ import json
 import requests
 
 def test_recipe_creation():
-    base_url = 'https://frontendsmo.vercel.app'
+    base_url = 'https://njoya.pythonanywhere.com'
     
     # Get auth token (replace with actual login)
     auth_token = 'your_auth_token_here'
