@@ -1,7 +1,7 @@
 // Recipe Search and API Utilities for ChopSmo
 
 class RecipeAPI {
-    constructor(baseUrl = 'http://127.0.0.1:8000') {
+    constructor(baseUrl = 'https://frontendsmo.vercel.app') {
         this.baseUrl = baseUrl;
         this.authToken = this.getAuthToken();
     }

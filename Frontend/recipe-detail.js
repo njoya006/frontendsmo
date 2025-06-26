@@ -3,14 +3,14 @@ class RecipeDetailManager {
     constructor() {        // Check if utils.js is loaded, use fallback if not
         if (typeof RecipeAPI !== 'undefined') {            // Try to find the correct Django server URL
             this.possibleUrls = [
-                'http://127.0.0.1:8000',
+                'https://frontendsmo.vercel.app',
                 'http://localhost:8000',
                 'http://127.0.0.1:9000',
                 'http://localhost:9000'
             ];
             
-            // Start with port 8000 (your Django server port)
-            this.recipeAPI = new RecipeAPI('http://127.0.0.1:8000');
+            // Start with Vercel deployment
+            this.recipeAPI = new RecipeAPI('https://frontendsmo.vercel.app');
             this.useAPI = true;
             
             console.log('RecipeAPI initialized with base URL:', this.recipeAPI.baseUrl);
@@ -115,7 +115,7 @@ class RecipeDetailManager {
             if (error.message.includes('HTTP error! status: 404')) {
                 this.showError(`Recipe with ID ${this.recipeId} not found in the database.`);
             } else if (error.message.includes('Failed to fetch')) {
-                this.showError('Cannot connect to the Django server. Please check if it\'s running on http://127.0.0.1:8000/');
+                this.showError('Cannot connect to the backend server. Please check if it\'s running.');
             } else {
                 this.showError(`Failed to load recipe: ${error.message}`);
             }

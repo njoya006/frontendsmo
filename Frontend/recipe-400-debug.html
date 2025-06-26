@@ -269,7 +269,7 @@
             
             try {
                 log('🔒 Getting CSRF token...');
-                const response = await fetch('http://127.0.0.1:8000/api/csrf-token/', {
+                const response = await fetch('https://frontendsmo.vercel.app/api/csrf-token/', {
                     credentials: 'include'
                 });
                 
@@ -341,7 +341,7 @@
             try {
                 log('🚀 Sending request to backend...', 'warning');
                 
-                const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                const response = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Token ${authToken}`,
@@ -388,7 +388,7 @@
             try {
                 log('📋 Fetching existing recipe to check format...', 'info');
                 
-                const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                const response = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
                     headers: authToken ? { 'Authorization': `Token ${authToken}` } : {},
                     credentials: 'include'
                 });
@@ -538,7 +538,7 @@
             try {
                 log(`📤 Sending ${formatName}...`, 'info');
                 
-                const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                const response = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Token ${authToken}`,
@@ -591,10 +591,10 @@
                 
                 // Try to get schema information
                 const endpoints = [
-                    'http://127.0.0.1:8000/api/schema/',
-                    'http://127.0.0.1:8000/api/docs/',
-                    'http://127.0.0.1:8000/api/',
-                    'http://127.0.0.1:8000/api/recipes/schema/'
+                    'https://frontendsmo.vercel.app/api/schema/',
+                    'https://frontendsmo.vercel.app/api/docs/',
+                    'https://frontendsmo.vercel.app/api/',
+                    'https://frontendsmo.vercel.app/api/recipes/schema/'
                 ];
                 
                 for (const endpoint of endpoints) {
@@ -620,7 +620,7 @@
                 
                 // Try OPTIONS request on recipes endpoint
                 log('🔍 Checking OPTIONS on recipes endpoint...', 'info');
-                const optionsResponse = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                const optionsResponse = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
                     method: 'OPTIONS',
                     headers: authToken ? { 'Authorization': `Token ${authToken}` } : {},
                     credentials: 'include'

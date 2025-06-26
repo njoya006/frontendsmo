@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchRecipes() {
         const token = localStorage.getItem('authToken');
         try {
-    const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+    const response = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
         method: 'GET',
         headers: token ? { 'Authorization': `Token ${token}` } : {},
     });
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (recipe.contributor) {
                 let photoUrl = recipe.profile_photo || (recipe.contributor.profile_photo || '');
                 if (photoUrl && !photoUrl.startsWith('http')) {
-                    photoUrl = `http://127.0.0.1:8000${photoUrl.startsWith('/media/') ? photoUrl : '/media/' + photoUrl}`;
+                    photoUrl = `https://frontendsmo.vercel.app${photoUrl.startsWith('/media/') ? photoUrl : '/media/' + photoUrl}`;
                 }
                 contributorHtml = `
                     <div class="contributor-info" style="display:flex;align-items:center;margin-bottom:8px;">
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('authToken');
         if (!token) return false;
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/users/profile/', {
+            const response = await fetch('https://frontendsmo.vercel.app/api/users/profile/', {
                 method: 'GET',
                 headers: { 'Authorization': `Token ${token}` }
             });
@@ -516,7 +516,7 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
             let csrfToken;
             try {
                 console.log('🔒 Getting CSRF token from /api/csrf-token/...');
-                const csrfResponse = await fetch('http://127.0.0.1:8000/api/csrf-token/', {
+                const csrfResponse = await fetch('https://frontendsmo.vercel.app/api/csrf-token/', {
                     method: 'GET',
                     credentials: 'include'
                 });
@@ -633,7 +633,7 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
                 console.log('📤 Request credentials: include');
                 console.log('📤 FormData entries count:', Array.from(formData.entries()).length);
                 
-                const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                const response = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
                     method: 'POST',
                     headers: requestHeaders,
                     credentials: 'include',

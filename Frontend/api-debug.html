@@ -109,7 +109,7 @@
         <div class="test-section">
             <h3><i class="fas fa-cog"></i> Configuration</h3>
             <p><strong>Current API Base URL:</strong> <span id="current-api-url"></span></p>
-            <label>Custom API URL: <input type="text" id="customApiUrl" placeholder="http://127.0.0.1:8000"></label>
+            <label>Custom API URL: <input type="text" id="customApiUrl" placeholder="https://frontendsmo.vercel.app"></label>
             <button class="btn" onclick="updateApiUrl()">Update URL</button>
             <button class="btn btn-danger" onclick="clearResults()">Clear Results</button>
         </div>
@@ -127,7 +127,7 @@
 
     <script src="utils.js"></script>
     <script>
-        let recipeAPI = new RecipeAPI('http://127.0.0.1:8000');
+        let recipeAPI = new RecipeAPI('https://frontendsmo.vercel.app');
         
         // Update display
         document.getElementById('current-api-url').textContent = recipeAPI.baseUrl;

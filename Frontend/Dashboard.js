@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/users/profile/', {
+            const response = await fetch('https://frontendsmo.vercel.app/api/users/profile/', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Token ${token}`,

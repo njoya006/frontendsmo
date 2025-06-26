@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:8000/';
+const API_BASE_URL = 'https://frontendsmo.vercel.app/';
 document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Toggle (same as index.js)
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');

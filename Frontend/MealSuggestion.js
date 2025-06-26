@@ -94,7 +94,7 @@ function getFilteredMeals() {
 async function fetchMealSuggestionsByIngredients(ingredientNames) {
     const token = localStorage.getItem('authToken');
     try {
-        const response = await fetch('http://127.0.0.1:8000/api/recipes/suggest-by-ingredients/', {
+        const response = await fetch('https://frontendsmo.vercel.app/api/recipes/suggest-by-ingredients/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function fetchMealsFromBackend() {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+            const response = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -502,7 +502,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function loadValidIngredients() {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/ingredients/', {
+            const response = await fetch('https://frontendsmo.vercel.app/api/ingredients/', {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });

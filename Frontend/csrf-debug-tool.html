@@ -79,10 +79,10 @@
             log('🔒 Testing CSRF Token Endpoint...', 'info');
             
             const urls = [
-                'http://127.0.0.1:8000/api/csrf-token/',
+                'https://frontendsmo.vercel.app/api/csrf-token/',
                 'http://localhost:8000/api/csrf-token/',
-                'http://127.0.0.1:8000/csrf/',
-                'http://127.0.0.1:8000/api/csrf/',
+                'https://frontendsmo.vercel.app/csrf/',
+                'https://frontendsmo.vercel.app/api/csrf/',
             ];
 
             for (const url of urls) {
@@ -166,9 +166,9 @@
             log('🔌 Testing Backend Connection...', 'info');
             
             const endpoints = [
-                'http://127.0.0.1:8000/',
-                'http://127.0.0.1:8000/api/',
-                'http://127.0.0.1:8000/api/recipes/',
+                'https://frontendsmo.vercel.app/',
+                'https://frontendsmo.vercel.app/api/',
+                'https://frontendsmo.vercel.app/api/recipes/',
                 'http://localhost:8000/',
             ];
 
@@ -198,7 +198,7 @@
             formData.append('instructions', 'Test instructions');
             
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                const response = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
                     method: 'POST',
                     credentials: 'include',
                     body: formData
@@ -231,7 +231,7 @@
             log(`🔑 Using token: ${token.substring(0, 20)}...`, 'info');
             
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                const response = await fetch('https://frontendsmo.vercel.app/api/recipes/', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Token ${token}`
