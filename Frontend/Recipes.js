@@ -190,6 +190,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return getFallbackRecipes();
             }
             console.log('✅ Successfully fetched recipes from API');
+            console.log('🔍 API Response - First recipe sample:', data[0]);
+            console.log('🔍 API Response - Recipe image fields:', {
+                image: data[0]?.image,
+                photo: data[0]?.photo,
+                recipe_image: data[0]?.recipe_image,
+                allFields: Object.keys(data[0] || {})
+            });
             // Only use recipes that have a contributor (created by users)
             return data.filter(recipe => recipe.contributor);
         } catch (error) {
