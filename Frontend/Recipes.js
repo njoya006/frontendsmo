@@ -57,9 +57,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to get recipe image with fallback
     function getRecipeImageUrl(recipe) {
         const imageUrl = recipe.image || recipe.photo || recipe.recipe_image;
-        const backendUrl = getImageUrl(imageUrl, null);
-        // Return backend URL if available, otherwise fallback
-        return backendUrl || getRandomRecipeImage();
+        console.log('🔍 Recipe image data:', {
+            recipeId: recipe.id,
+            title: recipe.title,
+            image: recipe.image,
+            photo: recipe.photo,
+            recipe_image: recipe.recipe_image,
+            finalImageUrl: imageUrl
+        });
+        
+        if (imageUrl) {
+            const backendUrl = getImageUrl(imageUrl, null);
+            console.log('🔍 Constructed backend URL:', backendUrl);
+            return backendUrl;
+        }
+        
+        console.log('🔄 No image URL found, using fallback');
+        return getRandomRecipeImage();
     }
     
     // Helper function to get profile image with fallback
@@ -67,9 +81,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!contributor) return getRandomProfileImage();
         
         const imageUrl = contributor.profile_photo || contributor.avatar || contributor.photo;
-        const backendUrl = getImageUrl(imageUrl, null);
-        // Return backend URL if available, otherwise fallback
-        return backendUrl || getRandomProfileImage();
+        console.log('🔍 Profile image data:', {
+            username: contributor.username,
+            profile_photo: contributor.profile_photo,
+            avatar: contributor.avatar,
+            photo: contributor.photo,
+            finalImageUrl: imageUrl
+        });
+        
+        if (imageUrl) {
+            const backendUrl = getImageUrl(imageUrl, null);
+            console.log('🔍 Constructed profile URL:', backendUrl);
+            return backendUrl;
+        }
+        
+        console.log('🔄 No profile image URL found, using fallback');
+        return getRandomProfileImage();
     }
     
     // Helper function to create image element with error handling
