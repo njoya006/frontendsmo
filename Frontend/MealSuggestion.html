@@ -1,0 +1,1228 @@
+<style>
+    /* Meal Suggestions Page - Enhanced Modern Design */
+    .meal-suggestions {
+        padding: 100px 0 60px;
+        background: linear-gradient(135deg, #f8fffe 0%, #e8f5e8 50%, #f0fdf4 100%);
+        min-height: 100vh;
+        position: relative;
+    }
+
+    .meal-suggestions::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(76, 175, 80, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(76, 175, 80, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(76, 175, 80, 0.02) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .suggestions-header {
+        text-align: center;
+        margin-bottom: 60px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+        backdrop-filter: blur(10px);
+        padding: 50px 40px;
+        border-radius: 24px;
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.08),
+            0 8px 16px rgba(76, 175, 80, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(76, 175, 80, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .suggestions-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 50%, #81C784 100%);
+    }
+
+    .suggestions-header h1 {
+        font-size: 48px;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 70%, #66BB6A 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        position: relative;
+    }
+
+    .suggestions-header h1::after {
+        content: '🍽️';
+        position: absolute;
+        right: -60px;
+        top: 0;
+        font-size: 40px;
+        opacity: 0.8;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .suggestions-header p {
+        color: #4a5568;
+        font-size: 20px;
+        margin-bottom: 40px;
+        font-weight: 500;
+        line-height: 1.6;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .filter-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 25px;
+        justify-content: center;
+        align-items: flex-end;
+        margin-top: 40px;
+        padding: 30px;
+        background: rgba(76, 175, 80, 0.03);
+        border-radius: 20px;
+        border: 1px solid rgba(76, 175, 80, 0.1);
+    }
+
+    .filter-group {
+        text-align: left;
+        position: relative;
+    }
+
+    .filter-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-weight: 700;
+        color: #1B5E20;
+        font-size: 15px;
+        letter-spacing: 0.3px;
+    }
+
+    .filter-group label i {
+        color: var(--primary-color);
+        font-size: 16px;
+        width: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .filter-group select {
+        padding: 16px 20px;
+        border: 2px solid #e8f5e8;
+        border-radius: 15px;
+        font-size: 15px;
+        min-width: 220px;
+        background: linear-gradient(135deg, #ffffff 0%, #fafffe 100%);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Poppins', sans-serif;
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .filter-group select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .filter-group select:hover {
+        border-color: rgba(76, 175, 80, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }    /* Enhanced Search Section */
+    .search-section {
+        margin: 40px 0;
+        position: relative;
+    }
+
+    .search-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+        backdrop-filter: blur(10px);
+        padding: 35px;
+        border-radius: 24px;
+        box-shadow: 
+            0 16px 32px rgba(0, 0, 0, 0.06),
+            0 4px 8px rgba(76, 175, 80, 0.08);
+        border: 1px solid rgba(76, 175, 80, 0.1);
+    }
+
+    .search-bar {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .search-bar input {
+        flex: 1;
+        padding: 18px 24px;
+        border: 2px solid #e8f5e8;
+        border-radius: 50px;
+        font-size: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(135deg, #ffffff 0%, #fafffe 100%);
+        font-family: 'Poppins', sans-serif;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .search-bar input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .search-bar input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
+    }
+
+    #searchButton {
+        padding: 18px 28px;
+        border-radius: 50px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+    }
+
+    #searchButton:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+    }
+
+    .search-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 15px;
+    }
+
+    .search-tag {
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+        color: var(--primary-dark);
+        padding: 10px 16px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(76, 175, 80, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .search-tag:hover {
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.1) 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(76, 175, 80, 0.15);
+    }
+
+    .remove-tag {
+        background: none;
+        border: none;
+        color: var(--primary-dark);
+        cursor: pointer;
+        padding: 2px;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remove-tag:hover {
+        background: rgba(76, 175, 80, 0.2);
+        transform: scale(1.1);
+    }
+
+    /* Enhanced Ingredient Selection */
+    .ingredient-selection {
+        margin: 40px 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+        backdrop-filter: blur(10px);
+        padding: 40px;
+        border-radius: 24px;
+        box-shadow: 
+            0 16px 32px rgba(0, 0, 0, 0.06),
+            0 4px 8px rgba(76, 175, 80, 0.08);
+        border: 1px solid rgba(76, 175, 80, 0.1);
+        position: relative;
+    }
+
+    .ingredient-selection::before {
+        content: '🥬';
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        font-size: 24px;
+        opacity: 0.7;
+    }
+
+    .ingredient-selection label {
+        font-weight: 700;
+        font-size: 18px;
+        color: #1B5E20;
+        margin-bottom: 20px;
+        display: block;
+        letter-spacing: 0.3px;
+    }
+
+    #ingredientTags {
+        margin: 15px 0;
+        min-height: 50px;
+        padding: 15px;
+        border: 2px dashed rgba(76, 175, 80, 0.3);
+        border-radius: 15px;
+        background: rgba(76, 175, 80, 0.02);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    #ingredientTags:hover {
+        border-color: rgba(76, 175, 80, 0.5);
+        background: rgba(76, 175, 80, 0.05);
+    }
+
+    #ingredientInput {
+        width: 100%;
+        padding: 18px 24px;
+        border-radius: 15px;
+        border: 2px solid #e8f5e8;
+        font-size: 16px;
+        margin-top: 15px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(135deg, #ffffff 0%, #fafffe 100%);
+        font-family: 'Poppins', sans-serif;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    #ingredientInput:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
+        transform: translateY(-1px);
+    }
+
+    #suggestMealsBtn {
+        margin-top: 20px;
+        font-size: 18px;
+        padding: 16px 32px;
+        border-radius: 15px;
+        font-weight: 700;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #suggestMealsBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+    }
+
+    #suggestMealsBtn:before {
+        content: '🔍';
+        font-size: 18px;
+    }    /* Enhanced Button Styling */
+    #applyFilters, #shuffle {
+        height: 52px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 24px;
+        border-radius: 15px;
+        font-weight: 700;
+        font-size: 15px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        cursor: pointer;
+        font-family: 'Poppins', sans-serif;
+        letter-spacing: 0.3px;
+    }
+
+    #applyFilters {
+        background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+    #applyFilters:hover {
+        background: linear-gradient(135deg, #45a049 0%, #5a9f5d 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+    }
+
+    #shuffle {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+        color: var(--primary-color);
+        border: 2px solid rgba(76, 175, 80, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    #shuffle:hover {
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.2);
+    }
+
+    /* Enhanced Meal Cards */
+    .suggestions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+        position: relative;
+    }
+
+    .meal-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.08),
+            0 4px 8px rgba(76, 175, 80, 0.06);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        border: 1px solid rgba(76, 175, 80, 0.1);
+    }
+
+    .meal-card:hover {
+        transform: translateY(-12px) scale(1.02);
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 8px 16px rgba(76, 175, 80, 0.2);
+        border-color: rgba(76, 175, 80, 0.3);
+    }
+
+    .meal-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 50%, #81C784 100%);
+        z-index: 1;
+    }
+
+    .meal-image {
+        height: 220px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .meal-image::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .meal-card:hover .meal-image::before {
+        opacity: 1;
+    }
+
+    .meal-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #66BB6A 100%);
+        color: white;
+        padding: 8px 14px;
+        border-radius: 25px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        z-index: 2;
+    }
+
+    .meal-content {
+        padding: 25px;
+    }
+
+    .meal-title {
+        font-size: 22px;
+        margin-bottom: 12px;
+        color: var(--dark-color);
+        font-weight: 700;
+        line-height: 1.3;
+        letter-spacing: -0.3px;
+    }
+
+    .meal-description {
+        color: #64748b;
+        font-size: 15px;
+        margin-bottom: 20px;
+        line-height: 1.6;
+        font-weight: 400;
+    }
+
+    .meal-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 25px;
+        padding: 15px;
+        background: rgba(76, 175, 80, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(76, 175, 80, 0.1);
+    }
+
+    .meal-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+    }
+
+    .meal-meta i {
+        color: var(--primary-color);
+        font-size: 16px;
+    }
+
+    .meal-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .meal-actions button {
+        flex: 1;
+        padding: 14px 18px;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: 'Poppins', sans-serif;
+        letter-spacing: 0.3px;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #66BB6A 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+    .btn-save:hover {
+        background: linear-gradient(135deg, #45a049 0%, #5a9f5d 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: var(--dark-color);
+        border: 2px solid #e9ecef;
+    }
+
+    .btn-view:hover {
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        border-color: #dee2e6;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }    /* Enhanced Nutrition Section */
+    .nutrition-info {
+        margin-top: 80px;
+        position: relative;
+    }
+
+    .nutrition-info h2 {
+        text-align: center;
+        margin-bottom: 50px;
+        font-size: 36px;
+        background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 70%, #66BB6A 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        position: relative;
+    }
+
+    .nutrition-info h2::before {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 100%);
+        border-radius: 2px;
+    }
+
+    .nutrition-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .nutrition-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 
+            0 12px 24px rgba(0, 0, 0, 0.08),
+            0 4px 8px rgba(76, 175, 80, 0.06);
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        border: 1px solid rgba(76, 175, 80, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nutrition-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 50%, #81C784 100%);
+    }
+
+    .nutrition-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.12),
+            0 8px 16px rgba(76, 175, 80, 0.15);
+        border-color: rgba(76, 175, 80, 0.3);
+    }
+
+    .nutrition-icon {
+        width: 65px;
+        height: 65px;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.1) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        border: 2px solid rgba(76, 175, 80, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .nutrition-card:hover .nutrition-icon {
+        transform: rotate(10deg) scale(1.1);
+        box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+    }
+
+    .nutrition-content {
+        flex: 1;
+    }
+
+    .nutrition-content h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+        color: #64748b;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .nutrition-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--dark-color);
+        margin-bottom: 4px;
+        letter-spacing: -0.5px;
+    }
+
+    .nutrition-value span {
+        font-size: 16px;
+        font-weight: 600;
+        color: #64748b;
+        margin-left: 4px;
+    }
+
+    .nutrition-goal {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 500;
+        margin-top: 4px;
+    }
+
+    /* Enhanced Loading Spinner */
+    .loading-spinner {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 40px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(76, 175, 80, 0.1);
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 6px solid rgba(76, 175, 80, 0.2);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        border-right-color: #66BB6A;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+    }
+
+    .loading-spinner p {
+        font-size: 18px;
+        color: var(--primary-color);
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Enhanced search result styling */
+    .meal-card.search-result {
+        border: 2px solid var(--primary-color);
+        position: relative;
+        box-shadow: 
+            0 12px 32px rgba(76, 175, 80, 0.2),
+            0 4px 8px rgba(76, 175, 80, 0.1);
+    }
+
+    .meal-card.search-result::after {
+        content: "🎯 Search Match";
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #66BB6A 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        z-index: 3;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+    /* Search highlight */
+    .highlight {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        padding: 2px 4px;
+        border-radius: 6px;
+        font-weight: 600;
+        color: #856404;
+    }    /* Enhanced Responsive Design */
+    @media (max-width: 1024px) {
+        .suggestions-header h1 {
+            font-size: 40px;
+        }
+        
+        .suggestions-header p {
+            font-size: 18px;
+        }
+        
+        .filter-controls {
+            gap: 20px;
+            padding: 25px;
+        }
+        
+        .filter-group select {
+            min-width: 200px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .meal-suggestions {
+            padding: 80px 0 40px;
+        }
+        
+        .suggestions-header {
+            padding: 40px 25px;
+            margin-bottom: 40px;
+        }
+        
+        .suggestions-header h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        
+        .suggestions-header h1::after {
+            right: -45px;
+            font-size: 28px;
+        }
+        
+        .suggestions-header p {
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .filter-controls {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .filter-group {
+            text-align: center;
+        }
+        
+        .filter-group select {
+            width: 100%;
+            min-width: unset;
+        }
+        
+        #applyFilters, #shuffle {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .search-container {
+            padding: 25px;
+        }
+        
+        .search-bar {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        #searchButton {
+            justify-content: center;
+        }
+        
+        .ingredient-selection {
+            padding: 25px;
+        }
+        
+        .ingredient-selection label {
+            font-size: 16px;
+        }
+        
+        #suggestMealsBtn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .suggestions-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .meal-card:hover {
+            transform: translateY(-8px) scale(1.01);
+        }
+        
+        .nutrition-cards {
+            gap: 20px;
+        }
+        
+        .nutrition-card {
+            padding: 20px;
+            gap: 15px;
+        }
+        
+        .nutrition-icon {
+            width: 55px;
+            height: 55px;
+            font-size: 20px;
+        }
+        
+        .nutrition-value {
+            font-size: 24px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .suggestions-header {
+            padding: 30px 20px;
+        }
+        
+        .suggestions-header h1 {
+            font-size: 28px;
+        }
+        
+        .suggestions-header h1::after {
+            display: none;
+        }
+        
+        .filter-controls {
+            padding: 15px;
+        }
+        
+        .search-container {
+            padding: 20px;
+        }
+        
+        .ingredient-selection {
+            padding: 20px;
+        }
+        
+        .meal-card {
+            border-radius: 16px;
+        }
+        
+        .meal-content {
+            padding: 20px;
+        }
+        
+        .meal-title {
+            font-size: 20px;
+        }
+        
+        .nutrition-card {
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .nutrition-content {
+            margin-top: 15px;
+        }
+    }
+
+    /* Scroll animations */
+    @media (prefers-reduced-motion: no-preference) {
+        .meal-card {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .meal-card:nth-child(1) { animation-delay: 0.1s; }
+        .meal-card:nth-child(2) { animation-delay: 0.2s; }
+        .meal-card:nth-child(3) { animation-delay: 0.3s; }
+        .meal-card:nth-child(4) { animation-delay: 0.4s; }
+        .meal-card:nth-child(5) { animation-delay: 0.5s; }
+        .meal-card:nth-child(6) { animation-delay: 0.6s; }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .nutrition-card {
+            opacity: 0;
+            transform: translateX(-30px);
+            animation: fadeInLeft 0.6s ease-out forwards;
+        }
+        
+        .nutrition-card:nth-child(1) { animation-delay: 0.2s; }
+        .nutrition-card:nth-child(2) { animation-delay: 0.4s; }
+        .nutrition-card:nth-child(3) { animation-delay: 0.6s; }
+        .nutrition-card:nth-child(4) { animation-delay: 0.8s; }
+        
+        @keyframes fadeInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #66BB6A 100%);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #45a049 0%, #5a9f5d 100%);
+    }
+</style>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MealMaster - Meal Suggestions</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <a href="index.html">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="MealPlans.html">Meal Plans</a></li>
+                    <li><a href="grocery-list.html">Grocery List</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <button id="logoutBtn" class="btn btn-outline">Back</button>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="meal-suggestions">
+        <div class="container">
+            <section class="suggestions-header">
+                <h1>Discover Your Next Meal</h1>
+                <p>Get personalized recommendations based on your available Ingredients</p>
+                
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="meal-type"><i class="fas fa-utensils"></i> Meal Type</label>
+                        <select id="meal-type">
+                            <option value="all">All Types</option>
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                            <option value="snack">Snacks</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="cuisine"><i class="fas fa-globe-americas"></i> Cuisine</label>
+                        <select id="cuisine">
+                            <option value="all">All Cuisines</option>
+                            <option value="italian">Italian</option>
+                            <option value="mexican">Mexican</option>
+                            <option value="asian">Asian</option>
+                            <option value="american">American</option>
+                            <option value="mediterranean">Mediterranean</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="cooking-time"><i class="fas fa-clock"></i> Cooking Time</label>
+                        <select id="cooking-time">
+                            <option value="all">Any Time</option>
+                            <option value="15">Under 15 mins</option>
+                            <option value="30">Under 30 mins</option>
+                            <option value="60">Under 1 hour</option>
+                        </select>
+                    </div>
+                    
+                    <button id="applyFilters" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    
+                    <button id="shuffle" class="btn btn-outline">
+                        <i class="fas fa-random"></i> Shuffle
+                    </button>
+                </div>
+            </section>            <section class="search-section">
+                <div class="search-container">
+                    <div class="search-bar">
+                        <input type="text" id="mealSearch" placeholder="🔍 Search for meals, ingredients, cuisines, or dietary preferences...">
+                        <button id="searchButton" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    <div class="search-tags">
+                        <span class="search-tag">⚡ Quick Meals <button class="remove-tag"><i class="fas fa-times"></i></button></span>
+                        <span class="search-tag">🌱 Vegetarian <button class="remove-tag"><i class="fas fa-times"></i></button></span>
+                        <span class="search-tag">⏰ Under 30 mins <button class="remove-tag"><i class="fas fa-times"></i></button></span>
+                        <span class="search-tag">🌶️ Spicy <button class="remove-tag"><i class="fas fa-times"></i></button></span>
+                    </div>
+                </div>
+            </section><div class="ingredient-selection">
+                <label for="ingredientInput">🥬 What ingredients do you have available?</label>
+                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px; font-weight: 500;">
+                    Enter ingredients separated by commas or press Enter after each one. We'll suggest delicious meals you can make!
+                </p>
+                <div id="ingredientTags" style="margin: 15px 0; min-height: 50px;"></div>
+                <input id="ingredientInput" type="text" placeholder="e.g. pasta, tomato, olive oil, garlic, chicken, onions...">
+                <button id="suggestMealsBtn" class="btn btn-primary">
+                    Find Perfect Meals
+                </button>
+            </div>
+            <section class="suggestions-grid">
+                <!-- Meal cards will be dynamically inserted here -->
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Finding delicious meals for you...</p>
+                </div>
+            </section>
+
+            <section class="nutrition-info">
+                <h2><i class="fas fa-chart-pie"></i> Weekly Nutrition Overview</h2>
+                <div class="nutrition-cards">
+                    <div class="nutrition-card">
+                        <div class="nutrition-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="nutrition-content">
+                            <h3>Calories</h3>
+                            <p class="nutrition-value">2,400 <span>kcal</span></p>
+                            <p class="nutrition-goal">Goal: 2,500 kcal</p>
+                        </div>
+                    </div>
+                    
+                    <div class="nutrition-card">
+                        <div class="nutrition-icon">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="nutrition-content">
+                            <h3>Protein</h3>
+                            <p class="nutrition-value">120 <span>g</span></p>
+                            <p class="nutrition-goal">Goal: 140 g</p>
+                        </div>
+                    </div>
+                    
+                    <div class="nutrition-card">
+                        <div class="nutrition-icon">
+                            <i class="fas fa-bread-slice"></i>
+                        </div>
+                        <div class="nutrition-content">
+                            <h3>Carbs</h3>
+                            <p class="nutrition-value">300 <span>g</span></p>
+                            <p class="nutrition-goal">Goal: 275 g</p>
+                        </div>
+                    </div>
+                    
+                    <div class="nutrition-card">
+                        <div class="nutrition-icon">
+                            <i class="fas fa-oil-can"></i>
+                        </div>
+                        <div class="nutrition-content">
+                            <h3>Fats</h3>
+                            <p class="nutrition-value">80 <span>g</span></p>
+                            <p class="nutrition-goal">Goal: 90 g</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <!-- Same footer as index.html -->
+    </footer>
+
+    <script src="MealSuggestion.js"></script>
+    <!-- --- Global Page Transition Animation: Blur, Colorful, Enhanced Logo & Dots --- -->
+    <script>
+    function animatePageTransition(href) {
+        // Create overlay
+        const fadeDiv = document.createElement('div');
+        fadeDiv.style.position = 'fixed';
+        fadeDiv.style.top = 0;
+        fadeDiv.style.left = 0;
+        fadeDiv.style.width = '100vw';
+        fadeDiv.style.height = '100vh';
+        fadeDiv.style.background = 'rgba(255,255,255,0.7)';
+        fadeDiv.style.backdropFilter = 'blur(16px) saturate(180%)';
+        fadeDiv.style.webkitBackdropFilter = 'blur(16px) saturate(180%)';
+        fadeDiv.style.opacity = 0;
+        fadeDiv.style.zIndex = 99999;
+        fadeDiv.style.transition = 'opacity 0.5s cubic-bezier(.4,0,.2,1)';
+        // Add enhanced spinning logo with gradient ring and animated dots
+        fadeDiv.innerHTML = `
+            <div style=\"position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;\">
+                <span style='display:inline-block;position:relative;width:90px;height:90px;'>
+                    <span style=\"position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--primary),#FF9800,#4CAF50,#00BCD4,#FF9800,var(--primary));filter:blur(2px);animation:spin 1.2s linear infinite;\"></span>
+                    <i class='fas fa-utensils' style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;color:#fff;text-shadow:0 2px 16px #4CAF50,0 0 0 #fff;z-index:2;animation:spin 1.2s linear infinite reverse;'></i>
+                </span>
+                <span style='font-size:24px;color:var(--primary);font-weight:700;letter-spacing:1.5px;margin-top:18px;text-shadow:0 2px 12px #fff;'>Chopsmo</span>
+                <span class=\"loading-dots\" style=\"display:inline-block;margin-top:18px;\">
+                    <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0s;\"></span>
+                    <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:#FF9800;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.2s;\"></span>
+                    <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.4s;\"></span>
+                </span>
+            </div>
+            <style>
+            @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+            @keyframes dot-bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-16px);}}
+            </style>
+        `;
+        document.body.appendChild(fadeDiv);
+        setTimeout(() => {
+            fadeDiv.style.opacity = 1;
+        }, 10);
+        setTimeout(() => {
+            window.location.href = href;
+        }, 3000);
+    }
+    // Intercept all internal navigation links for animation
+    setTimeout(() => {
+        document.querySelectorAll('a[href]').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('#')) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    animatePageTransition(href);
+                });
+            }
+        });
+    }, 100);
+    // Use animation for programmatic navigation
+    function animatedRedirect(href) {
+        animatePageTransition(href);
+    }
+    </script>
+</body>
+</html>

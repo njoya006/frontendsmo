@@ -1,0 +1,1796 @@
+<style>
+    /* Enhanced Meal Plans Page - Modern Design */
+    .meal-plans {
+        padding: 80px 0 60px;
+        background: var(--bg-gradient-primary);
+        min-height: 100vh;
+        position: relative;
+    }
+
+    .meal-plans::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(27,94,32,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(27,94,32,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Enhanced Header */
+    .plans-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        background: linear-gradient(135deg, var(--white-color) 0%, rgba(255, 255, 255, 0.95) 100%);
+        padding: 2rem;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid rgba(27, 94, 32, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .plans-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--bg-gradient-accent);
+    }
+
+    .header-content h1 {
+        font-size: clamp(2rem, 5vw, 2.8rem);
+        margin-bottom: 0.5rem;
+        color: var(--primary-color);
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+    }
+
+    .header-content p {
+        color: var(--gray-color);
+        font-size: 1.1rem;
+        margin: 0;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .week-navigation {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .week-nav-btn {
+        background: rgba(27, 94, 32, 0.1);
+        border: 2px solid rgba(27, 94, 32, 0.2);
+        color: var(--primary-color);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1rem;
+    }
+
+    .week-nav-btn:hover {
+        background: var(--primary-color);
+        color: var(--white-color);
+        transform: scale(1.1);
+        box-shadow: var(--shadow-md);
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: none;
+        letter-spacing: 0.025em;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+        left: 100%;
+    }
+
+    .btn-primary {
+        background: var(--bg-gradient-accent);
+        color: var(--white-color);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary-color);
+        color: var(--white-color);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+        background: var(--secondary-color);
+        color: var(--white-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--secondary-dark);
+        transform: translateY(-2px);
+    }
+
+    .week-navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding: 20px 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(46, 125, 50, 0.06);
+        border: 1px solid rgba(46, 125, 50, 0.1);
+    }
+
+    .btn-week-nav {
+        background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: 25px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-week-nav:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(46, 125, 50, 0.3);
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+    }
+
+    .btn-week-nav:active {
+        transform: translateY(0);
+    }
+
+    .week-display {
+        font-weight: 700;
+        font-size: 20px;
+        color: #1B5E20;
+        text-align: center;
+        flex: 1;
+    }    /* Enhanced Calendar Grid with Drag & Drop */
+    .meal-plan-calendar {
+        display: grid;
+        grid-template-columns: 140px repeat(7, 1fr);
+        gap: 1px;
+        background: rgba(27, 94, 32, 0.1);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid rgba(27, 94, 32, 0.1);
+        position: relative;
+    }
+
+    /* Drag & Drop States */
+    .meal-card {
+        cursor: grab;
+        user-select: none;
+    }
+
+    .meal-card:active {
+        cursor: grabbing;
+    }
+
+    .meal-card.dragging {
+        opacity: 0.5;
+        transform: rotate(5deg);
+        z-index: 1000;
+        box-shadow: var(--shadow-xl);
+    }
+
+    .day-cell.drag-over {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+        border: 2px dashed var(--primary-color);
+        transform: scale(0.98);
+    }
+
+    .day-cell.drag-invalid {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+        border: 2px dashed var(--danger-color);
+    }
+
+    .calendar-header, .day-cell, .meal-time-header {
+        background-color: var(--white-color);
+        padding: 1.25rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .calendar-header {
+        font-weight: 700;
+        text-align: center;
+        grid-column: 2 / span 7;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        background: var(--bg-gradient-accent);
+        color: var(--white-color);
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        gap: 1px;
+    }
+
+    .day-header {
+        padding: 1rem 0.75rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        background: var(--bg-gradient-accent);
+        transition: all 0.3s ease;
+    }
+
+    .day-header:hover {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--cameroon-green) 100%);
+        transform: scale(1.02);
+    }
+
+    .day-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+
+    .day-date {
+        font-size: 1.25rem;
+        font-weight: 700;
+        opacity: 0.95;
+    }
+
+    .meal-time-header {
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #F0FDF4;
+        border-right: 2px solid #DCFCE7;
+        color: #1B5E20;
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .meal-time-header i {
+        color: #2E7D32;
+        font-size: 18px;
+    }    .day-cell {
+        min-height: 180px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 15px;
+        background: #fafbfc;
+        border-right: 1px solid #e9ecef;
+        border-bottom: 1px solid #e9ecef;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        border-radius: 8px;
+    }
+
+    .day-cell:hover {
+        background: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .day-cell.has-meals {
+        background: linear-gradient(135deg, #f0fdf4 0%, #f7fee7 100%);
+        border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .day-cell.empty-slot {
+        border: 2px dashed rgba(156, 163, 175, 0.3);
+        background: rgba(249, 250, 251, 0.5);
+    }
+
+    .day-cell.empty-slot:hover {
+        border-color: var(--primary-color);
+        background: rgba(34, 197, 94, 0.05);
+    }    .meal-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e9ecef;
+        position: relative;
+        transform-origin: center;
+    }
+
+    .meal-card:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        border-color: var(--primary-color);
+    }
+
+    .meal-card.featured {
+        border: 2px solid var(--primary-color);
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+    }
+
+    .meal-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--bg-gradient-accent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .meal-card:hover::before {
+        opacity: 1;
+    }
+
+    .meal-image {
+        height: 100px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        background-color: #f8f9fa;
+    }
+
+    .meal-image::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    }
+
+    .meal-content {
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+    }
+
+    .meal-content h4 {
+        font-size: 15px;
+        margin: 0;
+        font-weight: 600;
+        color: #2c3e50;
+        text-transform: capitalize;
+    }
+
+    .btn-edit-meal {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+
+    .btn-edit-meal:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }    .btn-add-meal {
+        background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+        border: none;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-add-meal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+        background: linear-gradient(135deg, #15803D 0%, #22C55E 100%);
+    }.btn-add-meal i {
+        font-size: 16px;
+    }    /* Enhanced Plan Summary Section */
+    .plan-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 2rem;
+    }
+
+    .summary-card {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid rgba(27, 94, 32, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--bg-gradient-accent);
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+        border-color: var(--primary-color);
+    }
+
+    .summary-card h3 {
+        margin: 0 0 20px 0;
+        color: var(--primary-color);
+        font-size: 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .summary-card h3 i {
+        font-size: 24px;
+        padding: 8px;
+        background: rgba(34, 197, 94, 0.1);
+        border-radius: 50%;
+    }
+
+    .summary-content {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+
+    .summary-label {
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .summary-value {
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 18px;
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn-block {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Progress Bars for Nutrition */
+    .nutrition-progress {
+        width: 100%;
+        height: 8px;
+        background: #f3f4f6;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--bg-gradient-accent);
+        border-radius: 4px;
+        transition: width 0.8s ease;
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+        animation: shimmer 2s infinite;
+    }/* Enhanced Modal Styling */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            backdrop-filter: blur(0px);
+        }
+        to {
+            opacity: 1;
+            backdrop-filter: blur(8px);
+        }
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 3% auto;
+        padding: 0;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 700px;
+        max-height: 85vh;
+        overflow: hidden;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+        animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(-80px) scale(0.95);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        background: var(--bg-gradient-accent);
+        color: white;
+        padding: 25px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modal-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+    }
+
+    .close {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1) rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 30px;
+        max-height: 55vh;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    /* Smart Suggestions Section */
+    .suggestions-section {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: linear-gradient(135deg, #f0fdf4 0%, #f7fee7 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(34, 197, 94, 0.1);
+    }
+
+    .suggestions-section h3 {
+        margin: 0 0 15px 0;
+        color: var(--primary-color);
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .suggestion-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .suggestion-chip {
+        background: white;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .suggestion-chip::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--primary-color);
+        transition: left 0.3s ease;
+    }
+
+    .suggestion-chip:hover::before {
+        left: 0;
+    }
+
+    .suggestion-chip:hover {
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .suggestion-chip span {
+        position: relative;
+        z-index: 1;
+    }    .modal-search {
+        width: 100%;
+        padding: 15px 50px 15px 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 25px;
+        font-size: 16px;
+        margin-bottom: 25px;
+        transition: all 0.3s ease;
+        background: white;
+        position: relative;
+    }
+
+    .modal-search:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .search-wrapper {
+        position: relative;
+        margin-bottom: 25px;
+    }
+
+    .search-wrapper::after {
+        content: '\f002';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 16px;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        padding: 8px 16px;
+        border: 2px solid transparent;
+        background: #f3f4f6;
+        color: #6b7280;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .filter-tab.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .filter-tab:hover:not(.active) {
+        background: #e5e7eb;
+        transform: translateY(-1px);
+    }
+
+    .modal-recipe-item {
+        padding: 20px;
+        border: 2px solid #f3f4f6;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modal-recipe-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.05), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .modal-recipe-item:hover::before {
+        left: 100%;
+    }
+
+    .modal-recipe-item:hover {
+        border-color: var(--primary-color);
+        background: #f0fdf4;
+        transform: translateX(5px) translateY(-2px);
+        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15);
+    }
+
+    .modal-recipe-item.selected {
+        border-color: var(--primary-color);
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+    }
+
+    .recipe-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .modal-recipe-item h4 {
+        margin: 0;
+        color: var(--text-dark);
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .recipe-rating {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 14px;
+        color: #f59e0b;
+    }
+
+    .modal-recipe-item p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .recipe-meta {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: #9ca3af;
+    }
+
+    .recipe-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .recipe-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .recipe-tag {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--primary-color);
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2000;
+    }    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #DCFCE7;
+        border-top: 4px solid #2E7D32;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Toast Message */    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        color: #1B5E20;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 6px 25px rgba(46, 125, 50, 0.15);
+        display: none;
+        z-index: 3000;
+        border-left: 4px solid #22C55E;
+        font-weight: 500;
+    }
+
+    .toast.error {
+        border-left-color: #EF4444;
+        background: #FEF2F2;
+        color: #DC2626;
+    }
+
+    .toast.success {
+        border-left-color: #22C55E;
+        background: #F0FDF4;
+        color: #15803D;
+    }    /* Enhanced Responsive Design */
+    @media (max-width: 1024px) {
+        .meal-plan-calendar {
+            grid-template-columns: 120px repeat(7, 1fr);
+        }
+        
+        .container {
+            padding: 0 15px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .meal-plans {
+            padding: 60px 0 40px;
+        }
+
+        .meal-plan-calendar {
+            grid-template-columns: 90px repeat(7, 1fr);
+            gap: 1px;
+            border-radius: var(--radius-lg);
+        }
+        
+        .calendar-header {
+            font-size: 11px;
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .day-cell {
+            min-height: 140px;
+            padding: 8px;
+            gap: 8px;
+        }
+        
+        .meal-time-header {
+            font-size: 11px;
+            padding: 12px 8px;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+        
+        .meal-time-header i {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .plans-header {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .header-content h1 {
+            font-size: 28px;
+        }
+
+        .header-actions {
+            justify-content: center;
+        }
+
+        .week-navigation {
+            padding: 15px 20px;
+        }
+
+        .btn-week-nav {
+            padding: 10px 16px;
+            font-size: 12px;
+        }
+
+        .week-display {
+            font-size: 16px;
+        }
+
+        .meal-card {
+            border-radius: 8px;
+        }
+
+        .meal-image {
+            height: 70px;
+        }
+
+        .meal-content {
+            padding: 10px;
+        }
+
+        .meal-content h4 {
+            font-size: 13px;
+        }
+
+        .btn-edit-meal {
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
+        }
+
+        .btn-add-meal {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        /* Mobile Modal Improvements */
+        .modal-content {
+            width: 95%;
+            margin: 5% auto;
+            max-height: 90vh;
+        }
+
+        .modal-header {
+            padding: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+        }
+
+        .suggestions-section {
+            padding: 15px;
+        }
+
+        .suggestion-chips {
+            gap: 8px;
+        }
+
+        .suggestion-chip {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .filter-tabs {
+            gap: 8px;
+        }
+
+        .filter-tab {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .modal-recipe-item {
+            padding: 15px;
+        }
+
+        .modal-recipe-item h4 {
+            font-size: 16px;
+        }
+
+        .recipe-meta {
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .plan-summary {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .summary-card {
+            padding: 20px;
+        }
+
+        .summary-card h3 {
+            font-size: 18px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .meal-plan-calendar {
+            grid-template-columns: 70px repeat(7, 1fr);
+        }
+
+        .day-cell {
+            min-height: 120px;
+            padding: 6px;
+        }
+
+        .meal-time-header {
+            font-size: 10px;
+            padding: 10px 4px;
+        }
+
+        .meal-image {
+            height: 60px;
+        }
+
+        .meal-content {
+            padding: 8px;
+        }
+
+        .meal-content h4 {
+            font-size: 12px;
+        }
+
+        .btn-edit-meal {
+            width: 28px;
+            height: 28px;
+            font-size: 11px;
+        }
+
+        .btn-add-meal {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        .plans-header {
+            padding: 1rem;
+        }
+
+        .header-content h1 {
+            font-size: 24px;
+        }
+    }
+
+    /* Touch-friendly improvements */
+    @media (hover: none) and (pointer: coarse) {
+        .btn, .btn-add-meal, .btn-edit-meal {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .meal-card:hover {
+            transform: none;
+        }
+
+        .meal-card:active {
+            transform: scale(0.98);
+        }
+
+        .suggestion-chip:hover {
+            transform: none;
+        }
+
+        .suggestion-chip:active {
+            transform: scale(0.95);
+        }
+    }    /* Enhanced Meal Card Actions */
+    .meal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .meal-card:hover .meal-overlay {
+        opacity: 1;
+    }
+
+    .drag-handle {
+        color: white;
+        font-size: 20px;
+        cursor: grab;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    .meal-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .btn-delete-meal {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 12px;
+    }
+
+    .btn-delete-meal:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Enhanced Loading States */
+    .loading-shimmer {
+        background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    /* Empty State Styling */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6b7280;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    .empty-state p {
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+
+    /* Floating Action Button for Mobile */
+    .floating-add-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--bg-gradient-accent);
+        color: white;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: var(--shadow-xl);
+        transition: all 0.3s ease;
+        z-index: 100;
+        display: none;
+    }
+
+    .floating-add-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4);
+    }
+
+    @media (max-width: 768px) {
+        .floating-add-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChopSmo - My Meal Plan</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head> <!-- Styles for spinner/toast are in the <style> block or index.css -->
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <a href="index.html">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="MealPlans.html">Meal Plans</a></li>
+                    <li><a href="MealSuggestion.html">Suggestions</a></li>
+                    <li><a href="recipes.html">Recipes</a></li>
+                    <li><a href="profile.html">Profile</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="meal-plans">
+        <div class="container">
+            <section class="plans-header">
+                <div class="header-content">
+                    <h1>My Meal Plan</h1>
+                    <p>Week of <span id="current-week">June 12 - June 18, 2023</span></p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="newPlanBtn">
+                        <i class="fas fa-plus"></i> Create New Plan
+                    </button>
+                    <button class="btn btn-outline" id="printPlanBtn">
+                        <i class="fas fa-print"></i> Print Plan
+                    </button>
+                </div>
+            </section>
+
+            <section class="week-navigation">
+                <button class="btn-week-nav" id="prevWeek">
+                    <i class="fas fa-chevron-left"></i> Previous Week
+                </button>
+                <div class="week-display">
+                    <span id="weekRange">June 12 - June 18, 2023</span>
+                </div>
+                <button class="btn-week-nav" id="nextWeek">
+                    Next Week <i class="fas fa-chevron-right"></i>
+                </button>
+            </section>
+
+            <section class="meal-plan-calendar">
+                <div class="calendar-header">
+                    <div class="day-header">Monday</div>
+                    <div class="day-header">Tuesday</div>
+                    <div class="day-header">Wednesday</div>
+                    <div class="day-header">Thursday</div>
+                    <div class="day-header">Friday</div>
+                    <div class="day-header">Saturday</div>
+                    <div class="day-header">Sunday</div>
+                </div>
+                <!-- The meal-plan-calendar itself is the grid container for these items -->
+                    <!-- Breakfast Row -->
+                    <div class="meal-time-header">
+                        <i class="fas fa-sun"></i> Breakfast
+                    </div>
+                    <div class="day-cell" data-day="mon" data-meal="breakfast"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="tue" data-meal="breakfast"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="wed" data-meal="breakfast"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="thu" data-meal="breakfast"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="fri" data-meal="breakfast"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="sat" data-meal="breakfast"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="sun" data-meal="breakfast"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    
+                    <!-- Lunch Row -->
+                    <div class="meal-time-header">
+                        <i class="fas fa-utensils"></i> Lunch <!-- Changed icon for variety -->
+                    </div>
+                    <div class="day-cell" data-day="mon" data-meal="lunch"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="tue" data-meal="lunch"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="wed" data-meal="lunch"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="thu" data-meal="lunch"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="fri" data-meal="lunch"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="sat" data-meal="lunch"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="sun" data-meal="lunch"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    
+                    <!-- Dinner Row -->
+                    <div class="meal-time-header">
+                        <i class="fas fa-moon"></i> Dinner
+                    </div>
+                    <div class="day-cell" data-day="mon" data-meal="dinner"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="tue" data-meal="dinner"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="wed" data-meal="dinner"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="thu" data-meal="dinner"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="fri" data-meal="dinner"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="sat" data-meal="dinner"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="sun" data-meal="dinner"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    
+                    <!-- Snacks Row -->
+                    <div class="meal-time-header">
+                        <i class="fas fa-apple-alt"></i> Snacks
+                    </div>
+                    <div class="day-cell" data-day="mon" data-meal="snack"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="tue" data-meal="snack"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="wed" data-meal="snack"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="thu" data-meal="snack"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="fri" data-meal="snack"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="sat" data-meal="snack"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="day-cell" data-day="sun" data-meal="snack"><button class="btn-add-meal"><i class="fas fa-plus"></i> Add</button></div>
+            </section>            <!-- Enhanced Meal Selector Modal -->
+            <div id="mealSelectorModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Select a Recipe</h2>
+                        <button id="closeMealSelectorModal" class="close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Smart Suggestions Section -->
+                        <div class="suggestions-section">
+                            <h3><i class="fas fa-lightbulb"></i> Smart Suggestions</h3>
+                            <div class="suggestion-chips" id="suggestionChips">
+                                <div class="suggestion-chip" data-filter="quick"><span>Quick Meals</span></div>
+                                <div class="suggestion-chip" data-filter="healthy"><span>Healthy Options</span></div>
+                                <div class="suggestion-chip" data-filter="popular"><span>Popular Choices</span></div>
+                                <div class="suggestion-chip" data-filter="seasonal"><span>Seasonal</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Search Section -->
+                        <div class="search-wrapper">
+                            <input type="text" id="modalRecipeSearch" class="modal-search" placeholder="Search recipes...">
+                        </div>
+
+                        <!-- Filter Tabs -->
+                        <div class="filter-tabs">
+                            <div class="filter-tab active" data-filter="all">All Recipes</div>
+                            <div class="filter-tab" data-filter="breakfast">Breakfast</div>
+                            <div class="filter-tab" data-filter="lunch">Lunch</div>
+                            <div class="filter-tab" data-filter="dinner">Dinner</div>
+                            <div class="filter-tab" data-filter="snack">Snacks</div>
+                        </div>
+
+                        <!-- Recipe List -->
+                        <div id="modalRecipeList" class="recipe-list">
+                            <!-- Recipe items will be populated here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Spinner & Toast -->
+            <div id="loadingSpinner" style="display: none;"> <!-- Ensure styles are defined in <style> or index.css -->
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+            <div id="toastMessage" style="display: none;"></div> <!-- Ensure styles are defined -->            <!-- Enhanced Plan Summary Section -->
+            <section class="plan-summary">
+                <div class="summary-card">
+                    <h3><i class="fas fa-chart-bar"></i> Weekly Nutrition Summary</h3>
+                    <div class="summary-content">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Meals Planned:</span>
+                            <span class="summary-value" id="totalMealsPlanned">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Estimated Calories/Day:</span>
+                            <div>
+                                <span class="summary-value" id="avgCaloriesDay">0</span>
+                                <div class="nutrition-progress">
+                                    <div class="progress-fill" id="caloriesProgress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Protein/Day:</span>
+                            <div>
+                                <span class="summary-value" id="avgProteinDay">0g</span>
+                                <div class="nutrition-progress">
+                                    <div class="progress-fill" id="proteinProgress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Estimated Grocery Cost:</span>
+                            <span class="summary-value" id="estGroceryCost">$0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Plan Completion:</span>
+                            <div>
+                                <span class="summary-value" id="planCompletion">0%</span>
+                                <div class="nutrition-progress">
+                                    <div class="progress-fill" id="completionProgress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="summary-card">
+                    <h3><i class="fas fa-clipboard-check"></i> Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary btn-block" id="generateGroceryList">
+                            <i class="fas fa-shopping-basket"></i> Generate Grocery List
+                        </button>
+                        <button class="btn btn-outline btn-block" id="copyToNextWeek">
+                            <i class="fas fa-copy"></i> Copy to Next Week
+                        </button>
+                        <button class="btn btn-outline btn-block" id="sharePlan">
+                            <i class="fas fa-share-alt"></i> Share Plan
+                        </button>
+                        <button class="btn btn-secondary btn-block" id="clearWeek">
+                            <i class="fas fa-trash-alt"></i> Clear Week
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Meal Planning Insights -->
+                <div class="summary-card">
+                    <h3><i class="fas fa-brain"></i> Planning Insights</h3>
+                    <div class="summary-content">
+                        <div class="summary-item">
+                            <span class="summary-label">Most Planned Meal:</span>
+                            <span class="summary-value" id="mostPlannedMeal">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Recipe Variety Score:</span>
+                            <span class="summary-value" id="varietyScore">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Prep Time/Day:</span>
+                            <span class="summary-value" id="avgPrepTime">0 min</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Healthy Balance:</span>
+                            <div>
+                                <span class="summary-value" id="healthyBalance">Good</span>
+                                <div class="nutrition-progress">
+                                    <div class="progress-fill" id="healthProgress" style="width: 75%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer>
+        <!-- Same footer as index.html -->
+    </footer>
+
+    <!-- Basic Modal Styles (consider moving to index.css or a separate CSS file) -->
+    <style>
+        /* Basic Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent background */
+            align-items: center; /* Vertically center */
+            justify-content: center; /* Horizontally center */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px; /* Adjust as needed */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+        }
+
+        .modal-body {
+            padding-top: 10px;
+        }
+
+        #modalRecipeSearch {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .recipe-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .modal-recipe-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .modal-recipe-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .modal-recipe-item h4 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        .modal-recipe-item p {
+            margin: 0;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
+
+
+    <!-- Global Spinner & Toast -->
+    <div id="loadingSpinner" style="display: none;"> <!-- Ensure styles are defined in <style> or index.css -->
+        <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <div id="toastMessage" style="display: none;"></div> <!-- Ensure styles are defined -->
+
+    <script src="MealPlan.js"></script> <!-- This will be the new JS file -->
+    <script>
+        // --- Global Page Transition Animation: Blur, Colorful, Enhanced Logo & Dots ---
+function animatePageTransition(href) {
+    // Create overlay
+    const fadeDiv = document.createElement('div');
+    fadeDiv.style.position = 'fixed';
+    fadeDiv.style.top = 0;
+    fadeDiv.style.left = 0;
+    fadeDiv.style.width = '100vw';
+    fadeDiv.style.height = '100vh';
+    fadeDiv.style.background = 'rgba(255,255,255,0.7)';
+    fadeDiv.style.backdropFilter = 'blur(16px) saturate(180%)';
+    fadeDiv.style.webkitBackdropFilter = 'blur(16px) saturate(180%)';
+    fadeDiv.style.opacity = 0;
+    fadeDiv.style.zIndex = 99999;
+    fadeDiv.style.transition = 'opacity 0.5s cubic-bezier(.4,0,.2,1)';
+    // Add enhanced spinning logo with gradient ring and animated dots
+    fadeDiv.innerHTML = `
+        <div style=\"position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;\">
+            <span style='display:inline-block;position:relative;width:90px;height:90px;'>
+                <span style=\"position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--primary),#FF9800,#4CAF50,#00BCD4,#FF9800,var(--primary));filter:blur(2px);animation:spin 1.2s linear infinite;\"></span>
+                <i class='fas fa-utensils' style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;color:#fff;text-shadow:0 2px 16px #4CAF50,0 0 0 #fff;z-index:2;animation:spin 1.2s linear infinite reverse;'></i>
+            </span>
+            <span style='font-size:24px;color:var(--primary);font-weight:700;letter-spacing:1.5px;margin-top:18px;text-shadow:0 2px 12px #fff;'>Chopsmo</span>
+            <span class=\"loading-dots\" style=\"display:inline-block;margin-top:18px;\">
+                <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0s;\"></span>
+                <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:#FF9800;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.2s;\"></span>
+                <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.4s;\"></span>
+            </span>
+        </div>
+        <style>
+        @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}
+        @keyframes dot-bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-16px);}}</style>
+    `;
+    document.body.appendChild(fadeDiv);
+    setTimeout(() => {
+        fadeDiv.style.opacity = 1;
+    }, 10);
+    setTimeout(() => {
+        window.location.href = href;
+    }, 3000);
+}
+// Intercept all internal navigation links for animation
+setTimeout(() => {
+    document.querySelectorAll('a[href]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('#')) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                animatePageTransition(href);
+            });
+        }
+    });
+}, 100);
+// Use animation for programmatic navigation
+function animatedRedirect(href) {
+    animatePageTransition(href);
+}
+    </script>
+
+</body>
+</html>

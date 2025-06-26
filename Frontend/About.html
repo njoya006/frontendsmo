@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>ChopSmo - About Us</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <style>        /* About Page Specific Styles */
+        .about-page {
+            padding-top: var(--spacing-5xl);
+        }
+
+        .about-hero {
+            background: var(--bg-gradient-accent);
+            color: var(--white-color);
+            text-align: center;
+            padding: var(--spacing-6xl) 0;
+            margin-bottom: var(--spacing-5xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }        .about-hero h1 {
+            font-size: var(--font-size-5xl);
+            margin-bottom: var(--spacing-lg);
+            font-weight: var(--font-weight-bold);
+            position: relative;
+            z-index: 2;
+        }
+
+        .about-hero p {
+            font-size: var(--font-size-xl);
+            opacity: 0.95;
+            position: relative;
+            z-index: 2;
+        }
+
+        .mission-section {
+            padding: var(--spacing-section) 0;
+        }
+
+        .mission-content {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-4xl);
+        }
+
+        .mission-text {
+            flex: 1;
+        }
+
+        .mission-text h2 {
+            font-size: var(--font-size-4xl);
+            margin-bottom: var(--spacing-xl);
+            color: var(--dark-color);
+            font-weight: var(--font-weight-bold);
+        }
+
+        .mission-text p {
+            font-size: var(--font-size-lg);
+            line-height: 1.7;
+            color: var(--gray-color);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .mission-image {
+            flex: 1;
+            border-radius: var(--border-radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .mission-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: var(--transition-normal);
+        }
+
+        .mission-image:hover img {
+            transform: scale(1.05);
+        }
+
+        .features-section {
+            padding: var(--spacing-6xl) 0;
+            background: var(--bg-gradient-primary);
+        }
+
+        .features-section h2 {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 80px;
+            color: var(--dark-color);
+            font-weight: 700;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: var(--white-color);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--button-shadow);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--dark-color);
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            color: var(--gray-color);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .team-section {
+            padding: 100px 0;
+        }
+
+        .team-section h2 {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 80px;
+            color: var(--dark-color);
+            font-weight: 700;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+
+        .team-member {
+            text-align: center;
+            background: var(--white-color);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+        .team-member:hover {
+            transform: translateY(-5px);
+        }
+
+        .member-image {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 25px;
+            border: 4px solid var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        }
+
+        .member-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .team-member h3 {
+            font-size: 22px;
+            margin-bottom: 8px;
+            color: var(--dark-color);
+            font-weight: 600;
+        }
+
+        .role {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bio {
+            color: var(--gray-color);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .testimonials-section {
+            padding: 100px 0;
+            background: var(--primary-light);
+        }
+
+        .testimonials-section h2 {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 80px;
+            color: var(--dark-color);
+            font-weight: 700;
+        }
+
+        .testimonials-slider {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .testimonial {
+            background: var(--white-color);
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            display: none;
+        }
+
+        .testimonial.active {
+            display: block;
+        }
+
+        .testimonial-content p {
+            font-size: 20px;
+            font-style: italic;
+            color: var(--dark-color);
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .testimonial-author {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .testimonial-author img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+        }
+
+        .testimonial-author span {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .user-type {
+            font-size: 14px;
+            color: var(--gray-color);
+            margin-top: 8px;
+        }
+
+        .slider-controls {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
+        }
+
+        .slider-controls button {
+            background: var(--primary-gradient);
+            color: var(--white-color);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            box-shadow: var(--card-shadow);
+        }
+
+        .slider-controls button:hover {
+            transform: scale(1.1);
+            box-shadow: var(--button-shadow);
+        }
+
+        .cta-section {
+            padding: 100px 0;
+            text-align: center;
+            background: var(--white-color);
+        }
+
+        .cta-section h2 {
+            font-size: 42px;
+            margin-bottom: 40px;
+            color: var(--dark-color);
+            font-weight: 700;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .featured-member {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .featured-member .member-image {
+            width: 200px;
+            height: 200px;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .mission-content {
+                flex-direction: column;
+            }
+            
+            .mission-image {
+                order: -1;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .about-hero h1 {
+                font-size: 36px;
+            }
+            
+            .about-hero p {
+                font-size: 18px;
+            }
+            
+            .mission-text h2, 
+            .features-section h2,
+            .team-section h2,
+            .testimonials-section h2,
+            .cta-section h2 {
+                font-size: 28px;
+            }
+            
+            .slider-controls {
+                display: none;
+            }
+
+            .testimonial {
+                padding: 30px;
+            }
+
+            .testimonial-content p {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <a href="index.html">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="about.html">About</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="about-page">
+        <section class="about-hero">
+            <div class="container">
+                <h1>Our Story</h1>
+                <p>Helping you eat better, one meal at a time</p>
+            </div>
+        </section>
+
+        <section class="mission-section">
+            <div class="container">
+                <div class="mission-content">
+                    <div class="mission-text">
+                        <h2>Our Mission</h2>
+                        <p>At ChopSmo, we believe healthy eating should be simple, enjoyable, and accessible to everyone. Our mission is to take the stress out of meal planning by providing smart tools that help you create delicious, nutritious meals tailored to your lifestyle.</p>
+                        <p>Founded in 2025 by a team of nutritionists, chefs, and tech enthusiasts, we're passionate about helping people develop sustainable eating habits that last a lifetime.</p>
+                    </div>
+                    <div class="mission-image">
+                        <img src="/Frontend/images/Chicken Chips.jpg" alt="Healthy ingredients">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features-section">
+            <div class="container">
+                <h2>Why Choose ChopSmo?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h3>Smart Planning</h3>
+                        <p>Our algorithm creates personalized meal plans based on your dietary preferences, schedule, and nutritional needs.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <h3>5,000+ Recipes</h3>
+                        <p>Access our constantly growing database of delicious, dietitian-approved recipes for every taste and occasion.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3>Smart Meal Plans</h3>
+                        <p>Automatically generate Meal Plan that organize items by category to save you time throughout the week.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3>Always Accessible</h3>
+                        <p>Your meal plans sync across all devices so you always have them when you need them.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="team-section">
+            <div class="container">
+                <h2>Meet The Team</h2>
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/Frontend/images/Njoya.jpg" alt="Njoya Medin">
+                        </div>
+                        <h3>Njoya Medin</h3>
+                        <p class="role">Chief Technology Officer and Backend Developer</p>
+                        <p class="bio">An Engineer with a vision on healthy living and Good Life.</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/Frontend/images/Pamela.jpg" alt="Michael Chen">
+                        </div>
+                        <h3>Beri Pamela</h3>
+                        <p class="role">Head of Product</p>
+                        <p class="bio">Product Owner and a developer for the ChopSmo Community</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/Frontend/images/Precious.jpg" alt="Priya Patel">
+                        </div>
+                        <h3>Precious</h3>
+                        <p class="role">Backend Developer</p>
+                        <p class="bio">Developer striving in the field of Nutrition and good living</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/Frontend/images/Nicole.jpg" alt="Priya Patel">
+                        </div>
+                        <h3>Nicole Sengue</h3>
+                        <p class="role">Frontend Developer</p>
+                        <p class="bio">Frontend developer passionate about health tech.</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/Frontend/images/Bright.jpg" alt="David Kim">
+                        </div>
+                        <h3>Herman Bright</h3>
+                        <p class="role">Lead Frontend Developer</p>
+                        <p class="bio">Creates interactive web pages that tie with users preference and App design.</p>
+                    </div>
+                    <div class="team-member featured-member">
+                        <div class="member-image">
+                            <img src="/Frontend/images/Janice.jpg" alt="John Doe">
+                        </div>
+                        <h3>Janice Kelly</h3>
+                        <p class="role">Scrum Leader</p>
+                        <p class="bio">Designs user-friendly interfaces that make meal planning a breeze.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="testimonials-section">
+            <div class="container">
+                <h2>What Our Users Say</h2>
+                <div class="testimonials-slider">
+                    <div class="testimonial active">
+                        <div class="testimonial-content">
+                            <p>"ChopSmo has completely changed how I approach meal planning. I save time and eat healthier!"</p>
+                            <div class="testimonial-author">
+                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Lisa M.">
+                                <span>Lisa M.</span>
+                                <span class="user-type">Premium Member</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial">
+                        <div class="testimonial-content">
+                            <p>"As a busy parent, this app has been a lifesaver. The grocery list feature alone is worth it!"</p>
+                            <div class="testimonial-author">
+                                <img src="https://randomuser.me/api/portraits/men/33.jpg" alt="James T.">
+                                <span>James T.</span>
+                                <span class="user-type">Free Member</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slider-controls">
+                        <button class="slider-prev"><i class="fas fa-chevron-left"></i></button>
+                        <button class="slider-next"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="container">
+                <h2>Ready to Transform Your Meal Planning?</h2>
+                <div class="cta-buttons">
+                    <a href="signup.html" class="btn btn-primary btn-large">Get Started</a>
+                    <a href="MealSuggestion.html" class="btn btn-outline btn-large">Browse Recipes</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+           <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="logo">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </div>
+                    <p>Making meal suggestion simple and enjoyable in 2025.</p>
+                    <div class="social-links">
+                        <a href="www.facebook.com"><i class="fab fa-facebook-f"></i></a>
+                        <a href="www.twitter.com"><i class="fab fa-twitter"></i></a>
+                        <a href="www.instagram.com"><i class="fab fa-instagram"></i></a>
+                        <a href="www.pinterest.com"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="SignUp.html">Join</a></li>
+                        <li><a href="Recipes.html">Recipes</a></li>
+                        <li><a href="About.html">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="FAQ.html">FAQ</a></li>
+                        <li><a href="Contact.html">Contact Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-newsletter">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe to get weekly recipe ideas and meal planning tips.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your email address" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ChopSmo. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="about.js"></script>
+    <script>
+        // --- Global Page Transition Animation: Blur, Colorful, Enhanced Logo & Dots ---
+        function animatePageTransition(href) {
+            // Create overlay
+            const fadeDiv = document.createElement('div');
+            fadeDiv.style.position = 'fixed';
+            fadeDiv.style.top = 0;
+            fadeDiv.style.left = 0;
+            fadeDiv.style.width = '100vw';
+            fadeDiv.style.height = '100vh';
+            fadeDiv.style.background = 'rgba(255,255,255,0.7)';
+            fadeDiv.style.backdropFilter = 'blur(16px) saturate(180%)';
+            fadeDiv.style.webkitBackdropFilter = 'blur(16px) saturate(180%)';
+            fadeDiv.style.opacity = 0;
+            fadeDiv.style.zIndex = 99999;
+            fadeDiv.style.transition = 'opacity 0.5s cubic-bezier(.4,0,.2,1)';
+            // Add enhanced spinning logo with gradient ring and animated dots
+            fadeDiv.innerHTML = `
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;">
+                    <span style='display:inline-block;position:relative;width:90px;height:90px;'>
+                        <span style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--primary),#FF9800,#4CAF50,#00BCD4,#FF9800,var(--primary));filter:blur(2px);animation:spin 1.2s linear infinite;"></span>
+                        <i class='fas fa-utensils' style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;color:#fff;text-shadow:0 2px 16px #4CAF50,0 0 0 #fff;z-index:2;animation:spin 1.2s linear infinite reverse;'></i>
+                    </span>
+                    <span style='font-size:24px;color:var(--primary);font-weight:700;letter-spacing:1.5px;margin-top:18px;text-shadow:0 2px 12px #fff;'>Chopsmo</span>
+                    <span class="loading-dots" style="display:inline-block;margin-top:18px;">
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0s;"></span>
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:#FF9800;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.2s;"></span>
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.4s;"></span>
+                    </span>
+                </div>
+                <style>
+                @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}
+                @keyframes dot-bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-16px);}}</style>
+            `;
+            document.body.appendChild(fadeDiv);
+            setTimeout(() => {
+                fadeDiv.style.opacity = 1;
+            }, 10);
+            setTimeout(() => {
+                window.location.href = href;
+            }, 3000);
+        }
+        // Intercept all internal navigation links for animation
+        setTimeout(() => {
+            document.querySelectorAll('a[href]').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('#')) {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        animatePageTransition(href);
+                    });
+                }
+            });
+        }, 100);
+        // Use animation for programmatic navigation
+        function animatedRedirect(href) {
+            animatePageTransition(href);
+        }
+    </script>
+</body>
+</html>

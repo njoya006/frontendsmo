@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe API Debug - ChopSmo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .btn-danger {
+            background: #f44336;
+        }
+        .btn-danger:hover {
+            background: #da190b;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        input {
+            width: 100px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-bug"></i> Recipe API Debug Tool</h1>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-server"></i> API Connection Tests</h3>
+            <button class="btn" onclick="testAPIConnection()">Test API Connection</button>
+            <button class="btn" onclick="listAllRecipes()">List All Recipes</button>
+            <div id="api-test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-search"></i> Recipe Detail Tests</h3>
+            <label>Recipe ID: <input type="number" id="recipeId" value="1" min="1"></label>
+            <button class="btn" onclick="testRecipeDetail()">Test Recipe Detail</button>
+            <button class="btn" onclick="testRecipeDetailRaw()">Test Raw API Response</button>
+            <div id="recipe-test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-cog"></i> Configuration</h3>
+            <p><strong>Current API Base URL:</strong> <span id="current-api-url"></span></p>
+            <label>Custom API URL: <input type="text" id="customApiUrl" placeholder="http://127.0.0.1:8000"></label>
+            <button class="btn" onclick="updateApiUrl()">Update URL</button>
+            <button class="btn btn-danger" onclick="clearResults()">Clear Results</button>
+        </div>
+
+        <div class="test-section">
+            <h3><i class="fas fa-info-circle"></i> Instructions</h3>
+            <ol>
+                <li>First, test the API connection to see if your Django server is running</li>
+                <li>If connection works, test recipe detail with a known recipe ID from your database</li>
+                <li>Check the raw API response to see the exact data structure</li>
+                <li>If API fails, it will fall back to mock data (which is why you see sample recipes)</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let recipeAPI = new RecipeAPI('http://127.0.0.1:8000');
+        
+        // Update display
+        document.getElementById('current-api-url').textContent = recipeAPI.baseUrl;
+
+        function log(message, type = 'info') {
+            const results = document.querySelectorAll('.result');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            // Add to all result containers
+            results.forEach(container => {
+                container.appendChild(div.cloneNode(true));
+            });
+        }
+
+        async function testAPIConnection() {
+            const resultDiv = document.getElementById('api-test-result');
+            resultDiv.innerHTML = '<div class="result info">Testing API connection...</div>';
+            
+            try {
+                console.log('Testing connection to:', recipeAPI.baseUrl);
+                const response = await fetch(`${recipeAPI.baseUrl}/api/recipes/`, {
+                    method: 'GET',
+                    headers: recipeAPI.getHeaders(),
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">✅ API Connection Successful!</div>
+                        <div class="result info">Status: ${response.status}
+Found ${Array.isArray(data) ? data.length : 'unknown'} recipes
+Response preview: ${JSON.stringify(data).substring(0, 200)}...</div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">❌ API Connection Failed</div>
+                        <div class="result error">Status: ${response.status}
+Error: ${await response.text().catch(() => 'Unknown error')}</div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">❌ API Connection Error</div>
+                    <div class="result error">Error: ${error.message}
+This usually means:
+- Django server is not running
+- Wrong API URL
+- CORS issues
+- Network problems</div>
+                `;
+            }
+        }
+
+        async function listAllRecipes() {
+            const resultDiv = document.getElementById('api-test-result');
+            resultDiv.innerHTML = '<div class="result info">Fetching all recipes...</div>';
+            
+            try {
+                const data = await recipeAPI.searchRecipes('', {});
+                resultDiv.innerHTML = `
+                    <div class="result success">✅ Recipe List Retrieved</div>
+                    <div class="result info">Found ${data.results ? data.results.length : data.length} recipes:
+${JSON.stringify(data, null, 2)}</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">❌ Failed to fetch recipes</div>
+                    <div class="result error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testRecipeDetail() {
+            const recipeId = document.getElementById('recipeId').value;
+            const resultDiv = document.getElementById('recipe-test-result');
+            resultDiv.innerHTML = `<div class="result info">Testing recipe detail for ID: ${recipeId}...</div>`;
+            
+            try {
+                const recipe = await recipeAPI.getRecipe(recipeId);
+                resultDiv.innerHTML = `
+                    <div class="result success">✅ Recipe Detail Retrieved</div>
+                    <div class="result info">Recipe: ${recipe.title || recipe.name || 'Untitled'}
+Ingredients: ${recipe.ingredients ? recipe.ingredients.length : 'unknown'} items
+Full data: ${JSON.stringify(recipe, null, 2)}</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">❌ Failed to fetch recipe detail</div>
+                    <div class="result error">Error: ${error.message}
+This is why you're seeing mock data instead of real recipes!</div>
+                `;
+            }
+        }
+
+        async function testRecipeDetailRaw() {
+            const recipeId = document.getElementById('recipeId').value;
+            const resultDiv = document.getElementById('recipe-test-result');
+            resultDiv.innerHTML = `<div class="result info">Testing raw API call for recipe ID: ${recipeId}...</div>`;
+            
+            try {
+                const response = await fetch(`${recipeAPI.baseUrl}/api/recipes/${recipeId}/`, {
+                    method: 'GET',
+                    headers: recipeAPI.getHeaders(),
+                    credentials: 'include'
+                });
+                
+                const text = await response.text();
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(text);
+                } catch {
+                    parsedData = text;
+                }
+                
+                resultDiv.innerHTML = `
+                    <div class="result ${response.ok ? 'success' : 'error'}">${response.ok ? '✅' : '❌'} Raw API Response</div>
+                    <div class="result info">Status: ${response.status}
+Headers: ${JSON.stringify(Object.fromEntries(response.headers), null, 2)}
+Body: ${typeof parsedData === 'object' ? JSON.stringify(parsedData, null, 2) : parsedData}</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">❌ Raw API Call Failed</div>
+                    <div class="result error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        function updateApiUrl() {
+            const newUrl = document.getElementById('customApiUrl').value.trim();
+            if (newUrl) {
+                recipeAPI = new RecipeAPI(newUrl);
+                document.getElementById('current-api-url').textContent = recipeAPI.baseUrl;
+                log(`API URL updated to: ${newUrl}`, 'success');
+            }
+        }
+
+        function clearResults() {
+            document.querySelectorAll('.result').forEach(el => el.remove());
+        }
+    </script>
+</body>
+</html>

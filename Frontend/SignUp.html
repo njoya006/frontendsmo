@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChopSmo - Sign Up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">    <link rel="stylesheet" href="index.css">
+    <style>
+        /* Unified Color Variables */
+        :root {
+            /* Cameroon Flag Colors Inspired Palette */
+            --cameroon-green: #00A651;
+            --cameroon-red: #CE1126;
+            --cameroon-yellow: #FFCD00;
+            
+            /* Primary Colors - Nature-Inspired Greens */
+            --primary: #1B5E20;
+            --primary-dark: #0D4715;
+            --primary-light: #2E7D32;
+            --primary-lighter: #4CAF50;
+            --primary-accent: var(--cameroon-green);
+            
+            /* Background Gradients */
+            --bg-gradient-primary: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 50%, #BBF7D0 100%);
+            --bg-gradient-accent: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary-accent) 100%);
+            
+            /* Neutral Colors */
+            --text: #1A202C;
+            --text-light: #4A5568;
+            --white: #FFFFFF;
+            --border: #E2E8F0;
+            --gray-50: #F7FAFC;
+            --error: var(--cameroon-red);
+            --success: var(--primary-lighter);
+            
+            /* Shadows */
+            --shadow-md: 0 4px 16px rgba(26, 32, 44, 0.08);
+            --shadow-lg: 0 8px 24px rgba(26, 32, 44, 0.12);
+            --shadow-xl: 0 16px 40px rgba(26, 32, 44, 0.16);
+            
+            /* Transitions */
+            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Professional Auth Page Styles */
+        .auth-page {
+            min-height: 100vh;
+            background: var(--bg-gradient-primary);
+            display: flex;
+            align-items: center;
+            padding: 40px 20px;
+        }        .auth-container {
+            display: flex;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-image {
+            flex: 1;
+            background: var(--bg-gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+            opacity: 0.6;
+        }        .auth-image-content {
+            text-align: center;
+            color: var(--white);
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-image-content i {
+            font-size: 80px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .auth-image-content h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .auth-image-content p {
+            font-size: 18px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .auth-form {
+            flex: 1;
+            padding: 60px 50px;
+        }
+
+        .auth-form h1 {
+            font-size: 36px;
+            margin-bottom: 15px;
+            color: var(--text);
+            font-weight: 700;
+            background: var(--bg-gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-form > p {
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        /* Social Login Section - Moved to Top */
+        .social-auth {
+            margin-bottom: 30px;
+        }
+
+        .social-auth > p {
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 500;
+        }        .social-buttons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .btn-social {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 20px;
+            border: 2px solid var(--border);
+            background: var(--white);
+            color: var(--text);
+            font-weight: 600;
+            border-radius: 12px;
+            transition: var(--transition-normal);
+            font-size: 15px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-social::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-social:hover::before {
+            left: 100%;
+        }
+
+        .btn-social i {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .btn-social:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .btn-social:active {
+            transform: translateY(0);
+        }
+
+        .btn-google i {
+            color: #DB4437;
+        }
+
+        .btn-google:hover {
+            background: rgba(219, 68, 55, 0.05);
+            border-color: #DB4437;
+        }
+
+        .btn-facebook i {
+            color: #1877F2;
+        }
+
+        .btn-facebook:hover {
+            background: rgba(24, 119, 242, 0.05);
+            border-color: #1877F2;
+        }
+
+        /* Divider */
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background-color: var(--border);
+        }
+
+        .auth-divider::before {
+            margin-right: 15px;
+        }
+
+        .auth-divider::after {
+            margin-left: 15px;
+        }        .form-group {
+            position: relative;
+            margin-bottom: 28px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 15px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 20px 16px 52px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: var(--transition-normal);
+            background: var(--white);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        .form-group i {
+            position: absolute;
+            left: 20px;
+            top: 48px;
+            color: var(--text-light);
+            font-size: 16px;
+            transition: var(--transition-fast);
+        }
+
+        .form-group input:focus + i {
+            color: var(--primary);
+        }        .password-strength {
+            display: flex;
+            align-items: center;
+            margin-top: 12px;
+            gap: 6px;
+        }
+
+        .strength-bar {
+            height: 5px;
+            flex: 1;
+            background-color: var(--border);
+            border-radius: 3px;
+            transition: var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .strength-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: inherit;
+            transition: width 0.3s ease;
+        }
+
+        .strength-bar.weak {
+            background-color: var(--error);
+        }
+
+        .strength-bar.weak::after {
+            width: 100%;
+            background: linear-gradient(90deg, var(--error), #ff6b6b);
+        }
+
+        .strength-bar.medium {
+            background-color: var(--cameroon-yellow);
+        }
+
+        .strength-bar.medium::after {
+            width: 100%;
+            background: linear-gradient(90deg, var(--cameroon-yellow), #ffd93d);
+        }
+
+        .strength-bar.strong {
+            background-color: var(--primary);
+        }
+
+        .strength-bar.strong::after {
+            width: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        }
+
+        .strength-text {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-left: 12px;
+            font-weight: 600;
+            min-width: 60px;
+        }
+
+        .strength-text.weak {
+            color: var(--error);
+        }
+
+        .strength-text.medium {
+            color: #f57c00;
+        }
+
+        .strength-text.strong {
+            color: var(--primary);
+        }        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            gap: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            accent-color: var(--primary);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            font-weight: 400;
+            font-size: 15px;
+            line-height: 1.6;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .checkbox-group a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition-fast);
+        }
+
+        .checkbox-group a:hover {
+            color: var(--primary-accent);
+            text-decoration: underline;
+        }        .btn-primary {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            background: var(--bg-gradient-accent);
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            margin-bottom: 28px;
+            font-family: 'Poppins', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }        .auth-footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .auth-footer p {
+            color: var(--text-light);
+            font-size: 15px;
+            margin: 0;
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition-fast);
+        }
+
+        .auth-footer a:hover {
+            color: var(--primary-accent);
+            text-decoration: underline;
+        }        /* Enhanced Responsive Styles */
+        @media (max-width: 1200px) {
+            .auth-container {
+                max-width: 1000px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .auth-image {
+                display: none;
+            }
+            
+            .auth-form {
+                padding: 50px 40px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .auth-form {
+                padding: 40px 30px;
+            }
+            
+            .auth-form h1 {
+                font-size: 28px;
+            }
+            
+            .form-group input {
+                padding: 14px 18px 14px 48px;
+            }
+            
+            .form-group i {
+                left: 18px;
+                top: 46px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .auth-page {
+                padding: 20px 15px;
+            }
+            
+            .auth-form {
+                padding: 30px 20px;
+            }
+            
+            .social-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .btn-social {
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .auth-form h1 {
+                font-size: 24px;
+            }
+            
+            .checkbox-group {
+                gap: 12px;
+            }
+            
+            .checkbox-group label {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <a href="index.html">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="About.html">About</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <a href="Login.html" class="btn btn-outline">Login</a>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="auth-page">
+        <section class="auth-container">
+            <div class="auth-image">
+                <div class="auth-image-content">
+                    <i class="fas fa-utensils"></i>
+                    <h2>Welcome to ChopSmo</h2>
+                    <p>Join thousands of users who are transforming their meal planning experience with our smart, intuitive platform.</p>
+                </div>
+            </div>            <div class="auth-form">
+                <h1>Create Your Account</h1>
+                <p>Join ChopSmo to start planning your meals today</p>
+                
+                <!-- Social Login Section - Moved to Top -->
+                <div class="social-auth">
+                    <p>Sign up with social media</p>
+                    <div class="social-buttons">
+                        <button class="btn btn-social btn-google">
+                            <i class="fab fa-google"></i> Google
+                        </button>
+                        <button class="btn btn-social btn-facebook">
+                            <i class="fab fa-facebook-f"></i> Facebook
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="auth-divider">or sign up with email</div>
+                
+                <form id="signupForm">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                        <i class="fas fa-user"></i>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Create a password" required>
+                        <i class="fas fa-lock"></i>
+                        <div class="password-strength">
+                            <span class="strength-bar" id="bar1"></span>
+                            <span class="strength-bar" id="bar2"></span>
+                            <span class="strength-bar" id="bar3"></span>
+                            <span class="strength-text" id="strengthText">Weak</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms">I agree to the <a href="Term Of Service.html">Terms of Service</a> and <a href="Privacy Policy.html">Privacy Policy</a></label>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Create Account</button>
+                </form>
+                
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="Login.html">Sign in</a></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="logo">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </div>
+                    <p>Making meal planning simple and enjoyable in 2025.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="SignUp.html">Join</a></li>
+                        <li><a href="Recipes.html">Recipes</a></li>
+                        <li><a href="About.html">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="FAQ.html">FAQ</a></li>
+                        <li><a href="Contact.html">Contact Us</a></li>
+                        <li><a href="Privacy Policy.html">Privacy Policy</a></li>
+                        <li><a href="Term Of Service.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-newsletter">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe to get weekly recipe ideas and meal planning tips.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your email address" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ChopSmo. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="signup.js"></script>
+    <script>
+        // --- Global Page Transition Animation: Blur, Colorful, Enhanced Logo & Dots ---
+        function animatePageTransition(href) {
+            // Create overlay
+            const fadeDiv = document.createElement('div');
+            fadeDiv.style.position = 'fixed';
+            fadeDiv.style.top = 0;
+            fadeDiv.style.left = 0;
+            fadeDiv.style.width = '100vw';
+            fadeDiv.style.height = '100vh';
+            fadeDiv.style.background = 'rgba(255,255,255,0.7)';
+            fadeDiv.style.backdropFilter = 'blur(16px) saturate(180%)';
+            fadeDiv.style.webkitBackdropFilter = 'blur(16px) saturate(180%)';
+            fadeDiv.style.opacity = 0;
+            fadeDiv.style.zIndex = 99999;
+            fadeDiv.style.transition = 'opacity 0.5s cubic-bezier(.4,0,.2,1)';
+            // Add enhanced spinning logo with gradient ring and animated dots
+            fadeDiv.innerHTML = `
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;">
+                    <span style='display:inline-block;position:relative;width:90px;height:90px;'>
+                        <span style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--primary),#FF9800,#4CAF50,#00BCD4,#FF9800,var(--primary));filter:blur(2px);animation:spin 1.2s linear infinite;"></span>
+                        <i class='fas fa-utensils' style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;color:#fff;text-shadow:0 2px 16px #4CAF50,0 0 0 #fff;z-index:2;animation:spin 1.2s linear infinite reverse;'></i>
+                    </span>
+                    <span style='font-size:24px;color:var(--primary);font-weight:700;letter-spacing:1.5px;margin-top:18px;text-shadow:0 2px 12px #fff;'>Chopsmo</span>
+                    <span class="loading-dots" style="display:inline-block;margin-top:18px;">
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0s;"></span>
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:#FF9800;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.2s;"></span>
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.4s;"></span>
+                    </span>
+                </div>
+                <style>
+                @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+                @keyframes dot-bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-16px);}}
+                </style>
+            `;
+            document.body.appendChild(fadeDiv);
+            setTimeout(() => {
+                fadeDiv.style.opacity = 1;
+            }, 10);
+            setTimeout(() => {
+                window.location.href = href;
+            }, 3000);
+        }
+        // Intercept all internal navigation links for animation
+        setTimeout(() => {
+            document.querySelectorAll('a[href]').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('#')) {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        animatePageTransition(href);
+                    });
+                }
+            });
+        }, 100);
+        // Use animation for programmatic navigation
+        function animatedRedirect(href) {
+            animatePageTransition(href);
+        }
+    </script>
+</body>
+</html>

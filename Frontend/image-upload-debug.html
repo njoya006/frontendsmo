@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .image-preview {
+            margin: 10px 0;
+            max-width: 200px;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Upload Debug Test</h1>
+    <p>This page will help debug image upload issues with your Django backend.</p>
+
+    <div class="test-section">
+        <h2>Step 1: Test Recipe Selection</h2>
+        <div class="form-group">
+            <label for="recipeSelect">Select a Recipe to Test:</label>
+            <select id="recipeSelect">
+                <option value="">Loading recipes...</option>
+            </select>
+        </div>
+        <button onclick="loadRecipes()">Load Recipes</button>
+        <div id="recipeInfo" class="hidden">
+            <h3>Selected Recipe Info:</h3>
+            <div id="recipeDetails"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 2: Test Image Upload</h2>
+        <div class="form-group">
+            <label for="imageFile">Select Image File:</label>
+            <input type="file" id="imageFile" accept="image/*" onchange="previewImage()">
+        </div>
+        <div id="imagePreview" class="hidden">
+            <img id="previewImg" class="image-preview" alt="Preview">
+        </div>
+        <div class="form-group">
+            <label for="newTitle">Update Recipe Title (optional):</label>
+            <input type="text" id="newTitle" placeholder="New recipe title">
+        </div>
+        <button onclick="testImageUpload()" id="uploadBtn" disabled>Test Image Upload</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 3: Debug Information</h2>
+        <button onclick="clearResults()">Clear Log</button>
+        <div id="debugLog"></div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let selectedRecipe = null;
+        let recipeAPI = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debugLog');
+            const logEntry = document.createElement('div');
+            logEntry.className = `result ${type}`;
+            logEntry.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('debugLog').innerHTML = '';
+        }
+
+        async function loadRecipes() {
+            log('Loading recipes from API...', 'info');
+            
+            try {
+                // Initialize API
+                recipeAPI = new RecipeAPI();
+                
+                const response = await fetch(`${recipeAPI.baseUrl}/api/recipes/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const recipes = data.results || data;
+                
+                log(`Successfully loaded ${recipes.length} recipes`, 'success');
+
+                const select = document.getElementById('recipeSelect');
+                select.innerHTML = '<option value="">Select a recipe...</option>';
+                
+                recipes.forEach(recipe => {
+                    const option = document.createElement('option');
+                    option.value = recipe.id;
+                    option.textContent = `${recipe.id}: ${recipe.title}`;
+                    select.appendChild(option);
+                });
+
+                select.onchange = function() {
+                    const recipeId = this.value;
+                    if (recipeId) {
+                        selectedRecipe = recipes.find(r => r.id == recipeId);
+                        displayRecipeInfo(selectedRecipe);
+                        updateUploadButton();
+                    } else {
+                        selectedRecipe = null;
+                        document.getElementById('recipeInfo').classList.add('hidden');
+                        updateUploadButton();
+                    }
+                };
+
+            } catch (error) {
+                log(`Failed to load recipes: ${error.message}`, 'error');
+            }
+        }
+
+        function displayRecipeInfo(recipe) {
+            const infoDiv = document.getElementById('recipeInfo');
+            const detailsDiv = document.getElementById('recipeDetails');
+            
+            detailsDiv.innerHTML = `
+                <p><strong>ID:</strong> ${recipe.id}</p>
+                <p><strong>Title:</strong> ${recipe.title}</p>
+                <p><strong>Current Image:</strong> ${recipe.image || 'No image'}</p>
+                <p><strong>Owner:</strong> ${recipe.contributor?.username || 'Unknown'}</p>
+                <p><strong>Can Edit:</strong> <span id="canEdit">Checking...</span></p>
+            `;
+            
+            infoDiv.classList.remove('hidden');
+            
+            // Check if user can edit this recipe
+            checkOwnership(recipe);
+        }
+
+        async function checkOwnership(recipe) {
+            try {
+                log(`Checking ownership for recipe ${recipe.id}...`, 'info');
+                
+                const canEdit = await checkOwnership(recipe);
+                document.getElementById('canEdit').textContent = canEdit ? 'Yes' : 'No';
+                document.getElementById('canEdit').style.color = canEdit ? 'green' : 'red';
+                
+                if (!canEdit) {
+                    log('You cannot edit this recipe - not the owner', 'error');
+                }
+            } catch (error) {
+                log(`Error checking ownership: ${error.message}`, 'error');
+                document.getElementById('canEdit').textContent = 'Error checking';
+            }
+        }
+
+        function previewImage() {
+            const fileInput = document.getElementById('imageFile');
+            const previewDiv = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                
+                log(`Image selected: ${file.name} (${file.size} bytes, ${file.type})`, 'info');
+                
+                // Validate file
+                if (!file.type.startsWith('image/')) {
+                    log('Error: Selected file is not an image', 'error');
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) { // 5MB
+                    log('Error: Image file is too large (max 5MB)', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewDiv.classList.remove('hidden');
+                    updateUploadButton();
+                };
+                reader.readAsDataURL(file);
+                
+                log('Image preview loaded successfully', 'success');
+            } else {
+                previewDiv.classList.add('hidden');
+                updateUploadButton();
+            }
+        }
+
+        function updateUploadButton() {
+            const btn = document.getElementById('uploadBtn');
+            const hasRecipe = selectedRecipe != null;
+            const hasImage = document.getElementById('imageFile').files.length > 0;
+            
+            btn.disabled = !(hasRecipe && hasImage);
+        }
+
+        async function testImageUpload() {
+            if (!selectedRecipe) {
+                log('Error: No recipe selected', 'error');
+                return;
+            }
+
+            const fileInput = document.getElementById('imageFile');
+            if (!fileInput.files || !fileInput.files[0]) {
+                log('Error: No image file selected', 'error');
+                return;
+            }
+
+            const imageFile = fileInput.files[0];
+            const newTitle = document.getElementById('newTitle').value;
+
+            log('Starting image upload test...', 'info');
+            log(`Recipe ID: ${selectedRecipe.id}`, 'info');
+            log(`Image file: ${imageFile.name} (${imageFile.size} bytes)`, 'info');
+            log(`New title: ${newTitle || 'No change'}`, 'info');
+
+            try {
+                // Prepare update data
+                const updateData = {
+                    title: newTitle || selectedRecipe.title,
+                    description: selectedRecipe.description,
+                    instructions: selectedRecipe.instructions,
+                    prep_time: selectedRecipe.prep_time,
+                    cooking_time: selectedRecipe.cooking_time,
+                    servings: selectedRecipe.servings
+                };
+
+                log('Calling updateRecipeWithImage...', 'info');
+
+                // Test the actual upload
+                const result = await recipeAPI.updateRecipeWithImage(
+                    selectedRecipe.id, 
+                    updateData, 
+                    imageFile
+                );
+
+                log('Image upload successful!', 'success');
+                log(`Updated recipe: ${JSON.stringify(result, null, 2)}`, 'success');
+
+                // Update the selected recipe with the result
+                selectedRecipe = result;
+                displayRecipeInfo(result);
+
+            } catch (error) {
+                log(`Image upload failed: ${error.message}`, 'error');
+                
+                // Log additional error details
+                if (error.message.includes('HTTP')) {
+                    log('This appears to be an HTTP error. Check:', 'error');
+                    log('1. Django CSRF_TRUSTED_ORIGINS includes your frontend URL', 'error');
+                    log('2. Django CORS settings allow your frontend', 'error');
+                    log('3. Recipe model has an image field', 'error');
+                    log('4. You have permission to edit this recipe', 'error');
+                }
+            }
+        }
+
+        // Helper function to check ownership (simplified)
+        async function checkOwnership(recipe) {
+            try {
+                const sessionData = JSON.parse(localStorage.getItem('sessionData') || '{}');
+                return sessionData.username === recipe.contributor?.username;
+            } catch {
+                return false;
+            }
+        }
+
+        // Initialize page
+        window.addEventListener('DOMContentLoaded', function() {
+            log('Image upload debug page loaded', 'info');
+            log('Click "Load Recipes" to start testing', 'info');
+        });
+    </script>
+</body>
+</html>

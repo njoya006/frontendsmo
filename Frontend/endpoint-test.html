@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe API Endpoint Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { background: #f5f5f5; padding: 20px; margin: 10px 0; border-radius: 5px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { background: white; padding: 10px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Recipe API Endpoint Test</h1>
+      <div class="test-section">
+        <h2>Current Configuration</h2>
+        <p><strong>Django Server URL:</strong> <code>http://127.0.0.1:8000</code></p>
+        <p><strong>Frontend Server URL:</strong> <code>http://127.0.0.1:5502</code> (Live Server)</p>
+        <p><strong>Recipe Detail Endpoint:</strong> <code>GET /api/recipes/{id}/</code></p>
+        <p><strong>Django Server Status:</strong> <span id="serverStatus">Checking...</span></p>
+        <p><strong>Note:</strong> Django (port 8000) serves API, Frontend (port 5502) serves HTML/JS files</p>
+    </div>    <div class="test-section">
+        <h2>Test Django Endpoints</h2>
+        <button onclick="testDjangoRoot()">Test Django Root</button>
+        <button onclick="testDjangoAdmin()">Test Django Admin</button>
+        <button onclick="testAPIRoot()">Test API Root</button>
+        <button onclick="testRecipeEndpoint(1)">Test Recipe ID 1</button>
+        <button onclick="testRecipeEndpoint(2)">Test Recipe ID 2</button>
+        <button onclick="testRecipeEndpoint(999)">Test Invalid ID (999)</button>
+        <button onclick="testRecipeList()">Test Recipe List</button>
+        <button onclick="testCORS()">Test CORS</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const BASE_URL = 'http://127.0.0.1:8000';
+        
+        async function testDjangoRoot() {
+            addResult('Testing Django root endpoint', 'info');
+            try {
+                const response = await fetch(`${BASE_URL}/`);
+                addResult(`Django Root Status: ${response.status} ${response.statusText}`, 
+                         response.ok ? 'success' : 'error');
+                const text = await response.text();
+                addResult(`Response preview: ${text.substring(0, 200)}...`, 'info');
+            } catch (error) {
+                addResult(`Django Root Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testDjangoAdmin() {
+            addResult('Testing Django admin endpoint', 'info');
+            try {
+                const response = await fetch(`${BASE_URL}/admin/`);
+                addResult(`Django Admin Status: ${response.status} ${response.statusText}`, 
+                         response.ok ? 'success' : 'error');
+            } catch (error) {
+                addResult(`Django Admin Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAPIRoot() {
+            addResult('Testing API root endpoint', 'info');
+            try {
+                const response = await fetch(`${BASE_URL}/api/`);
+                addResult(`API Root Status: ${response.status} ${response.statusText}`, 
+                         response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`API Root Response: <pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    const text = await response.text();
+                    addResult(`API Root Error: ${text}`, 'error');
+                }
+            } catch (error) {
+                addResult(`API Root Error: ${error.message}`, 'error');
+                addResult(`This suggests /api/ endpoint doesn't exist in Django`, 'error');
+            }
+        }
+        
+        async function testRecipeEndpoint(recipeId) {
+            addResult(`Testing recipe endpoint for ID: ${recipeId}`, 'info');
+            
+            try {
+                const url = `${BASE_URL}/api/recipes/${recipeId}/`;
+                addResult(`Making request to: ${url}`, 'info');
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+                
+                addResult(`Response Status: ${response.status} ${response.statusText}`, 
+                         response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`Recipe Data Retrieved:`, 'success');
+                    addResult(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    addResult(`Error Response: ${errorText}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`Network Error: ${error.message}`, 'error');
+                addResult(`Error Type: ${error.name}`, 'error');
+                addResult(`This suggests the Django server is not reachable`, 'error');
+            }
+        }
+        
+        async function testRecipeList() {
+            addResult('Testing recipe list endpoint', 'info');
+            
+            try {
+                const url = `${BASE_URL}/api/recipes/`;
+                addResult(`Making request to: ${url}`, 'info');
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+                
+                addResult(`Response Status: ${response.status} ${response.statusText}`, 
+                         response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`Found ${data.results ? data.results.length : 'unknown'} recipes`, 'success');
+                    addResult(`<pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    addResult(`Error Response: ${errorText}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`Network Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCORS() {
+            addResult('Testing CORS configuration', 'info');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/recipes/`, {
+                    method: 'OPTIONS',
+                });
+                
+                addResult(`CORS preflight status: ${response.status}`, 
+                         response.status === 200 ? 'success' : 'error');
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                };
+                
+                addResult(`CORS Headers: <pre>${JSON.stringify(corsHeaders, null, 2)}</pre>`, 'info');
+                
+            } catch (error) {
+                addResult(`CORS Test Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        // Test server status on load
+        window.onload = async function() {
+            try {
+                const response = await fetch(`${BASE_URL}/api/recipes/`, { method: 'HEAD' });
+                document.getElementById('serverStatus').textContent = response.ok ? 
+                    '✅ Server is running' : '❌ Server returned error';
+            } catch (error) {
+                document.getElementById('serverStatus').textContent = '❌ Server is not reachable';
+            }
+        };
+    </script>
+</body>
+</html>

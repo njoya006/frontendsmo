@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Connection Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .success { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 5px 0; }
+        .error { background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin: 5px 0; }
+        .info { background-color: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 5px; margin: 5px 0; }
+        .log-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 API Connection Debug Tool</h1>
+    
+    <div class="debug-panel">
+        <h2>Server Connection Test</h2>
+        <p>Test different API endpoints to see which one works with your Django server:</p>
+        
+        <div>
+            <label>API Base URL: </label>
+            <input type="text" id="apiUrl" value="http://127.0.0.1:8000" placeholder="http://127.0.0.1:8000">
+            <button class="test-button" onclick="testConnection()">Test Connection</button>
+        </div>
+        
+        <div>
+            <label>Recipe ID to test: </label>
+            <input type="number" id="recipeId" value="1" min="1">
+            <button class="test-button" onclick="testRecipeEndpoint()">Test Recipe Endpoint</button>
+        </div>
+        
+        <button class="test-button" onclick="testCommonUrls()">Test All Common URLs</button>
+        <button class="test-button" onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <div class="debug-panel">
+        <h2>Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="debug-panel">
+        <h2>Detailed Logs</h2>
+        <div id="logs" class="log-area"></div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let logCount = 0;
+        
+        function log(message, type = 'info') {
+            logCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            const resultElement = document.getElementById('results');
+            
+            const logEntry = `[${timestamp}] ${message}`;
+            logElement.innerHTML += logEntry + '\\n';
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            // Also show in results with styling
+            const resultDiv = document.createElement('div');
+            resultDiv.className = type;
+            resultDiv.textContent = logEntry;
+            resultElement.appendChild(resultDiv);
+            
+            console.log(logEntry);
+        }
+
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            log(`Testing connection to: ${apiUrl}`, 'info');
+            
+            try {
+                const response = await fetch(`${apiUrl}/api/recipes/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                log(`Response status: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Success! Received ${data.length || 'unknown'} recipes`, 'success');
+                    log(`First few recipes: ${JSON.stringify(data.slice(0, 2), null, 2)}`);
+                } else {
+                    const errorText = await response.text().catch(() => 'Unable to read error');
+                    log(`Error response: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                log(`Connection failed: ${error.name}: ${error.message}`, 'error');
+                log(`This usually means the Django server is not running or the URL is incorrect.`, 'error');
+            }
+        }
+
+        async function testRecipeEndpoint() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const recipeId = document.getElementById('recipeId').value;
+            const endpoint = `${apiUrl}/api/recipes/${recipeId}/`;
+            
+            log(`Testing recipe endpoint: ${endpoint}`, 'info');
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                log(`Response status: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Success! Recipe data received:`, 'success');
+                    log(`Recipe: ${data.title || data.name || 'Untitled'}`);
+                    log(`ID: ${data.id}, Ingredients: ${data.ingredients?.length || 0}`);
+                    log(`Full data: ${JSON.stringify(data, null, 2)}`);
+                } else if (response.status === 404) {
+                    log(`Recipe with ID ${recipeId} not found in database`, 'error');
+                } else {
+                    const errorText = await response.text().catch(() => 'Unable to read error');
+                    log(`Error response: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                log(`Recipe fetch failed: ${error.name}: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCommonUrls() {
+            const commonUrls = [
+                'http://127.0.0.1:8000',
+                'http://localhost:8000',
+                'http://127.0.0.1:9000',
+                'http://localhost:9000',
+                'http://127.0.0.1:3000',
+                'http://localhost:3000'
+            ];
+            
+            log('Testing common Django server URLs...', 'info');
+            
+            for (const url of commonUrls) {
+                try {
+                    log(`Testing: ${url}...`);
+                    const response = await fetch(`${url}/api/recipes/`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (response.ok) {
+                        log(`✅ SUCCESS: ${url} is working!`, 'success');
+                        document.getElementById('apiUrl').value = url;
+                        break;
+                    } else {
+                        log(`❌ ${url} returned ${response.status}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ ${url} failed: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('results').innerHTML = '';
+            logCount = 0;
+        }
+
+        // Auto-run connection test on page load
+        window.addEventListener('load', () => {
+            log('API Debug Tool loaded. Testing default connection...', 'info');
+            setTimeout(testConnection, 500);
+        });
+    </script>
+</body>
+</html>

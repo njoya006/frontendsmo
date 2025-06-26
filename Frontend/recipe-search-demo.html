@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Search Demo - ChopSmo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --primary-light: #E8F5E8;
+            --secondary-color: #FF9800;
+            --accent-color: #00BCD4;
+            --dark-color: #2C3E50;
+            --gray-color: #7F8C8D;
+            --light-gray: #F8F9FA;
+            --border-color: #E0E0E0;
+            --white: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .demo-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .demo-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .demo-content {
+            padding: 40px;
+        }
+
+        .demo-section {
+            margin-bottom: 40px;
+        }
+
+        .demo-section h2 {
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .demo-card {
+            background: var(--light-gray);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .demo-card h3 {
+            color: var(--dark-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .demo-card p {
+            color: var(--gray-color);
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .demo-example {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--dark-color);
+        }
+
+        .api-endpoint {
+            background: var(--dark-color);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .status-ready {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .status-testing {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .test-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .test-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .requirements-list {
+            background: #fff8e1;
+            border: 1px solid #ffcc02;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .requirements-list h4 {
+            color: #e65100;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .requirements-list ul {
+            padding-left: 20px;
+        }
+
+        .requirements-list li {
+            margin-bottom: 8px;
+            color: var(--dark-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1><i class="fas fa-utensils"></i> Recipe Search Demo</h1>
+            <p>Test the ChopSmo recipe search and filtering functionality</p>
+        </div>
+
+        <div class="demo-content">
+            <div class="status-indicator status-ready">
+                <i class="fas fa-check-circle"></i>
+                Frontend Implementation Complete
+            </div>
+
+            <div class="demo-section">
+                <h2><i class="fas fa-info-circle"></i> Overview</h2>
+                <p>The recipe search functionality has been fully implemented in the <strong>Profile.html</strong> page with the following features:</p>
+                
+                <div class="demo-grid">
+                    <div class="demo-card">
+                        <h3><i class="fas fa-search"></i> Keyword Search</h3>
+                        <p>Search recipes by title, description, or any text content. Includes intelligent filtering by categories, meal types, and tags.</p>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <h3><i class="fas fa-carrot"></i> Ingredient-Based Search</h3>
+                        <p>Get recipe suggestions based on available ingredients. The system will find recipes you can make with what you have.</p>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <h3><i class="fas fa-filter"></i> Advanced Filtering</h3>
+                        <p>Filter recipes by categories, meal types (breakfast, lunch, dinner), and tags for precise results.</p>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <h3><i class="fas fa-mobile-alt"></i> Responsive Design</h3>
+                        <p>Fully responsive interface that works perfectly on desktop, tablet, and mobile devices.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h2><i class="fas fa-code"></i> API Integration</h2>
+                <p>The frontend is configured to work with the following Django backend endpoints:</p>
+                
+                <div class="api-endpoint">
+                    GET /api/recipes/?search=query&categories=cat&tags=tag&meal_type=type
+                </div>
+                <div class="api-endpoint">
+                    POST /api/recipes/suggest-by-ingredients/
+                </div>
+                <div class="api-endpoint">
+                    GET /api/recipes/categories/
+                </div>
+                <div class="api-endpoint">
+                    GET /api/recipes/tags/
+                </div>
+            </div>
+
+            <div class="requirements-list">
+                <h4><i class="fas fa-exclamation-triangle"></i> Backend Requirements</h4>
+                <ul>
+                    <li>Django backend running on <code>http://localhost:8000</code></li>
+                    <li>CORS properly configured to allow frontend requests</li>
+                    <li>Recipe API endpoints implemented and working</li>
+                    <li>Authentication system (optional but recommended)</li>
+                </ul>
+            </div>
+
+            <div class="demo-section">
+                <h2><i class="fas fa-play"></i> How to Test</h2>
+                <div class="demo-grid">
+                    <div class="demo-card">
+                        <h3><i class="fas fa-browser"></i> 1. Open Profile Page</h3>
+                        <p>Navigate to Profile.html and click on the "Find Recipes" tab</p>
+                        <a href="Profile.html" class="test-button">
+                            <i class="fas fa-external-link-alt"></i>
+                            Open Profile
+                        </a>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <h3><i class="fas fa-search"></i> 2. Try Keyword Search</h3>
+                        <p>Enter a recipe name or ingredient in the search box and apply filters</p>
+                        <div class="demo-example">
+                            Example: "chicken curry" + Category: "Main Course"
+                        </div>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <h3><i class="fas fa-magic"></i> 3. Test Ingredient Search</h3>
+                        <p>Switch to "By Ingredients" tab and enter available ingredients</p>
+                        <div class="demo-example">
+                            Example: "tomato, onion, chicken, rice"
+                        </div>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <h3><i class="fas fa-bug"></i> 4. Check Console</h3>
+                        <p>Open browser developer tools to see API calls and any error messages</p>
+                        <div class="demo-example">
+                            F12 → Console → Network tabs
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h2><i class="fas fa-tools"></i> Files Modified</h2>
+                <div class="demo-grid">
+                    <div class="demo-card">
+                        <h3><i class="fas fa-file-code"></i> Profile.html</h3>
+                        <p>Main profile page with complete recipe search UI and JavaScript integration</p>
+                    </div>
+                    
+                    <div class="demo-card">
+                        <h3><i class="fas fa-file-code"></i> utils.js</h3>
+                        <p>Utility classes for API calls, recipe display, and form validation</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h2><i class="fas fa-lightbulb"></i> Next Steps</h2>
+                <div class="demo-card">
+                    <h3><i class="fas fa-rocket"></i> Ready for Testing</h3>
+                    <p>The frontend is complete and ready for integration testing with your Django backend. Make sure your backend is running and the API endpoints are properly configured.</p>
+                    
+                    <div style="margin-top: 20px;">
+                        <a href="Profile.html" class="test-button">
+                            <i class="fas fa-play"></i>
+                            Start Testing
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple demo functionality
+        console.log('🍽️ ChopSmo Recipe Search Demo Ready');
+        console.log('📝 Implementation includes:');
+        console.log('   • Keyword search with filters');
+        console.log('   • Ingredient-based suggestions');
+        console.log('   • Responsive design');
+        console.log('   • Error handling');
+        console.log('   • Loading states');
+        console.log('🚀 Ready for backend integration!');
+    </script>
+</body>
+</html>

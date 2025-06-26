@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Backend Status Check</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .status-card {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ccc;
+        }
+        .status-success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .status-warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        .status-loading {
+            background: #e2e3e5;
+            border-left-color: #6c757d;
+            color: #495057;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .code {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        h1 { color: #333; margin-bottom: 30px; text-align: center; }
+        h3 { color: #495057; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Backend Status Check</h1>
+        
+        <button class="btn" onclick="runFullCheck()">Run Full Check</button>
+        <button class="btn" onclick="clearResults()">Clear Results</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function addResult(title, status, message, details = null) {
+            const results = document.getElementById('results');
+            const card = document.createElement('div');
+            card.className = `status-card status-${status}`;
+            
+            let content = `<h3>${title}</h3><p>${message}</p>`;
+            if (details) {
+                content += `<div class="code">${details}</div>`;
+            }
+            
+            card.innerHTML = content;
+            results.appendChild(card);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function checkBackendStatus() {
+            addResult('🔌 Backend Connection', 'loading', 'Checking if Django backend is running...');
+            
+            const urls = [
+                'http://localhost:8000',
+                'http://127.0.0.1:8000',
+                'http://localhost:8000/api',
+                'http://127.0.0.1:8000/api'
+            ];
+            
+            for (const url of urls) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        timeout: 5000
+                    });
+                    
+                    if (response.ok) {
+                        addResult('✅ Backend Found', 'success', 
+                            `Backend is running at ${url}`, 
+                            `Status: ${response.status} ${response.statusText}`);
+                        return url;
+                    } else {
+                        addResult('⚠️ Backend Response', 'warning', 
+                            `Got response from ${url} but status is ${response.status}`,
+                            `Status: ${response.status} ${response.statusText}`);
+                    }
+                } catch (error) {
+                    addResult('❌ Connection Failed', 'error', 
+                        `Could not connect to ${url}`, 
+                        `Error: ${error.message}`);
+                }
+            }
+            
+            return null;
+        }
+
+        async function checkApiEndpoints(baseUrl) {
+            const endpoints = [
+                '/api/recipes/',
+                '/api/recipes/categories/',
+                '/api/recipes/tags/',
+                '/api/recipes/cuisines/',
+                '/admin/',
+                '/api/'
+            ];
+            
+            addResult('🔗 API Endpoints', 'loading', 'Checking API endpoint availability...');
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${baseUrl}${endpoint}`, {
+                        method: 'GET',
+                        timeout: 5000
+                    });
+                    
+                    const status = response.ok ? 'success' : 'warning';
+                    const icon = response.ok ? '✅' : '⚠️';
+                    
+                    addResult(`${icon} ${endpoint}`, status, 
+                        `Status: ${response.status} ${response.statusText}`,
+                        `URL: ${baseUrl}${endpoint}`);
+                        
+                } catch (error) {
+                    addResult(`❌ ${endpoint}`, 'error', 
+                        'Endpoint not accessible', 
+                        `Error: ${error.message}`);
+                }
+            }
+        }
+
+        async function checkAuthentication(baseUrl) {
+            addResult('🔐 Authentication', 'loading', 'Checking authentication...');
+            
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                addResult('❌ Auth Token', 'error', 
+                    'No authentication token found in localStorage',
+                    'You need to log in first to test authenticated endpoints');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/recipes/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✅ Authentication', 'success', 
+                        'Token authentication successful',
+                        `Token: ${token.substring(0, 20)}...\nResponse: ${JSON.stringify(data, null, 2).substring(0, 200)}...`);
+                } else {
+                    addResult('❌ Authentication Failed', 'error', 
+                        `Token authentication failed: ${response.status} ${response.statusText}`,
+                        `Token: ${token.substring(0, 20)}...\nCheck if token is valid and user has permissions`);
+                }
+            } catch (error) {
+                addResult('❌ Auth Test Failed', 'error', 
+                    'Could not test authentication', 
+                    `Error: ${error.message}`);
+            }
+        }
+
+        async function testRecipeCreation(baseUrl) {
+            addResult('🧪 Recipe Creation Test', 'loading', 'Testing minimal recipe creation...');
+            
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                addResult('❌ Recipe Test Skipped', 'warning', 
+                    'Cannot test recipe creation without auth token');
+                return;
+            }
+            
+            const testData = new FormData();
+            testData.append('title', 'Debug Test Recipe');
+            testData.append('name', 'Debug Recipe');
+            testData.append('description', 'A test recipe created by the debug tool');
+            testData.append('instructions', 'This is just a test');
+            testData.append('ingredients', JSON.stringify({
+                ingredient_name: 'Test Ingredient',
+                quantity: '1',
+                unit: 'piece'
+            }));
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/recipes/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`
+                    },
+                    body: testData
+                });
+                
+                const responseData = await response.json();
+                
+                if (response.ok) {
+                    addResult('✅ Recipe Creation Works', 'success', 
+                        'Recipe creation successful!',
+                        `Created recipe ID: ${responseData.id || 'Unknown'}\nResponse: ${JSON.stringify(responseData, null, 2).substring(0, 300)}...`);
+                } else {
+                    addResult('❌ Recipe Creation Failed', 'error', 
+                        `Recipe creation failed: ${response.status} ${response.statusText}`,
+                        `Response: ${JSON.stringify(responseData, null, 2)}\n\nThis is the 400 error you're experiencing!`);
+                }
+            } catch (error) {
+                addResult('❌ Recipe Test Failed', 'error', 
+                    'Could not test recipe creation', 
+                    `Error: ${error.message}`);
+            }
+        }
+
+        async function runFullCheck() {
+            clearResults();
+            
+            addResult('🚀 Starting Backend Check', 'loading', 'Running comprehensive backend status check...');
+            
+            // Step 1: Find backend
+            const baseUrl = await checkBackendStatus();
+            
+            if (!baseUrl) {
+                addResult('❌ Check Failed', 'error', 
+                    'Cannot continue - backend not accessible',
+                    'Make sure Django development server is running:\npython manage.py runserver');
+                return;
+            }
+            
+            // Step 2: Check API endpoints
+            await checkApiEndpoints(baseUrl);
+            
+            // Step 3: Test authentication
+            await checkAuthentication(baseUrl);
+            
+            // Step 4: Test recipe creation (the actual problem)
+            await testRecipeCreation(baseUrl);
+            
+            addResult('🏁 Check Complete', 'success', 
+                'Backend status check completed',
+                'Review the results above to identify any issues');
+        }
+
+        // Auto-load token on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                addResult('🔑 Auth Token Found', 'success', 
+                    'Authentication token loaded from localStorage',
+                    `Token: ${token.substring(0, 30)}...`);
+            } else {
+                addResult('⚠️ No Auth Token', 'warning', 
+                    'No authentication token found',
+                    'Log in to test authenticated endpoints');
+            }
+        });
+    </script>
+</body>
+</html>

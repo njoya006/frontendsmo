@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChopSmo - Frequently Asked Questions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        /* FAQ Page Styles */
+        .faq-page {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--white-color) 100%);
+            min-height: 100vh;
+        }
+
+        .faq-header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 50px 0;
+            background: var(--white-color);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .faq-header h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            color: var(--dark-color);
+            font-weight: 700;
+        }
+
+        .faq-header p {
+            color: var(--gray-color);
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .search-faq {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            box-shadow: var(--card-shadow);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .search-faq input {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            font-size: 16px;
+            background: var(--white-color);
+        }
+
+        .search-faq input:focus {
+            outline: none;
+        }
+
+        .search-faq button {
+            border: none;
+            padding: 15px 30px;
+            background: var(--primary-gradient);
+            color: var(--white-color);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .search-faq button:hover {
+            transform: scale(1.02);
+        }
+
+        .faq-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+
+        .category {
+            padding: 12px 25px;
+            background: var(--white-color);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            font-weight: 600;
+            border: 2px solid var(--light-color);
+            color: var(--dark-color);
+        }
+
+        .category:hover {
+            background: var(--primary-light);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .category.active {
+            background: var(--primary-gradient);
+            color: var(--white-color);
+            border-color: var(--primary-color);
+            box-shadow: var(--card-shadow);
+        }
+
+        .faq-category {
+            margin-bottom: 60px;
+            background: var(--white-color);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .faq-category h2 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--dark-color);
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-light);
+            font-weight: 600;
+        }
+
+        .faq-item {
+            margin-bottom: 20px;
+            border: 2px solid var(--light-color);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .faq-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--card-shadow);
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 20px 30px;
+            text-align: left;
+            background: var(--primary-light);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark-color);
+            transition: var(--transition);
+        }
+
+        .faq-question:hover {
+            background: rgba(76, 175, 80, 0.15);
+        }
+
+        .faq-question.active {
+            background: var(--primary-color);
+            color: var(--white-color);
+        }
+
+        .faq-answer {
+            padding: 0 30px;
+            background: var(--white-color);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .faq-answer.active {
+            padding: 25px 30px;
+            max-height: 500px;
+        }
+
+        .faq-answer p {
+            color: var(--gray-color);
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .faq-answer ul {
+            margin-left: 20px;
+            color: var(--gray-color);
+        }
+
+        .faq-answer li {
+            margin-bottom: 8px;
+        }
+
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-question.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        .help-section {
+            text-align: center;
+            padding: 60px 0;
+            background: var(--white-color);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            margin-top: 60px;
+        }
+
+        .help-section h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--dark-color);
+            font-weight: 700;
+        }
+
+        .help-section p {
+            color: var(--gray-color);
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .help-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .faq-header h1 {
+                font-size: 28px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .faq-category {
+                padding: 25px;
+            }
+
+            .faq-category h2 {
+                font-size: 22px;
+            }
+
+            .search-faq {
+                flex-direction: column;
+                border-radius: 15px;
+            }
+
+            .search-faq input {
+                padding: 15px 20px;
+            }
+
+            .search-faq button {
+                padding: 15px 20px;
+                border-radius: 0 0 15px 15px;
+            }
+
+            .help-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <a href="index.html">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="About.html">About</a></li>
+                    <li><a href="Contact.html">Contact</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <a href="Login.html" class="btn btn-outline">Login</a>
+                    <a href="SignUp.html" class="btn btn-primary">Sign Up</a>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="faq-page">
+        <div class="container">
+            <section class="faq-header">
+                <h1>
+                    <i class="fas fa-question-circle"></i>
+                    Frequently Asked Questions
+                </h1>
+                <p>Find answers to common questions about ChopSmo</p>
+                
+                <div class="search-faq">
+                    <input type="text" id="faqSearch" placeholder="Search for answers...">
+                    <button type="button" onclick="searchFAQ()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </section>
+
+            <section class="faq-categories">
+                <div class="category active" data-category="all">All</div>
+                <div class="category" data-category="getting-started">Getting Started</div>
+                <div class="category" data-category="meal-planning">Meal Planning</div>
+                <div class="category" data-category="recipes">Recipes</div>
+                <div class="category" data-category="account">Account</div>
+                <div class="category" data-category="technical">Technical</div>
+            </section>
+
+            <section class="faq-category" data-category="getting-started">
+                <h2>
+                    <i class="fas fa-rocket"></i>
+                    Getting Started
+                </h2>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        What is ChopSmo?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>ChopSmo is a comprehensive meal planning and recipe suggestion platform designed to simplify your cooking experience. We help you discover new recipes, plan your meals for the week, and make cooking more enjoyable and organized.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How do I get started with ChopSmo?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Getting started is easy! Simply:</p>
+                        <ul>
+                            <li>Create a free account by clicking "Sign Up"</li>
+                            <li>Set up your dietary preferences and restrictions</li>
+                            <li>Start exploring our recipe collection</li>
+                            <li>Create your first meal plan</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Is ChopSmo free to use?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes! ChopSmo offers a free tier that includes access to our basic recipe collection, meal planning tools, and essential features. We also offer premium plans with additional features for users who want enhanced functionality.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="faq-category" data-category="meal-planning">
+                <h2>
+                    <i class="fas fa-calendar-alt"></i>
+                    Meal Planning
+                </h2>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How does the meal planning feature work?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Our meal planning feature allows you to organize your meals for the week. You can browse our recipe collection, add meals to specific days, and generate shopping lists automatically based on your planned meals.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Can I customize my meal plans?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Absolutely! You can fully customize your meal plans by adding, removing, or swapping recipes. You can also set dietary preferences, allergies, and portion sizes to get personalized recommendations.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="faq-category" data-category="recipes">
+                <h2>
+                    <i class="fas fa-utensils"></i>
+                    Recipes
+                </h2>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How many recipes are available on ChopSmo?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>We currently have over 5,000 recipes in our database, with new recipes being added regularly. Our collection includes diverse cuisines, dietary options, and difficulty levels to suit every cook.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Can I save my favorite recipes?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes! You can save recipes to your favorites list by clicking the heart icon on any recipe. Your saved recipes are easily accessible from your profile for quick meal planning.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="faq-category" data-category="account">
+                <h2>
+                    <i class="fas fa-user"></i>
+                    Account Management
+                </h2>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How do I update my dietary preferences?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>You can update your dietary preferences anytime by going to your Profile settings. Here you can specify allergies, dietary restrictions, preferred cuisines, and cooking skill level.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Can I delete my account?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes, you can delete your account at any time through your Profile settings. Please note that this action is irreversible and will permanently remove all your saved recipes and meal plans.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="faq-category" data-category="technical">
+                <h2>
+                    <i class="fas fa-cogs"></i>
+                    Technical Support
+                </h2>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        What browsers are supported?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>ChopSmo works best on modern browsers including Chrome, Firefox, Safari, and Edge. We recommend keeping your browser updated for the best experience.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Is there a mobile app?
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Currently, ChopSmo is a web-based platform optimized for both desktop and mobile browsers. We're working on dedicated mobile apps that will be available soon!</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="help-section">
+                <h2>Still Need Help?</h2>
+                <p>Can't find the answer you're looking for? We're here to help!</p>
+                <div class="help-buttons">
+                    <a href="Contact.html" class="btn btn-primary">Contact Support</a>
+                    <a href="mailto:support@chopsmo.com" class="btn btn-outline">Email Us</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="logo">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </div>
+                    <p>Making meal planning simple and enjoyable in 2025.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="SignUp.html">Join</a></li>
+                        <li><a href="Recipes.html">Recipes</a></li>
+                        <li><a href="About.html">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="FAQ.html">FAQ</a></li>
+                        <li><a href="Contact.html">Contact Us</a></li>
+                        <li><a href="Privacy Policy.html">Privacy Policy</a></li>
+                        <li><a href="Term Of Service.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-newsletter">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe to get weekly recipe ideas and meal planning tips.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your email address" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ChopSmo. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="FAQ.js"></script>
+    <script>
+        // FAQ functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // FAQ toggle functionality
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', function() {
+                    const answer = this.nextElementSibling;
+                    const isActive = this.classList.contains('active');
+                    
+                    // Close all other answers
+                    faqQuestions.forEach(q => {
+                        q.classList.remove('active');
+                        q.nextElementSibling.classList.remove('active');
+                    });
+                    
+                    // Toggle current answer
+                    if (!isActive) {
+                        this.classList.add('active');
+                        answer.classList.add('active');
+                    }
+                });
+            });
+
+            // Category filtering
+            const categories = document.querySelectorAll('.category');
+            const faqCategories = document.querySelectorAll('.faq-category');
+            
+            categories.forEach(category => {
+                category.addEventListener('click', function() {
+                    const targetCategory = this.dataset.category;
+                    
+                    // Update active category
+                    categories.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show/hide categories
+                    faqCategories.forEach(section => {
+                        if (targetCategory === 'all' || section.dataset.category === targetCategory) {
+                            section.style.display = 'block';
+                        } else {
+                            section.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+
+        // Search functionality
+        function searchFAQ() {
+            const searchTerm = document.getElementById('faqSearch').value.toLowerCase();
+            const faqItems = document.querySelectorAll('.faq-item');
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+                
+                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    item.parentElement.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Hide empty categories
+            const faqCategories = document.querySelectorAll('.faq-category');
+            faqCategories.forEach(category => {
+                const visibleItems = category.querySelectorAll('.faq-item[style*="block"]');
+                if (visibleItems.length === 0) {
+                    category.style.display = 'none';
+                }
+            });
+        }
+
+        // Search on Enter key
+        document.getElementById('faqSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchFAQ();
+            }
+        });
+
+        // --- Global Page Transition Animation: Blur, Colorful, Enhanced Logo & Dots ---
+        function animatePageTransition(href) {
+            // Create overlay
+            const fadeDiv = document.createElement('div');
+            fadeDiv.style.position = 'fixed';
+            fadeDiv.style.top = 0;
+            fadeDiv.style.left = 0;
+            fadeDiv.style.width = '100vw';
+            fadeDiv.style.height = '100vh';
+            fadeDiv.style.background = 'rgba(255,255,255,0.7)';
+            fadeDiv.style.backdropFilter = 'blur(16px) saturate(180%)';
+            fadeDiv.style.webkitBackdropFilter = 'blur(16px) saturate(180%)';
+            fadeDiv.style.opacity = 0;
+            fadeDiv.style.zIndex = 99999;
+            fadeDiv.style.transition = 'opacity 0.5s cubic-bezier(.4,0,.2,1)';
+            // Add enhanced spinning logo with gradient ring and animated dots
+            fadeDiv.innerHTML = `
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;">
+                    <span style='display:inline-block;position:relative;width:90px;height:90px;'>
+                        <span style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--primary),#FF9800,#4CAF50,#00BCD4,#FF9800,var(--primary));filter:blur(2px);animation:spin 1.2s linear infinite;"></span>
+                        <i class='fas fa-utensils' style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;color:#fff;text-shadow:0 2px 16px #4CAF50,0 0 0 #fff;z-index:2;animation:spin 1.2s linear infinite reverse;'></i>
+                    </span>
+                    <span style='font-size:24px;color:var(--primary);font-weight:700;letter-spacing:1.5px;margin-top:18px;text-shadow:0 2px 12px #fff;'>Chopsmo</span>
+                    <span class="loading-dots" style="display:inline-block;margin-top:18px;">
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0s;"></span>
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:#FF9800;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.2s;"></span>
+                        <span class="dot" style="display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.4s;"></span>
+                    </span>
+                </div>
+                <style>
+                @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+                @keyframes dot-bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-16px);}}
+                </style>
+            `;
+            document.body.appendChild(fadeDiv);
+            setTimeout(() => {
+                fadeDiv.style.opacity = 1;
+            }, 10);
+            setTimeout(() => {
+                window.location.href = href;
+            }, 3000);
+        }
+        // Intercept all internal navigation links for animation
+        setTimeout(() => {
+            document.querySelectorAll('a[href]').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('#')) {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        animatePageTransition(href);
+                    });
+                }
+            });
+        }, 100);
+        // Use animation for programmatic navigation
+        function animatedRedirect(href) {
+            animatePageTransition(href);
+        }
+    </script>
+</body>
+</html>

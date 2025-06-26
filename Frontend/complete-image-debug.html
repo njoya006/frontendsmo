@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Image Upload Troubleshooter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .status-item {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: #f8f9fa;
+        }
+        
+        .status-ok { border-color: #28a745; background-color: #d4edda; }
+        .status-error { border-color: #dc3545; background-color: #f8d7da; }
+        .status-warning { border-color: #ffc107; background-color: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Complete Image Upload Troubleshooter</h1>
+    <p>This comprehensive tool will help identify and fix image upload issues.</p>
+
+    <div class="section">
+        <h2>🌐 Environment Check</h2>
+        <div class="test-grid">
+            <div class="status-item" id="env-origin">
+                <strong>Frontend Origin:</strong><br>
+                <span id="origin-value">Checking...</span>
+            </div>
+            <div class="status-item" id="env-backend">
+                <strong>Backend URL:</strong><br>
+                <span id="backend-value">Checking...</span>
+            </div>
+            <div class="status-item" id="env-browser">
+                <strong>Browser:</strong><br>
+                <span id="browser-value">Checking...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔍 Backend Connectivity Test</h2>
+        <button onclick="runConnectivityTests()">Test Backend Connection</button>
+        <div id="connectivity-results"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔐 CSRF & Authentication Test</h2>
+        <button onclick="testCSRFAndAuth()">Test CSRF & Auth</button>
+        <div id="csrf-results"></div>
+    </div>
+
+    <div class="section">
+        <h2>📸 Image Upload Test</h2>
+        <p>Select a test image and a recipe to upload to:</p>
+        
+        <div style="margin: 15px 0;">
+            <label>Test Image: </label>
+            <input type="file" id="testImage" accept="image/*" onchange="validateTestImage()">
+        </div>
+        
+        <div style="margin: 15px 0;">
+            <label>Recipe ID to test with: </label>
+            <input type="number" id="testRecipeId" placeholder="Enter recipe ID" min="1">
+            <button onclick="loadTestRecipe()">Load Recipe Info</button>
+        </div>
+        
+        <div id="recipe-info" style="display: none; margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+            <h4>Recipe Information:</h4>
+            <div id="recipe-details"></div>
+        </div>
+        
+        <button onclick="performImageUploadTest()" id="upload-test-btn" disabled>🚀 Perform Full Upload Test</button>
+        <div id="upload-results"></div>
+    </div>
+
+    <div class="section">
+        <h2>📋 Debug Log</h2>
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="exportLog()">Export Log</button>
+        <div id="debug-log"></div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let testRecipe = null;
+        let recipeAPI = null;
+
+        function log(message, type = 'info', section = 'debug-log') {
+            const logDiv = document.getElementById(section);
+            const logEntry = document.createElement('div');
+            logEntry.className = `result ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            // Also console log for additional debugging
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('debug-log').innerHTML = '';
+        }
+
+        function exportLog() {
+            const logContent = document.getElementById('debug-log').textContent;
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `image-upload-debug-${new Date().toISOString().slice(0, 19)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function updateStatusItem(itemId, status, value) {
+            const item = document.getElementById(itemId);
+            const valueSpan = item.querySelector('span');
+            valueSpan.textContent = value;
+            
+            item.className = 'status-item';
+            if (status === 'ok') item.classList.add('status-ok');
+            else if (status === 'error') item.classList.add('status-error');
+            else if (status === 'warning') item.classList.add('status-warning');
+        }
+
+        async function runConnectivityTests() {
+            log('Starting backend connectivity tests...', 'info', 'connectivity-results');
+            
+            // Initialize API
+            if (!recipeAPI) {
+                recipeAPI = new RecipeAPI();
+            }
+
+            // Test 1: Basic API endpoint
+            try {
+                log('Testing basic API connectivity...', 'info', 'connectivity-results');
+                const response = await fetch(`${recipeAPI.baseUrl}/api/recipes/`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const count = data.results ? data.results.length : data.length || 0;
+                    log(`✅ Basic API connectivity: SUCCESS (${count} recipes found)`, 'success', 'connectivity-results');
+                } else {
+                    log(`❌ Basic API connectivity: FAILED (HTTP ${response.status})`, 'error', 'connectivity-results');
+                }
+            } catch (error) {
+                log(`❌ Basic API connectivity: ERROR - ${error.message}`, 'error', 'connectivity-results');
+            }
+
+            // Test 2: CORS headers
+            try {
+                log('Testing CORS headers...', 'info', 'connectivity-results');
+                const response = await fetch(`${recipeAPI.baseUrl}/api/recipes/`, {
+                    method: 'OPTIONS'
+                });
+
+                const corsOrigin = response.headers.get('Access-Control-Allow-Origin');
+                const corsMethods = response.headers.get('Access-Control-Allow-Methods');
+                const corsHeaders = response.headers.get('Access-Control-Allow-Headers');
+
+                log(`CORS Origin: ${corsOrigin || 'NOT SET'}`, corsOrigin ? 'success' : 'warning', 'connectivity-results');
+                log(`CORS Methods: ${corsMethods || 'NOT SET'}`, corsMethods ? 'info' : 'warning', 'connectivity-results');
+                log(`CORS Headers: ${corsHeaders || 'NOT SET'}`, corsHeaders ? 'info' : 'warning', 'connectivity-results');
+
+            } catch (error) {
+                log(`❌ CORS test: ERROR - ${error.message}`, 'error', 'connectivity-results');
+            }
+
+            // Test 3: Django static/media configuration
+            try {
+                log('Testing Django static file serving...', 'info', 'connectivity-results');
+                const testStaticUrl = `${recipeAPI.baseUrl}/static/admin/css/base.css`;
+                const staticResponse = await fetch(testStaticUrl, { method: 'HEAD' });
+                
+                if (staticResponse.ok) {
+                    log('✅ Django static files: ACCESSIBLE', 'success', 'connectivity-results');
+                } else {
+                    log('⚠️ Django static files: NOT ACCESSIBLE (may be normal)', 'warning', 'connectivity-results');
+                }
+            } catch (error) {
+                log('⚠️ Django static files: TEST FAILED (may be normal)', 'warning', 'connectivity-results');
+            }
+        }
+
+        async function testCSRFAndAuth() {
+            log('Starting CSRF and authentication tests...', 'info', 'csrf-results');
+
+            if (!recipeAPI) {
+                recipeAPI = new RecipeAPI();
+            }
+
+            // Test 1: CSRF token retrieval
+            try {
+                log('Testing CSRF token retrieval...', 'info', 'csrf-results');
+                const csrfToken = await recipeAPI.getCSRFToken();
+                
+                if (csrfToken) {
+                    log(`✅ CSRF token retrieved: ${csrfToken.substring(0, 16)}...`, 'success', 'csrf-results');
+                } else {
+                    log('❌ CSRF token: NOT AVAILABLE', 'error', 'csrf-results');
+                }
+            } catch (error) {
+                log(`❌ CSRF token error: ${error.message}`, 'error', 'csrf-results');
+            }
+
+            // Test 2: CSRF endpoint directly
+            try {
+                log('Testing CSRF endpoint directly...', 'info', 'csrf-results');
+                const response = await fetch(`${recipeAPI.baseUrl}/api/csrf-token/`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ CSRF endpoint: SUCCESS - ${data.csrfToken ? 'Token provided' : 'No token in response'}`, 'success', 'csrf-results');
+                } else {
+                    log(`❌ CSRF endpoint: FAILED (HTTP ${response.status})`, 'error', 'csrf-results');
+                }
+            } catch (error) {
+                log(`❌ CSRF endpoint error: ${error.message}`, 'error', 'csrf-results');
+            }
+
+            // Test 3: Cookie inspection
+            log('Inspecting cookies...', 'info', 'csrf-results');
+            const cookies = document.cookie.split(';').map(c => c.trim());
+            const csrfCookie = cookies.find(c => c.startsWith('csrftoken='));
+            
+            if (csrfCookie) {
+                log(`✅ CSRF cookie found: ${csrfCookie.substring(0, 30)}...`, 'success', 'csrf-results');
+            } else {
+                log('⚠️ CSRF cookie: NOT FOUND', 'warning', 'csrf-results');
+            }
+
+            log(`Total cookies: ${cookies.length}`, 'info', 'csrf-results');
+        }
+
+        function validateTestImage() {
+            const fileInput = document.getElementById('testImage');
+            const uploadBtn = document.getElementById('upload-test-btn');
+            
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                log(`Test image selected: ${file.name} (${file.size} bytes, ${file.type})`);
+                
+                if (!file.type.startsWith('image/')) {
+                    log('❌ Selected file is not an image', 'error');
+                    uploadBtn.disabled = true;
+                    return;
+                }
+                
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    log('❌ Image too large (max 10MB)', 'error');
+                    uploadBtn.disabled = true;
+                    return;
+                }
+                
+                log('✅ Test image validated', 'success');
+                updateUploadButton();
+            } else {
+                uploadBtn.disabled = true;
+            }
+        }
+
+        async function loadTestRecipe() {
+            const recipeId = document.getElementById('testRecipeId').value;
+            if (!recipeId) {
+                log('❌ Please enter a recipe ID', 'error');
+                return;
+            }
+
+            if (!recipeAPI) {
+                recipeAPI = new RecipeAPI();
+            }
+
+            try {
+                log(`Loading recipe ${recipeId}...`);
+                const recipe = await recipeAPI.getRecipe(recipeId);
+                
+                testRecipe = recipe;
+                document.getElementById('recipe-info').style.display = 'block';
+                document.getElementById('recipe-details').innerHTML = `
+                    <p><strong>Title:</strong> ${recipe.title}</p>
+                    <p><strong>Owner:</strong> ${recipe.contributor?.username || 'Unknown'}</p>
+                    <p><strong>Current Image:</strong> ${recipe.image || 'No image'}</p>
+                    <p><strong>ID:</strong> ${recipe.id}</p>
+                `;
+                
+                log(`✅ Recipe loaded: ${recipe.title}`, 'success');
+                updateUploadButton();
+                
+            } catch (error) {
+                log(`❌ Failed to load recipe: ${error.message}`, 'error');
+                testRecipe = null;
+                document.getElementById('recipe-info').style.display = 'none';
+                updateUploadButton();
+            }
+        }
+
+        function updateUploadButton() {
+            const uploadBtn = document.getElementById('upload-test-btn');
+            const hasImage = document.getElementById('testImage').files.length > 0;
+            const hasRecipe = testRecipe != null;
+            
+            uploadBtn.disabled = !(hasImage && hasRecipe);
+        }
+
+        async function performImageUploadTest() {
+            if (!testRecipe) {
+                log('❌ No test recipe loaded', 'error', 'upload-results');
+                return;
+            }
+
+            const fileInput = document.getElementById('testImage');
+            if (!fileInput.files || !fileInput.files[0]) {
+                log('❌ No test image selected', 'error', 'upload-results');
+                return;
+            }
+
+            const imageFile = fileInput.files[0];
+            log('🚀 Starting comprehensive image upload test...', 'info', 'upload-results');
+            log(`Recipe: ${testRecipe.title} (ID: ${testRecipe.id})`, 'info', 'upload-results');
+            log(`Image: ${imageFile.name} (${imageFile.size} bytes)`, 'info', 'upload-results');
+
+            try {
+                // Step 1: Prepare update data
+                const updateData = {
+                    title: testRecipe.title + ' (Updated)',
+                    description: testRecipe.description,
+                    instructions: testRecipe.instructions,
+                    prep_time: testRecipe.prep_time,
+                    cooking_time: testRecipe.cooking_time,
+                    servings: testRecipe.servings
+                };
+
+                log('Step 1: Update data prepared', 'info', 'upload-results');
+
+                // Step 2: Get CSRF token
+                log('Step 2: Getting CSRF token...', 'info', 'upload-results');
+                const csrfToken = await recipeAPI.getCSRFToken();
+                
+                if (!csrfToken) {
+                    log('❌ Step 2 FAILED: No CSRF token available', 'error', 'upload-results');
+                    return;
+                }
+                
+                log(`Step 2: CSRF token obtained: ${csrfToken.substring(0, 16)}...`, 'success', 'upload-results');
+
+                // Step 3: Prepare FormData
+                log('Step 3: Preparing FormData...', 'info', 'upload-results');
+                const formData = new FormData();
+                formData.append('image', imageFile);
+                
+                Object.keys(updateData).forEach(key => {
+                    if (updateData[key] !== null && updateData[key] !== undefined) {
+                        formData.append(key, updateData[key]);
+                    }
+                });
+
+                log('Step 3: FormData prepared', 'success', 'upload-results');
+
+                // Step 4: Make the request
+                log('Step 4: Making PATCH request...', 'info', 'upload-results');
+                
+                const response = await fetch(`${recipeAPI.baseUrl}/api/recipes/${testRecipe.id}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    },
+                    credentials: 'include',
+                    body: formData
+                });
+
+                log(`Step 4: Response received (Status: ${response.status})`, 'info', 'upload-results');
+                log(`Response headers: ${JSON.stringify([...response.headers.entries()])}`, 'info', 'upload-results');
+
+                if (response.ok) {
+                    const result = await response.json();
+                    log('🎉 IMAGE UPLOAD TEST: SUCCESS!', 'success', 'upload-results');
+                    log(`Updated recipe data: ${JSON.stringify(result, null, 2)}`, 'success', 'upload-results');
+                    
+                    if (result.image) {
+                        log(`✅ New image URL: ${result.image}`, 'success', 'upload-results');
+                    }
+                    
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ IMAGE UPLOAD TEST: FAILED (HTTP ${response.status})`, 'error', 'upload-results');
+                    log(`Error response: ${errorText}`, 'error', 'upload-results');
+                    
+                    // Try to parse error details
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        log(`Parsed error: ${JSON.stringify(errorJson, null, 2)}`, 'error', 'upload-results');
+                    } catch (e) {
+                        log('Error response is not valid JSON', 'warning', 'upload-results');
+                    }
+                }
+
+            } catch (error) {
+                log(`❌ IMAGE UPLOAD TEST: EXCEPTION - ${error.message}`, 'error', 'upload-results');
+                log(`Error stack: ${error.stack}`, 'error', 'upload-results');
+            }
+        }
+
+        // Initialize page
+        function init() {
+            log('Image upload troubleshooter initialized');
+            
+            // Update environment info
+            updateStatusItem('env-origin', 'ok', window.location.origin);
+            updateStatusItem('env-backend', 'ok', 'http://localhost:8000');
+            updateStatusItem('env-browser', 'ok', navigator.userAgent.split(' ').pop());
+            
+            document.getElementById('origin-value').textContent = window.location.origin;
+            document.getElementById('backend-value').textContent = 'http://localhost:8000';
+            document.getElementById('browser-value').textContent = navigator.userAgent.split(' ').pop();
+            
+            log('Environment information loaded');
+            log('Ready for testing - use the buttons above to diagnose issues');
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

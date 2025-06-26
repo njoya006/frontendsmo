@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSRF FormData Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #4299e1;
+        }
+        .btn {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66, 153, 225, 0.4);
+        }
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #log {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 2px solid #4a5568;
+        }
+        .success { color: #68d391; }
+        .error { color: #fc8181; }
+        .warning { color: #f6e05e; }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+        .auth-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .auth-section input {
+            flex: 1;
+            min-width: 200px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.connected { background: #c6f6d5; color: #22543d; }
+        .status.disconnected { background: #fed7d7; color: #742a2a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 CSRF FormData Recipe Creation Test</h1>
+        
+        <div class="test-section">
+            <h3>Authentication</h3>
+            <div class="auth-section">
+                <input type="text" id="username" placeholder="Username" value="testuser">
+                <input type="password" id="password" placeholder="Password" value="testpass">
+                <button class="btn" onclick="authenticate()">Login</button>
+                <span id="authStatus" class="status disconnected">Not Authenticated</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>CSRF Token Test</h3>
+            <button class="btn" onclick="testCSRFToken()">Get CSRF Token</button>
+            <button class="btn" onclick="testCSRFCookie()">Check CSRF Cookie</button>
+            <span id="csrfStatus" class="status disconnected">No Token</span>
+        </div>
+
+        <div class="test-section">
+            <h3>Recipe Creation Tests</h3>
+            <button class="btn" onclick="testFormDataWithCSRF()" id="testBtn">Test FormData + CSRF</button>
+            <button class="btn" onclick="testFormDataWithoutCSRF()">Test FormData (No CSRF)</button>
+            <button class="btn" onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div id="log"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let csrfToken = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function authenticate() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                log('Please enter username and password', 'error');
+                return;
+            }
+
+            try {
+                log('🔑 Attempting authentication...');
+                
+                const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.access_token) {
+                    authToken = data.access_token;
+                    log('✅ Authentication successful!', 'success');
+                    document.getElementById('authStatus').textContent = 'Authenticated';
+                    document.getElementById('authStatus').className = 'status connected';
+                } else {
+                    log('❌ Authentication failed: ' + (data.detail || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                log('❌ Authentication error: ' + error.message, 'error');
+            }
+        }
+
+        async function testCSRFToken() {
+            try {
+                log('🔒 Fetching CSRF token from endpoint...');
+                
+                const response = await fetch('http://127.0.0.1:8000/api/auth/csrf/', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    csrfToken = data.csrfToken;
+                    log('✅ CSRF token obtained: ' + csrfToken.substring(0, 20) + '...', 'success');
+                    document.getElementById('csrfStatus').textContent = 'Token Available';
+                    document.getElementById('csrfStatus').className = 'status connected';
+                } else {
+                    log('❌ Failed to get CSRF token: ' + response.status, 'error');
+                }
+            } catch (error) {
+                log('❌ CSRF token error: ' + error.message, 'error');
+            }
+        }
+
+        async function testCSRFCookie() {
+            log('🍪 Checking CSRF cookie...');
+            const cookies = document.cookie.split(';');
+            let csrfCookie = null;
+            
+            for (let cookie of cookies) {
+                const [key, value] = cookie.trim().split('=');
+                if (key === 'csrftoken' || key === 'csrf_token') {
+                    csrfCookie = decodeURIComponent(value);
+                    break;
+                }
+            }
+            
+            if (csrfCookie) {
+                log('✅ CSRF cookie found: ' + csrfCookie.substring(0, 20) + '...', 'success');
+                if (!csrfToken) {
+                    csrfToken = csrfCookie;
+                    document.getElementById('csrfStatus').textContent = 'Token from Cookie';
+                    document.getElementById('csrfStatus').className = 'status connected';
+                }
+            } else {
+                log('❌ No CSRF cookie found', 'error');
+            }
+        }
+
+        async function testFormDataWithCSRF() {
+            if (!authToken) {
+                log('❌ Please authenticate first', 'error');
+                return;
+            }
+
+            if (!csrfToken) {
+                log('❌ Please get CSRF token first', 'error');
+                return;
+            }
+
+            try {
+                log('🧪 Testing FormData with CSRF token...');
+                
+                const formData = new FormData();
+                formData.append('title', 'CSRF Test Recipe');
+                formData.append('description', 'Testing FormData with CSRF token');
+                formData.append('instructions', 'Step 1: Mix ingredients\nStep 2: Cook properly\nStep 3: Serve hot\nStep 4: Enjoy!');
+                
+                // Add CSRF token to FormData
+                formData.append('csrfmiddlewaretoken', csrfToken);
+                
+                // Add ingredients
+                const ingredients = [
+                    { ingredient_name: "Flour", quantity: 2, unit: "cups", preparation: "sifted" },
+                    { ingredient_name: "Sugar", quantity: 1, unit: "cup", preparation: "" },
+                    { ingredient_name: "Eggs", quantity: 3, unit: "pieces", preparation: "beaten" }
+                ];
+                
+                ingredients.forEach(ing => {
+                    formData.append('ingredients', JSON.stringify(ing));
+                });
+                
+                // Add categories
+                formData.append('category_names', 'Dessert');
+                formData.append('cuisine_names', 'International');
+                formData.append('tag_names', 'Easy');
+
+                // Log what we're sending
+                log('📋 FormData contents:');
+                for (let [key, value] of formData.entries()) {
+                    const displayValue = typeof value === 'string' ? 
+                        (value.length > 50 ? value.substring(0, 50) + '...' : value) : 
+                        '[File object]';
+                    log(`  ${key}: ${displayValue}`);
+                }                const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${authToken}`,
+                        'X-CSRFToken': csrfToken
+                        // Don't set Content-Type for FormData
+                    },
+                    credentials: 'include',
+                    body: formData
+                });
+
+                log(`📨 Response: ${response.status} ${response.statusText}`);
+
+                let responseData;
+                try {
+                    responseData = await response.json();
+                } catch (e) {
+                    responseData = await response.text();
+                }
+
+                if (response.ok) {
+                    log('✅ SUCCESS! Recipe created with FormData + CSRF', 'success');
+                    log('📄 Response: ' + JSON.stringify(responseData, null, 2).substring(0, 300) + '...', 'success');
+                } else {
+                    log('❌ FAILED! Status: ' + response.status, 'error');
+                    log('📄 Error response: ' + JSON.stringify(responseData, null, 2), 'error');
+                }
+            } catch (error) {
+                log('❌ Network error: ' + error.message, 'error');
+            }
+        }
+
+        async function testFormDataWithoutCSRF() {
+            if (!authToken) {
+                log('❌ Please authenticate first', 'error');
+                return;
+            }
+
+            try {
+                log('🧪 Testing FormData without CSRF token (should fail)...');
+                
+                const formData = new FormData();
+                formData.append('title', 'No CSRF Test Recipe');
+                formData.append('description', 'Testing FormData without CSRF token');
+                formData.append('instructions', 'Step 1: This should fail\nStep 2: Due to missing CSRF token');
+                
+                // Add minimal ingredients
+                const ingredient = { ingredient_name: "Test Ingredient", quantity: 1, unit: "piece", preparation: "" };
+                formData.append('ingredients', JSON.stringify(ingredient));                const response = await fetch('http://127.0.0.1:8000/api/recipes/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${authToken}`
+                        // No CSRF token
+                    },
+                    credentials: 'include',
+                    body: formData
+                });
+
+                log(`📨 Response: ${response.status} ${response.statusText}`);
+
+                let responseData;
+                try {
+                    responseData = await response.json();
+                } catch (e) {
+                    responseData = await response.text();
+                }
+
+                if (response.ok) {
+                    log('⚠️ UNEXPECTED SUCCESS! Recipe created without CSRF (this should not happen)', 'warning');
+                    log('📄 Response: ' + JSON.stringify(responseData, null, 2), 'warning');
+                } else {
+                    log('✅ EXPECTED FAILURE! CSRF protection working correctly', 'success');
+                    log('📄 Error response: ' + JSON.stringify(responseData, null, 2), 'error');
+                }
+            } catch (error) {
+                log('❌ Network error: ' + error.message, 'error');
+            }
+        }
+
+        // Initialize
+        log('🚀 CSRF FormData Test Tool initialized');
+        log('📋 Instructions:');
+        log('1. Click "Login" to authenticate');
+        log('2. Click "Get CSRF Token" to obtain security token');
+        log('3. Click "Test FormData + CSRF" to test recipe creation');
+        log('4. Optionally test without CSRF to verify protection');
+    </script>
+</body>
+</html>

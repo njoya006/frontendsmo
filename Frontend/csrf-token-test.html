@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSRF Token Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔒 CSRF Token Test & Diagnostics</h1>
+    <p>This page helps diagnose CSRF token issues with your Django backend.</p>
+
+    <div class="test-section">
+        <h3>Current Status</h3>
+        <p><strong>Frontend Origin:</strong> <span id="origin"></span></p>
+        <p><strong>Backend URL:</strong> <span id="backend"></span></p>
+        <p><strong>Current Cookies:</strong> <span id="cookies"></span></p>
+    </div>
+
+    <div class="test-section">
+        <h3>CSRF Token Tests</h3>
+        <button onclick="testCSRFToken()">🧪 Test CSRF Token Retrieval</button>
+        <button onclick="testCSRFEndpoint()">🌐 Test CSRF Endpoint</button>
+        <button onclick="testRecipeGet()">📋 Test Recipe GET Request</button>
+        <button onclick="clearResults()">🧹 Clear Results</button>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Django Configuration</h3>
+        <p>If CSRF token tests fail, add this to your Django <code>settings.py</code>:</p>
+        <div class="code-block">
+CSRF_TRUSTED_ORIGINS = [
+    '<span id="required-origin"></span>',
+    'http://localhost:5500',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    '<span id="required-cors-origin"></span>',
+    'http://localhost:5500',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
+
+# Make sure you have a CSRF token endpoint:
+# In your urls.py:
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({'csrfToken': request.META.get('CSRF_COOKIE')})
+
+urlpatterns = [
+    # ... your other patterns
+    path('api/csrf-token/', get_csrf_token, name='csrf_token'),
+]
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let recipeAPI;
+
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const logEntry = document.createElement('div');
+            logEntry.className = `result ${type}`;
+            logEntry.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            resultsDiv.appendChild(logEntry);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testCSRFToken() {
+            log('Testing CSRF token retrieval...', 'info');
+            
+            try {
+                if (!recipeAPI) {
+                    recipeAPI = new RecipeAPI();
+                }
+
+                const token = await recipeAPI.getCSRFToken();
+                
+                if (token) {
+                    log(`✅ CSRF token retrieved: ${token.substring(0, 20)}...`, 'success');
+                } else {
+                    log('❌ No CSRF token retrieved', 'error');
+                    log('Check browser console for detailed logs', 'warning');
+                }
+                
+                // Show current cookies after token attempt
+                log(`Current cookies after token test: ${document.cookie || 'No cookies'}`, 'info');
+                
+            } catch (error) {
+                log(`❌ CSRF token test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCSRFEndpoint() {
+            log('Testing CSRF endpoint directly...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/csrf-token/', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                log(`CSRF endpoint response: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`CSRF endpoint data: ${JSON.stringify(data)}`, 'success');
+                    
+                    if (data.csrfToken) {
+                        log(`✅ CSRF token from endpoint: ${data.csrfToken.substring(0, 20)}...`, 'success');
+                    } else {
+                        log('⚠️ CSRF endpoint accessible but no token in response', 'warning');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    log(`CSRF endpoint error: ${errorText}`, 'error');
+                }
+
+                // Show cookies after endpoint test
+                log(`Cookies after endpoint test: ${document.cookie || 'No cookies'}`, 'info');
+
+            } catch (error) {
+                log(`❌ CSRF endpoint test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRecipeGet() {
+            log('Testing recipe GET request (may set CSRF cookie)...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/recipes/', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                log(`Recipe GET response: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const count = data.results ? data.results.length : data.length || 0;
+                    log(`✅ Recipe GET successful: ${count} recipes found`, 'success');
+                } else {
+                    const errorText = await response.text();
+                    log(`Recipe GET error: ${errorText}`, 'error');
+                }
+
+                // Show cookies after GET request
+                log(`Cookies after GET request: ${document.cookie || 'No cookies'}`, 'info');
+
+                // Try to get CSRF token from cookies after GET request
+                const csrfCookie = document.cookie.split(';').find(cookie => 
+                    cookie.trim().startsWith('csrftoken=')
+                );
+                
+                if (csrfCookie) {
+                    const token = csrfCookie.split('=')[1];
+                    log(`✅ CSRF token found in cookie after GET: ${token.substring(0, 20)}...`, 'success');
+                } else {
+                    log('❌ No CSRF token in cookie after GET request', 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Recipe GET test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize page
+        function init() {
+            const origin = window.location.origin;
+            document.getElementById('origin').textContent = origin;
+            document.getElementById('backend').textContent = 'http://localhost:8000';
+            document.getElementById('cookies').textContent = document.cookie || 'No cookies';
+            document.getElementById('required-origin').textContent = origin;
+            document.getElementById('required-cors-origin').textContent = origin;
+            
+            log('CSRF token test page loaded', 'info');
+            log('Current cookies: ' + (document.cookie || 'No cookies'), 'info');
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

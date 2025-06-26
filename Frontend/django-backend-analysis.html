@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Backend Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { background-color: #0056b3; }
+        button.btn-success { background-color: #28a745; }
+        button.btn-success:hover { background-color: #218838; }
+        
+        .config-section {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .config-section h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        
+        .step {
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Django Backend CSRF Analysis & Fix</h1>
+    <p>This tool will analyze your Django backend and provide specific fixes for the CSRF token issue.</p>
+
+    <div class="test-section">
+        <div class="step">Step 1</div>
+        <h3>Backend Connectivity Analysis</h3>
+        <p>Let's verify your Django backend is running and accessible:</p>
+        <button onclick="testBackendConnectivity()">🌐 Test Backend Connection</button>
+        <div id="connectivity-results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="step">Step 2</div>
+        <h3>CSRF Endpoint Analysis</h3>
+        <p>Check if Django has the required CSRF token endpoint:</p>
+        <button onclick="testCSRFEndpoints()">🔒 Test CSRF Endpoints</button>
+        <div id="csrf-endpoint-results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="step">Step 3</div>
+        <h3>Django Configuration Generator</h3>
+        <p>Based on the test results, we'll generate the exact Django configuration you need:</p>
+        <button onclick="generateDjangoConfig()" class="btn-success">⚙️ Generate Django Configuration</button>
+        <div id="config-results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="step">Step 4</div>
+        <h3>Verify Fix</h3>
+        <p>After applying the Django configuration, test if CSRF tokens work:</p>
+        <button onclick="verifyCSRFFix()">✅ Verify CSRF Fix</button>
+        <div id="verify-results"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8000';
+        const FRONTEND_ORIGIN = window.location.origin;
+
+        function log(message, type = 'info', containerId = 'results') {
+            const container = document.getElementById(containerId);
+            const logEntry = document.createElement('div');
+            logEntry.className = `result ${type}`;
+            logEntry.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function testBackendConnectivity() {
+            const containerId = 'connectivity-results';
+            document.getElementById(containerId).innerHTML = '';
+            
+            log('🔍 Testing Django backend connectivity...', 'info', containerId);
+            log(`Frontend: ${FRONTEND_ORIGIN}`, 'info', containerId);
+            log(`Backend: ${BACKEND_URL}`, 'info', containerId);
+
+            // Test 1: Basic API endpoint
+            try {
+                log('Testing basic API endpoint...', 'info', containerId);
+                const response = await fetch(`${BACKEND_URL}/api/recipes/`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const count = data.results ? data.results.length : data.length || 0;
+                    log(`✅ Backend is running and accessible (${count} recipes found)`, 'success', containerId);
+                    
+                    // Check response headers
+                    const corsHeaders = {
+                        'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                        'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials'),
+                    };
+                    
+                    log(`CORS Headers: ${JSON.stringify(corsHeaders)}`, 'info', containerId);
+                    
+                    if (!corsHeaders['Access-Control-Allow-Origin']) {
+                        log('⚠️ Missing CORS headers - Django CORS not configured', 'warning', containerId);
+                    }
+                    
+                } else {
+                    log(`❌ Backend API failed: ${response.status} ${response.statusText}`, 'error', containerId);
+                }
+            } catch (error) {
+                log(`❌ Backend connection failed: ${error.message}`, 'error', containerId);
+                log('Make sure Django server is running on http://localhost:8000', 'error', containerId);
+                return false;
+            }
+
+            // Test 2: Check cookies after API call
+            log('Checking cookies after API call...', 'info', containerId);
+            const cookies = document.cookie;
+            log(`Current cookies: ${cookies || 'NO COOKIES'}`, 'info', containerId);
+            
+            if (cookies.includes('csrftoken')) {
+                log('✅ CSRF cookie found after API call', 'success', containerId);
+            } else {
+                log('❌ No CSRF cookie set by Django', 'error', containerId);
+            }
+
+            return true;
+        }
+
+        async function testCSRFEndpoints() {
+            const containerId = 'csrf-endpoint-results';
+            document.getElementById(containerId).innerHTML = '';
+            
+            log('🔒 Testing CSRF token endpoints...', 'info', containerId);
+
+            const endpoints = [
+                '/api/csrf-token/',
+                '/csrf-token/',
+                '/api/csrf/',
+                '/csrf/',
+                '/api/auth/csrf/',
+                '/auth/csrf-token/'
+            ];
+
+            let workingEndpoint = null;
+
+            for (const endpoint of endpoints) {
+                try {
+                    log(`Testing: ${BACKEND_URL}${endpoint}`, 'info', containerId);
+                    
+                    const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        log(`✅ CSRF endpoint found: ${endpoint}`, 'success', containerId);
+                        log(`Response: ${JSON.stringify(data)}`, 'success', containerId);
+                        
+                        if (data.csrfToken || data.csrf_token || data.token) {
+                            workingEndpoint = endpoint;
+                            log(`✅ CSRF token provided: ${data.csrfToken || data.csrf_token || data.token}`, 'success', containerId);
+                            break;
+                        } else {
+                            log(`⚠️ Endpoint works but no token in response`, 'warning', containerId);
+                        }
+                    } else {
+                        log(`❌ ${endpoint}: ${response.status} ${response.statusText}`, 'error', containerId);
+                    }
+                } catch (error) {
+                    log(`❌ ${endpoint}: ${error.message}`, 'error', containerId);
+                }
+            }
+
+            if (!workingEndpoint) {
+                log('❌ No working CSRF endpoint found', 'error', containerId);
+                log('Django needs a CSRF token endpoint configured', 'error', containerId);
+            }
+
+            return workingEndpoint;
+        }
+
+        async function generateDjangoConfig() {
+            const containerId = 'config-results';
+            document.getElementById(containerId).innerHTML = '';
+            
+            log('⚙️ Generating Django configuration...', 'info', containerId);
+
+            // Run connectivity test first
+            const backendWorking = await testBackendConnectivity();
+            const csrfEndpoint = await testCSRFEndpoints();
+
+            log('📋 Based on the tests, here is your Django configuration:', 'info', containerId);
+
+            const config = `
+# Django settings.py Configuration
+# Add these settings to fix CSRF token issues
+
+# 1. CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    '${FRONTEND_ORIGIN}',
+    'http://localhost:5500',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
+
+# 2. CORS Settings (install django-cors-headers first)
+CORS_ALLOWED_ORIGINS = [
+    '${FRONTEND_ORIGIN}',
+    'http://localhost:5500', 
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# 3. Session and Cookie Settings
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+
+# 4. Middleware (ensure correct order)
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Must be first
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# 5. Installed Apps
+INSTALLED_APPS = [
+    # ... your existing apps
+    'corsheaders',
+    # ... rest of your apps
+]`;
+
+            const viewsCode = `
+# views.py - Add this CSRF token endpoint
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    """
+    Get CSRF token for frontend requests
+    """
+    csrf_token = get_token(request)
+    return JsonResponse({
+        'csrfToken': csrf_token,
+        'status': 'success'
+    })`;
+
+            const urlsCode = `
+# urls.py - Add this to your URL patterns
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # ... your existing patterns
+    path('api/csrf-token/', views.get_csrf_token, name='csrf_token'),
+    # ... rest of your patterns
+]`;
+
+            const installCode = `
+# Install required packages
+pip install django-cors-headers Pillow
+
+# If you don't have them, also install:
+pip install djangorestframework`;
+
+            // Create formatted output
+            const configContainer = document.createElement('div');
+            configContainer.innerHTML = `
+                <div class="config-section">
+                    <h4>📦 1. Install Packages</h4>
+                    <pre>${installCode}</pre>
+                </div>
+                
+                <div class="config-section">
+                    <h4>⚙️ 2. Django Settings (settings.py)</h4>
+                    <pre>${config}</pre>
+                </div>
+                
+                <div class="config-section">
+                    <h4>🔒 3. CSRF Token View (views.py)</h4>
+                    <pre>${viewsCode}</pre>
+                </div>
+                
+                <div class="config-section">
+                    <h4>🌐 4. URL Configuration (urls.py)</h4>
+                    <pre>${urlsCode}</pre>
+                </div>
+                
+                <div class="config-section">
+                    <h4>🔄 5. After Making Changes</h4>
+                    <pre>python manage.py migrate
+python manage.py runserver</pre>
+                </div>
+            `;
+            
+            document.getElementById(containerId).appendChild(configContainer);
+            log('✅ Django configuration generated successfully!', 'success', containerId);
+            log('Apply these changes and restart your Django server', 'info', containerId);
+        }
+
+        async function verifyCSRFFix() {
+            const containerId = 'verify-results';
+            document.getElementById(containerId).innerHTML = '';
+            
+            log('✅ Verifying CSRF fix...', 'info', containerId);
+
+            try {
+                // Test CSRF token retrieval
+                log('Testing CSRF token retrieval...', 'info', containerId);
+                
+                const response = await fetch(`${BACKEND_URL}/api/csrf-token/`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.csrfToken) {
+                        log(`✅ CSRF token successfully retrieved: ${data.csrfToken.substring(0, 16)}...`, 'success', containerId);
+                        
+                        // Test using the token in a request
+                        log('Testing CSRF token in a request...', 'info', containerId);
+                        
+                        const testResponse = await fetch(`${BACKEND_URL}/api/recipes/1/`, {
+                            method: 'GET',
+                            headers: {
+                                'X-CSRFToken': data.csrfToken
+                            },
+                            credentials: 'include'
+                        });
+                        
+                        if (testResponse.ok) {
+                            log('✅ CSRF token works! Image upload should now function.', 'success', containerId);
+                            log('🎉 CSRF issue has been resolved!', 'success', containerId);
+                        } else {
+                            log(`⚠️ CSRF token retrieved but request failed: ${testResponse.status}`, 'warning', containerId);
+                        }
+                        
+                    } else {
+                        log('❌ CSRF endpoint accessible but no token returned', 'error', containerId);
+                        log('Check your CSRF token view implementation', 'error', containerId);
+                    }
+                } else {
+                    log(`❌ CSRF endpoint still not working: ${response.status}`, 'error', containerId);
+                    log('Double-check your Django configuration and restart the server', 'error', containerId);
+                }
+
+            } catch (error) {
+                log(`❌ Verification failed: ${error.message}`, 'error', containerId);
+                log('Make sure Django server is running with the new configuration', 'error', containerId);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Django Backend Analysis tool loaded');
+        });
+    </script>
+</body>
+</html>

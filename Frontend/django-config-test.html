@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Backend Configuration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .code-block pre {
+            margin: 0;
+            font-family: monospace;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ok { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }
+        .status-unknown { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>Django Backend Configuration Test</h1>
+    <p>This page tests whether your Django backend is properly configured for the Chopsmo frontend.</p>
+
+    <div class="test-section">
+        <h2>Configuration Status</h2>
+        <div id="configStatus">
+            <div><span class="status-indicator status-unknown"></span>Frontend Origin: <span id="frontendOrigin">Unknown</span></div>
+            <div><span class="status-indicator status-unknown"></span>Backend URL: <span id="backendUrl">Unknown</span></div>
+            <div><span class="status-indicator status-unknown"></span>CSRF Token: <span id="csrfStatus">Not tested</span></div>
+            <div><span class="status-indicator status-unknown"></span>CORS: <span id="corsStatus">Not tested</span></div>
+            <div><span class="status-indicator status-unknown"></span>API Access: <span id="apiStatus">Not tested</span></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="testCSRFToken()">Test CSRF Token</button>
+        <button onclick="testCORS()">Test CORS</button>
+        <button onclick="testAPI()">Test Recipe API</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Required Django Configuration</h2>
+        <p>If tests fail, add this to your Django <code>settings.py</code>:</p>
+        
+        <h3>CSRF Trusted Origins</h3>
+        <div class="code-block">
+            <pre>CSRF_TRUSTED_ORIGINS = [
+    '<span id="requiredOrigin">http://127.0.0.1:5500</span>',
+    'http://localhost:5500',
+    # Add any other origins your frontend uses
+]</pre>
+        </div>
+
+        <h3>CORS Configuration</h3>
+        <div class="code-block">
+            <pre>CORS_ALLOWED_ORIGINS = [
+    '<span id="requiredCorsOrigin">http://127.0.0.1:5500</span>',
+    'http://localhost:5500',
+]
+
+# Or for development only (less secure):
+# CORS_ALLOW_ALL_ORIGINS = True</pre>
+        </div>
+
+        <h3>CSRF Token Endpoint</h3>
+        <div class="code-block">
+            <pre># In your views.py or a separate file
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({'csrfToken': request.META.get('CSRF_COOKIE')})
+
+# In your urls.py
+urlpatterns = [
+    # ... your other patterns
+    path('api/csrf-token/', get_csrf_token, name='csrf_token'),
+]</pre>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        
+        function updateStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            const indicator = element.previousElementSibling;
+            element.textContent = text;
+            
+            indicator.className = 'status-indicator';
+            if (status === 'ok') {
+                indicator.classList.add('status-ok');
+            } else if (status === 'error') {
+                indicator.classList.add('status-error');
+            } else if (status === 'warning') {
+                indicator.classList.add('status-warning');
+            } else {
+                indicator.classList.add('status-unknown');
+            }
+        }
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        async function testCSRFToken() {
+            addResult('Testing CSRF token endpoint...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/csrf-token/`, {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.csrfToken) {
+                        addResult('✅ CSRF token endpoint working: ' + data.csrfToken.substring(0, 10) + '...', 'success');
+                        updateStatus('csrfStatus', 'ok', 'Working');
+                        return data.csrfToken;
+                    } else {
+                        addResult('⚠️ CSRF token endpoint accessible but no token returned', 'warning');
+                        updateStatus('csrfStatus', 'warning', 'No token');
+                    }
+                } else {
+                    addResult(`❌ CSRF token endpoint failed: ${response.status} ${response.statusText}`, 'error');
+                    updateStatus('csrfStatus', 'error', `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                addResult(`❌ CSRF token test failed: ${error.message}`, 'error');
+                updateStatus('csrfStatus', 'error', 'Failed');
+            }
+            
+            return null;
+        }
+
+        async function testCORS() {
+            addResult('Testing CORS configuration...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/recipes/`, {
+                    method: 'OPTIONS',
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                };
+                
+                addResult('CORS headers received: ' + JSON.stringify(corsHeaders, null, 2), 'info');
+                
+                if (corsHeaders['Access-Control-Allow-Origin']) {
+                    addResult('✅ CORS headers present', 'success');
+                    updateStatus('corsStatus', 'ok', 'Configured');
+                } else {
+                    addResult('⚠️ No CORS headers found - may cause issues', 'warning');
+                    updateStatus('corsStatus', 'warning', 'Missing headers');
+                }
+            } catch (error) {
+                addResult(`❌ CORS test failed: ${error.message}`, 'error');
+                updateStatus('corsStatus', 'error', 'Failed');
+            }
+        }
+
+        async function testAPI() {
+            addResult('Testing Recipe API access...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/recipes/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ Recipe API working: ${data.results ? data.results.length : data.length || 0} recipes found`, 'success');
+                    updateStatus('apiStatus', 'ok', 'Working');
+                } else {
+                    addResult(`❌ Recipe API failed: ${response.status} ${response.statusText}`, 'error');
+                    updateStatus('apiStatus', 'error', `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                addResult(`❌ Recipe API test failed: ${error.message}`, 'error');
+                updateStatus('apiStatus', 'error', 'Failed');
+            }
+        }
+
+        async function runAllTests() {
+            clearResults();
+            addResult('Starting comprehensive backend configuration test...', 'info');
+            
+            await testCSRFToken();
+            await testCORS();
+            await testAPI();
+            
+            addResult('All tests completed. Check results above.', 'info');
+        }
+
+        // Initialize page
+        function init() {
+            document.getElementById('frontendOrigin').textContent = window.location.origin;
+            document.getElementById('backendUrl').textContent = API_URL;
+            document.getElementById('requiredOrigin').textContent = window.location.origin;
+            document.getElementById('requiredCorsOrigin').textContent = window.location.origin;
+            
+            updateStatus('frontendOrigin', 'ok', window.location.origin);
+            updateStatus('backendUrl', 'ok', API_URL);
+            
+            addResult('Configuration test page loaded. Click "Run All Tests" to check Django backend setup.', 'info');
+        }
+
+        // Run initialization when page loads
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

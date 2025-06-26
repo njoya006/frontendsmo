@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChopSmo - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <style>        /* Enhanced Dashboard Specific Styles */
+        .dashboard {
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg-gradient-primary);
+            padding-top: 80px;
+
+        .dashboard-header {
+            margin-bottom: 2rem;
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--white-color) 0%, rgba(255, 255, 255, 0.95) 100%);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(27, 94, 32, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--bg-gradient-accent);
+        }
+
+        .dashboard-header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-header p {
+            color: var(--gray-color);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .dashboard-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(27, 94, 32, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white-color);
+            padding: 1.5rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(27, 94, 32, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--bg-gradient-accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-card:hover::before {            opacity: 1;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--white-color);
+            background: var(--bg-gradient-accent);
+            box-shadow: var(--shadow-md);
+            flex-shrink: 0;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-content h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-color);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+            line-height: 1;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            color: var(--success-color);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.negative {
+            color: var(--danger-color);
+        }
+
+        .stat-change::before {
+            content: '↗';
+            font-size: 0.9rem;
+        }
+
+        .stat-change.negative::before {
+            content: '↘';
+        }        .dashboard-main {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Quick Actions Widget */
+        .quick-actions {
+            background: var(--white-color);
+            padding: 2rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(27, 94, 32, 0.08);
+        }
+
+        .quick-actions h3 {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.5rem 1rem;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
+            border: 2px solid transparent;
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            color: var(--dark-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-4px);
+            border-color: rgba(76, 175, 80, 0.3);
+            box-shadow: var(--shadow-lg);
+            background: rgba(76, 175, 80, 0.15);
+        }
+
+        .action-btn i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .action-btn span {
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* Recent Activity Widget */
+        .recent-activity {
+            background: var(--white-color);
+            padding: 2rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(27, 94, 32, 0.08);
+        }
+
+        .recent-activity h3 {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(76, 175, 80, 0.05);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: var(--white-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-content h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-content p {
+            font-size: 0.8rem;
+            color: var(--gray-color);
+            margin: 0;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--gray-light);
+            font-weight: 500;
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            font-size: 28px;
+            color: var(--dark-color);
+            font-weight: 600;
+        }
+
+        .meal-plan-preview {
+            background: var(--white-color);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .day-card {
+            background: var(--primary-light);
+            padding: 20px;
+            border-radius: 15px;
+            transition: var(--transition);
+            border: 1px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .day-card:hover {
+            background: rgba(76, 175, 80, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .day-card h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(76, 175, 80, 0.2);
+            font-weight: 600;
+        }
+
+        .meal {
+            margin-bottom: 15px;
+        }
+
+        .meal-type {
+            font-size: 12px;
+            color: var(--gray-color);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .meal-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        .quick-actions {
+            background: var(--white-color);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .action-card {
+            background: var(--primary-light);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transition: var(--transition);
+            color: var(--dark-color);
+            text-decoration: none;
+            border: 1px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .action-card:hover {
+            background: var(--primary-color);
+            color: var(--white-color);
+            transform: translateY(-5px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .action-icon {
+            font-size: 28px;
+            color: var(--primary-color);
+            margin-bottom: 18px;
+            transition: var(--transition);
+        }
+
+        .action-card:hover .action-icon {
+            color: var(--white-color);
+        }
+
+        .action-card h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .action-card p {
+            font-size: 12px;
+            color: var(--gray-color);
+            transition: var(--transition);
+        }
+
+        .action-card:hover p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .dashboard-recent {
+            background: var(--white-color);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 50px;
+        }
+
+        .recipes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px;
+        }
+
+        .recipe-card {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            background: var(--white-color);
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--button-shadow);
+        }
+
+        .recipe-image {
+            height: 140px;
+            background: var(--primary-light);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .recipe-info {
+            padding: 20px;
+        }
+
+        .recipe-info h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--dark-color);
+            font-weight: 600;
+        }
+
+        .recipe-info p {
+            font-size: 12px;
+            color: var(--gray-color);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .recipe-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .recipe-meta span {
+            display: flex;
+            align-items: center;
+            color: var(--gray-color);
+        }
+
+        .recipe-meta i {
+            margin-right: 6px;
+            font-size: 10px;
+            color: var(--primary-color);
+        }        @media (max-width: 768px) {
+            .dashboard {
+                padding: 60px 0 20px !important;
+            }
+            
+            .dashboard-header {
+                margin-bottom: 1.5rem !important;
+                padding: 1.5rem !important;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .dashboard-header p {
+                font-size: 1rem;
+            }
+            
+            .dashboard-date {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+            
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .stat-card {
+                padding: 1.25rem;
+            }
+            
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .section-header h2 {
+                font-size: 1.4rem;
+            }
+            
+            .section-actions {
+                display: flex;
+                gap: 0.5rem;
+                width: 100%;
+            }
+            
+            .action-buttons {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            
+            .action-btn {
+                padding: 1rem 0.75rem;
+            }
+            
+            .action-btn i {
+                font-size: 1.25rem;
+            }
+            
+            .action-btn span {
+                font-size: 0.8rem;
+            }
+            
+            .days-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .activity-item {
+                padding: 0.75rem;
+            }
+            
+            .activity-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 0.8rem;
+            }
+            
+            .meal-plan-preview,
+            .quick-actions,
+            .recent-activity {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard {
+                padding: 60px 0 15px !important;
+            }
+            
+            .dashboard-header {
+                padding: 1rem !important;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .dashboard-stats {
+                margin-bottom: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+                gap: 0.75rem;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header h2 {
+                font-size: 1.2rem;
+            }
+            
+            .btn-sm {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+        }
+            
+            .days-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard {
+                padding: 5px 0 !important;
+                margin: 0 !important;
+            }
+            
+            .dashboard-header {
+                border-radius: var(--border-radius-lg);
+                padding: 8px !important;
+                margin-bottom: 8px !important;
+                margin-top: 0 !important;
+            }
+            
+            .stat-card {
+                padding: var(--spacing-md);
+            }
+            
+            .meal-plan-preview,
+            .quick-actions {
+                padding: var(--spacing-lg);
+            }
+        }        /* Override any global spacing that might push content down */
+        main.dashboard {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        .dashboard .container {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
+        
+        /* Ensure header is immediately visible after navigation */
+        header + main.dashboard {
+            margin-top: 0 !important;
+        }
+        
+        /* Force content to top */
+        body {
+            padding-top: 0 !important;
+        }
+        
+        /* Override header height issues */
+        header {
+            position: relative !important;
+            z-index: 1000;
+        }
+        
+        /* Additional mobile-first approach for visibility */
+        @media (max-width: 1024px) {
+            .dashboard {
+                padding: 10px 0 20px !important;
+            }
+            
+            .dashboard-header {
+                margin-bottom: 10px;
+                padding: 10px 0;
+            }
+        }    </style>
+</head>
+<body style="margin: 0; padding: 0;">
+    <style>
+        /* Emergency override for immediate visibility */
+        .dashboard {
+            padding-top: 5px !important;
+            margin-top: 0 !important;
+        }
+    </style>
+    <header>
+        <div class="container">
+            <            <nav>
+                <div class="logo">
+                    <a href="index.html">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="MealPlans.html">Meal Plans</a></li>
+                    <li><a href="MealSuggestion.html">Meal Suggestions</a></li>
+                    <li><a href="Recipes.html">Recipes</a></li>
+                    <li><a href="Profile.html">Profile</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>    <main class="dashboard">
+        <div class="container">            <section class="dashboard-header">
+                <h1>Welcome back, <span id="userName">User</span>!</h1>
+                <p>Here's your meal planning overview for today</p>
+                <div class="dashboard-date">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="currentDate">Loading...</span>
+                </div>
+            </section>
+
+            <section class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Meals Planned</h3>
+                        <p class="stat-value" id="mealsPlanned">21</p>
+                        <p class="stat-change">+3 from last week</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-utensil-spoon"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Recipes Tried</h3>
+                        <p class="stat-value" id="recipesTried">15</p>
+                        <p class="stat-change">5 new this week</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Healthy Meals</h3>
+                        <p class="stat-value" id="healthyMeals">92%</p>
+                        <p class="stat-change">+7% improvement</p>
+                    </div>
+                </div>
+            </section>            <section class="dashboard-main">
+                <div class="meal-plan-preview">
+                    <div class="section-header">
+                        <h2>This Week's Meal Plan</h2>
+                        <a href="MealPlans.html" class="btn btn-outline">View All</a>
+                    </div>
+                    <div class="days-grid">
+                        <div class="day-card">
+                            <h3>Monday</h3>
+                            <div class="meal">
+                                <p class="meal-type">Breakfast</p>
+                                <p class="meal-name">Avocado Toast</p>
+                            </div>
+                            <div class="meal">
+                                <p class="meal-type">Lunch</p>
+                                <p class="meal-name">Quinoa Salad Bowl</p>
+                            </div>
+                            <div class="meal">
+                                <p class="meal-type">Dinner</p>
+                                <p class="meal-name">Grilled Salmon</p>
+                            </div>
+                        </div>
+                        <div class="day-card">
+                            <h3>Tuesday</h3>
+                            <div class="meal">
+                                <p class="meal-type">Breakfast</p>
+                                <p class="meal-name">Greek Yogurt Bowl</p>
+                            </div>
+                            <div class="meal">
+                                <p class="meal-type">Lunch</p>
+                                <p class="meal-name">Chicken Salad</p>
+                            </div>
+                            <div class="meal">
+                                <p class="meal-type">Dinner</p>
+                                <p class="meal-name">Vegetable Stir Fry</p>
+                            </div>
+                        </div>
+                        <div class="day-card">
+                            <h3>Wednesday</h3>
+                            <div class="meal">
+                                <p class="meal-type">Breakfast</p>
+                                <p class="meal-name">Smoothie Bowl</p>
+                            </div>
+                            <div class="meal">
+                                <p class="meal-type">Lunch</p>
+                                <p class="meal-name">Turkey Wrap</p>
+                            </div>
+                            <div class="meal">
+                                <p class="meal-type">Dinner</p>
+                                <p class="meal-name">Pasta Primavera</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>                <div class="quick-actions">
+                    <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                    <div class="action-buttons">
+                        <a href="MealPlans.html" class="action-btn">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Add Meal Plan</span>
+                        </a>
+                        <a href="Recipes.html" class="action-btn">
+                            <i class="fas fa-search"></i>
+                            <span>Find Recipes</span>
+                        </a>
+                        <a href="MealSuggestion.html" class="action-btn">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Get Suggestions</span>
+                        </a>
+                        <a href="Profile.html" class="action-btn">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Update Profile</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section class="dashboard-main">
+                <div class="meal-plan-preview">
+                    <div class="section-header">
+                        <h2><i class="fas fa-calendar-week"></i> This Week's Meal Plan</h2>
+                        <div class="section-actions">
+                            <a href="MealPlans.html" class="btn btn-outline btn-sm">View All</a>
+                            <a href="MealPlans.html" class="btn btn-primary btn-sm">Edit Plan</a>
+                        </div>
+                    </div>
+                    <div class="actions-grid">
+                        <a href="MealPlans.html" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
+                            <h3>Plan Meals</h3>
+                            <p>Create a new meal plan</p>
+                        </a>
+                        <a href="MealSuggestion.html" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <h3>Get Suggestions</h3>
+                            <p>Find meal ideas for today</p>
+                        </a>
+                        <a href="Recipes.html" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                            <h3>Browse Recipes</h3>
+                            <p>Discover new dishes</p>
+                        </a>
+                        <a href="Profile.html" class="action-card">
+                            <div class="action-icon">
+                                <i class="fas fa-user-cog"></i>
+                            </div>
+                            <h3>Profile Settings</h3>
+                            <p>Update preferences</p>
+                        </a>                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>Added Achu Recipe</h4>
+                                <p>You saved a new recipe to your collection</p>
+                            </div>
+                            <div class="activity-time">2 hours ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>Completed Meal Plan</h4>
+                                <p>Week of January 13-19 meal plan finished</p>
+                            </div>
+                            <div class="activity-time">1 day ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>Liked Ndole Recipe</h4>
+                                <p>Added to your favorite recipes</p>
+                            </div>
+                            <div class="activity-time">3 days ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-share"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>Shared Meal Plan</h4>
+                                <p>Shared weekly plan with family members</p>
+                            </div>
+                            <div class="activity-time">1 week ago</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="dashboard-recent">
+                <div class="section-header">
+                    <h2><i class="fas fa-eye"></i> Recently Viewed Recipes</h2>
+                    <div class="section-actions">
+                        <a href="Recipes.html" class="btn btn-outline btn-sm">View All</a>
+                    </div>
+                </div>                <div class="recipes-grid">
+                    <div class="recipe-card" onclick="window.location.href='recipe-detail.html?id=1'" style="cursor: pointer;">
+                        <div class="recipe-image" style="background-image: url('images/Achu.jpg')"></div>
+                        <div class="recipe-info">
+                            <h3>Achu (Yellow Soup)</h3>
+                            <p>Traditional Cameronian soup with palm nut and spices</p>
+                            <div class="recipe-meta">
+                                <span><i class="fas fa-clock"></i> 45 mins</span>
+                                <span><i class="fas fa-star"></i> 4.8</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- More recipe cards would be populated by JavaScript -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="logo">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </div>
+                    <p>Making meal planning simple and enjoyable in 2025.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="SignUp.html">Join</a></li>
+                        <li><a href="Recipes.html">Recipes</a></li>
+                        <li><a href="About.html">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="FAQ.html">FAQ</a></li>
+                        <li><a href="Contact.html">Contact Us</a></li>
+                        <li><a href="Privacy Policy.html">Privacy Policy</a></li>
+                        <li><a href="Term Of Service.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-newsletter">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe to get weekly recipe ideas and meal planning tips.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your email address" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ChopSmo. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>    <script src="Dashboard.js"></script>
+    <script>
+        // Enhanced Dashboard Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update current date
+            updateCurrentDate();
+            
+            // Initialize dashboard features
+            initializeDashboard();
+            
+            // Update greeting based on time of day
+            updateGreeting();
+            
+            // Animate statistics on load
+            animateStats();
+        });
+
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            const dateString = now.toLocaleDateString('en-US', options);
+            const dateElement = document.getElementById('currentDate');
+            if (dateElement) {
+                dateElement.textContent = dateString;
+            }
+        }
+
+        function updateGreeting() {
+            const now = new Date();
+            const hour = now.getHours();
+            const userNameElement = document.getElementById('userName');
+            const headerElement = document.querySelector('.dashboard-header h1');
+            
+            let greeting = 'Welcome back';
+            if (hour < 12) {
+                greeting = 'Good morning';
+            } else if (hour < 17) {
+                greeting = 'Good afternoon';
+            } else {
+                greeting = 'Good evening';
+            }
+            
+            if (headerElement) {
+                headerElement.innerHTML = `${greeting}, <span id="userName">User</span>!`;
+            }
+        }
+
+        function animateStats() {
+            const statValues = document.querySelectorAll('.stat-value');
+            statValues.forEach((stat, index) => {
+                const originalValue = parseInt(stat.textContent);
+                stat.textContent = '0';
+                
+                setTimeout(() => {
+                    animateValue(stat, 0, originalValue, 1000);
+                }, index * 200);
+            });
+        }
+
+        function animateValue(element, start, end, duration) {
+            const range = end - start;
+            const startTime = performance.now();
+            
+            function updateValue(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentValue = Math.floor(start + (range * progress));
+                
+                element.textContent = currentValue;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateValue);
+                }
+            }
+            
+            requestAnimationFrame(updateValue);
+        }
+
+        function initializeDashboard() {
+            // Add hover effects to stat cards
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Add click effects to action buttons
+            const actionButtons = document.querySelectorAll('.action-btn');
+            actionButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // Create ripple effect
+                    const ripple = document.createElement('div');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.cssText = `
+                        position: absolute;
+                        width: ${size}px;
+                        height: ${size}px;
+                        left: ${x}px;
+                        top: ${y}px;
+                        background: rgba(255, 255, 255, 0.5);
+                        border-radius: 50%;
+                        transform: scale(0);
+                        animation: ripple 0.6s linear;
+                        pointer-events: none;
+                    `;
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+
+            // Update activity timestamps
+            updateActivityTimestamps();
+        }
+
+        function updateActivityTimestamps() {
+            const activityTimes = document.querySelectorAll('.activity-time');
+            const now = new Date();
+            
+            activityTimes.forEach((timeElement, index) => {
+                // Simulate different time periods
+                const hours = [2, 24, 72, 168][index] || 1; // hours ago
+                const activityTime = new Date(now.getTime() - (hours * 60 * 60 * 1000));
+                timeElement.textContent = getRelativeTime(activityTime);
+            });
+        }
+
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diffInMs = now - date;
+            const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+            const diffInDays = Math.floor(diffInHours / 24);
+            const diffInWeeks = Math.floor(diffInDays / 7);
+
+            if (diffInHours < 1) {
+                return 'Just now';
+            } else if (diffInHours < 24) {
+                return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+            } else if (diffInDays < 7) {
+                return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+            } else {
+                return `${diffInWeeks} week${diffInWeeks > 1 ? 's' : ''} ago`;
+            }
+        }
+
+        // Add CSS animation for ripple effect
+        const rippleStyle = document.createElement('style');
+        rippleStyle.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(rippleStyle);
+
+    // --- Global Page Transition Animation: Blur, Colorful, Enhanced Logo & Dots ---
+    function animatePageTransition(href) {
+        // Create overlay
+        const fadeDiv = document.createElement('div');
+        fadeDiv.style.position = 'fixed';
+        fadeDiv.style.top = 0;
+        fadeDiv.style.left = 0;
+        fadeDiv.style.width = '100vw';
+        fadeDiv.style.height = '100vh';
+        fadeDiv.style.background = 'rgba(255,255,255,0.7)';
+        fadeDiv.style.backdropFilter = 'blur(16px) saturate(180%)';
+        fadeDiv.style.webkitBackdropFilter = 'blur(16px) saturate(180%)';
+        fadeDiv.style.opacity = 0;
+        fadeDiv.style.zIndex = 99999;
+        fadeDiv.style.transition = 'opacity 0.5s cubic-bezier(.4,0,.2,1)';
+        // Add enhanced spinning logo with gradient ring and animated dots
+        fadeDiv.innerHTML = `
+            <div style=\"position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;\">
+                <span style='display:inline-block;position:relative;width:90px;height:90px;'>
+                    <span style=\"position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--primary),#FF9800,#4CAF50,#00BCD4,#FF9800,var(--primary));filter:blur(2px);animation:spin 1.2s linear infinite;\"></span>
+                    <i class='fas fa-utensils' style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;color:#fff;text-shadow:0 2px 16px #4CAF50,0 0 0 #fff;z-index:2;animation:spin 1.2s linear infinite reverse;'></i>
+                </span>
+                <span style='font-size:24px;color:var(--primary);font-weight:700;letter-spacing:1.5px;margin-top:18px;text-shadow:0 2px 12px #fff;'>Chopsmo</span>
+                <span class=\"loading-dots\" style=\"display:inline-block;margin-top:18px;\">
+                    <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0s;\"></span>
+                    <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:#FF9800;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.2s;\"></span>
+                    <span class=\"dot\" style=\"display:inline-block;width:10px;height:10px;background:#00BCD4;border-radius:50%;margin:0 3px;animation:dot-bounce 1s infinite 0.4s;\"></span>
+                </span>
+            </div>
+            <style>
+            @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}
+            @keyframes dot-bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-16px);}}
+            </style>
+        `;
+        document.body.appendChild(fadeDiv);
+        setTimeout(() => {
+            fadeDiv.style.opacity = 1;
+        }, 10);
+        setTimeout(() => {
+            window.location.href = href;
+        }, 3000);
+    }
+    // Intercept all internal navigation links for animation
+    setTimeout(() => {
+        document.querySelectorAll('a[href]').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('#')) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    animatePageTransition(href);
+                });
+            }
+        });
+    }, 100);
+    // Use animation for programmatic navigation
+    function animatedRedirect(href) {
+        animatePageTransition(href);
+    }
+    </script>
+</body>
+</html>
