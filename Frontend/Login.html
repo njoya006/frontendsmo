@@ -469,6 +469,16 @@
                 padding: 0.9rem 1.2rem;
                 font-size: 1rem;
             }
+            
+            .mobile-nav-minimal {
+                display: block !important;
+            }
+            
+            .mobile-nav-minimal a:hover {
+                background: rgba(255,255,255,1);
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            }
         }
         
         @media (max-width: 480px) {
@@ -538,6 +548,13 @@
     </style>
 </head>
 <body>
+    <!-- Mobile Navigation Button for Login Page -->
+    <div class="mobile-nav-minimal" style="position: fixed; top: 20px; left: 20px; z-index: 1000; display: none;">
+        <a href="index.html" style="display: flex; align-items: center; padding: 10px; background: rgba(255,255,255,0.9); border-radius: 50%; text-decoration: none; color: var(--primary); font-size: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
+    
     <div class="container">
         <div class="logo">
             <h1>ChopSmo</h1>
@@ -572,6 +589,7 @@
     </div>
     <div class="loading-spinner" id="loadingSpinner"><div class="spinner"></div></div>
     <div class="toast" id="toast" aria-live="polite"></div>
+    <script src="mobile-nav.js"></script>
     <script src="./Login.js"></script>
 </body>
 </html>
