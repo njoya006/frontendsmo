@@ -32,21 +32,55 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchRecipes() {
         const token = localStorage.getItem('authToken');
         try {
-    const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
-        method: 'GET',
-        headers: token ? { 'Authorization': `Token ${token}` } : {},
-    });
+            console.log('🔄 Fetching recipes from API...');
+            const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                method: 'GET',
+                headers: token ? { 'Authorization': `Token ${token}` } : {},
+            });
             const data = await response.json();
             if (!response.ok) {
-                showToast('Failed to load recipes.', '#f44336');
-                return [];
+                console.warn('⚠️ API call failed, using fallback data');
+                return getFallbackRecipes();
             }
+            console.log('✅ Successfully fetched recipes from API');
             // Only use recipes that have a contributor (created by users)
             return data.filter(recipe => recipe.contributor);
         } catch (error) {
-            showToast('Network error. Please try again later.', '#f44336');
-            return [];
+            console.warn('⚠️ Network error, using fallback data:', error);
+            return getFallbackRecipes();
         }
+    }
+
+    // Fallback recipes for when API is not available
+    function getFallbackRecipes() {
+        return [
+            {
+                id: 1,
+                title: "Sample Pasta Recipe",
+                name: "Quick Pasta",
+                description: "A delicious and quick pasta recipe perfect for any meal.",
+                image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400",
+                time: "20",
+                contributor: { username: "ChopSmo Chef", basic_ingredients: "Available" },
+                ingredients: ["pasta", "tomato sauce", "garlic", "olive oil"],
+                categories: [{ name: "Lunch" }],
+                cuisines: [{ name: "Italian" }],
+                tags: ["quick", "easy"]
+            },
+            {
+                id: 2,
+                title: "Sample Salad Recipe", 
+                name: "Fresh Garden Salad",
+                description: "A healthy and refreshing salad with fresh vegetables.",
+                image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400",
+                time: "10",
+                contributor: { username: "Healthy Chef", basic_ingredients: "Available" },
+                ingredients: ["lettuce", "tomatoes", "cucumber", "dressing"],
+                categories: [{ name: "Vegetarian" }],
+                cuisines: [{ name: "American" }],
+                tags: ["healthy", "vegetarian"]
+            }
+        ];
     }    // Display recipes (updated to show contributor info and profile photo)
     function displayRecipes(recipes) {
         if (!recipesGrid) {
@@ -740,15 +774,31 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
                     headers: requestHeaders,
                     credentials: 'include',
                     body: formData
-                });let data;
+                });
+
+                let data;
                 try {
                     data = await response.json();
                 } catch (jsonError) {
-                    console.error('❌ Failed to parse response as JSON:', jsonError);
-                    const textResponse = await response.text();
-                    console.error('❌ Raw response:', textResponse.substring(0, 500));
-                    showToast('Server returned invalid response format', '#f44336');
-                    return;
+                    console.error('❌ Failed to parse response JSON:', jsonError);
+                    if (response.status === 404) {
+                        showToast('API endpoint not found. Recipe creation is currently unavailable.', '#f44336');
+                        return;
+                    } else if (!response.ok) {
+                        showToast(`Server error (${response.status}). Please try again later.`, '#f44336');
+                        return;
+                    }
+                    // If response is ok but JSON parsing failed, try to get text
+                    try {
+                        const textResponse = await response.text();
+                        console.error('❌ Raw response:', textResponse.substring(0, 500));
+                        showToast('Server returned invalid response format', '#f44336');
+                        return;
+                    } catch (textError) {
+                        console.error('❌ Failed to get response text:', textError);
+                        showToast('Failed to process server response', '#f44336');
+                        return;
+                    }
                 }
 
                 if (!response.ok) {                    console.error('❌ Recipe creation failed:', {
