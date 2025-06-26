@@ -238,6 +238,25 @@
             border-top: 3px solid var(--primary-color);
         }
 
+        /* Tab Panes - Control visibility */
+        .tab-pane {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .tab-pane.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* Recipe Search Styles */
         .recipe-search-section {
             padding: 0;
@@ -2233,12 +2252,17 @@
     <script>
         // Tab switching functionality
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Profile page loaded, initializing tabs...');
+            
             const tabButtons = document.querySelectorAll('.nav-tab button');
             const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            console.log('Found', tabButtons.length, 'tab buttons and', tabPanes.length, 'tab panes');
 
             tabButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const targetTab = this.getAttribute('data-tab');
+                    console.log('Tab clicked:', targetTab);
                     
                     // Remove active class from all tabs and panes
                     tabButtons.forEach(btn => btn.parentElement.classList.remove('active'));
@@ -2246,7 +2270,13 @@
                     
                     // Add active class to clicked tab and corresponding pane
                     this.parentElement.classList.add('active');
-                    document.getElementById(targetTab).classList.add('active');
+                    const targetPane = document.getElementById(targetTab);
+                    if (targetPane) {
+                        targetPane.classList.add('active');
+                        console.log('Activated tab:', targetTab);
+                    } else {
+                        console.error('Tab pane not found:', targetTab);
+                    }
                 });
             });
 
