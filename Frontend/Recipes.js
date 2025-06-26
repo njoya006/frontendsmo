@@ -140,17 +140,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 // If background image is not already a fallback, replace it
                 if (backgroundImage && !backgroundImage.includes('unsplash.com')) {
                     console.log('� Replacing background image with fallback');
-                    element.style.backgroundImage = `url('${DEFAULT_RECIPE_IMAGE}')`;
+                    // element.style.backgroundImage = `url('${DEFAULT_RECIPE_IMAGE}')`;  // DISABLED to preserve backend images
                 }
                 element.dataset.errorHandled = 'true';
             }
         });
     }
     
-    // Call image error handling after content is loaded
+    // Call image error handling after content is loaded - DISABLED background replacement
     function handleImagesAfterLoad() {
         setTimeout(() => {
-            addGlobalImageErrorHandling();
+            // Only handle <img> tags, not background images for now
+            document.querySelectorAll('img').forEach(img => {
+                if (!img.dataset.errorHandled) {
+                    img.addEventListener('error', function() {
+                        console.log('🔄 Image failed to load, applying fallback:', this.src);
+                        const isProfile = this.alt === 'Profile' || this.style.borderRadius.includes('50%');
+                        this.src = isProfile ? getRandomProfileImage() : getRandomRecipeImage();
+                        this.dataset.errorHandled = 'true';
+                    });
+                    img.dataset.errorHandled = 'true';
+                }
+            });
         }, 500);
     }
     
