@@ -1,6 +1,6 @@
 /**
  * ChopSmo Mobile Navigation System
- * Provides responsive mobile menu functionality across all pages
+ * Only activates on mobile devices, doesn't interfere with desktop
  */
 
 class MobileNavigation {
@@ -9,10 +9,23 @@ class MobileNavigation {
         this.mobileMenu = null;
         this.mobileMenuOverlay = null;
         this.isMenuOpen = false;
+        this.isMobile = false;
         this.init();
     }
 
     init() {
+        // Only initialize on mobile devices
+        this.checkIfMobile();
+        
+        console.log('Mobile Navigation Init - Screen width:', window.innerWidth, 'Is Mobile:', this.isMobile);
+        
+        if (!this.isMobile) {
+            console.log('Desktop detected - mobile navigation disabled');
+            return; // Don't initialize on desktop
+        }
+
+        console.log('Mobile detected - initializing mobile navigation');
+
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.setup());
@@ -21,17 +34,71 @@ class MobileNavigation {
         }
     }
 
+    checkIfMobile() {
+        // Primary check: screen size
+        const isMobileScreen = window.innerWidth <= 768;
+        
+        // Secondary check: user agent for mobile devices
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Enhanced mobile detection including touch capability
+        const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Use screen size as primary determinant
+        this.isMobile = isMobileScreen;
+        
+        // Throttled resize handler for better performance
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const wasMobile = this.isMobile;
+                this.isMobile = window.innerWidth <= 768;
+                
+                // If switching from mobile to desktop, clean up
+                if (wasMobile && !this.isMobile) {
+                    this.cleanupMobileMenu();
+                }
+                // If switching from desktop to mobile, initialize
+                else if (!wasMobile && this.isMobile) {
+                    this.setup();
+                }
+            }, 100); // Throttle resize events
+        }, { passive: true });
+    }
+
     setup() {
-        this.createMobileMenu();
+        if (!this.isMobile) return;
+        
+        console.log('Setting up mobile navigation...');
+        this.findExistingElements();
+        this.createMobileMenuIfNeeded();
         this.bindEvents();
         this.updateAuthState();
         this.setActiveNavItem();
+        console.log('Mobile navigation setup complete');
     }
 
-    createMobileMenu() {
+    findExistingElements() {
+        this.mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        
+        console.log('Mobile menu button found:', !!this.mobileMenuBtn);
+        
+        // If there's no mobile menu button, we're probably on a page without proper header
+        if (!this.mobileMenuBtn) {
+            console.log('No mobile menu button found - page may not have header navigation');
+            return;
+        }
+    }
+
+    createMobileMenuIfNeeded() {
+        // Only create if we have a mobile menu button and we're on mobile
+        if (!this.mobileMenuBtn || !this.isMobile) return;
+
         // Check if mobile menu already exists
         if (document.querySelector('.mobile-menu')) {
-            this.bindExistingElements();
+            this.mobileMenu = document.querySelector('.mobile-menu');
+            this.mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
             return;
         }
 
@@ -108,20 +175,28 @@ class MobileNavigation {
         `;
 
         document.body.appendChild(this.mobileMenu);
-        this.bindExistingElements();
-    }
-
-    bindExistingElements() {
-        this.mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-        this.mobileMenu = document.querySelector('.mobile-menu');
-        this.mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
     }
 
     bindEvents() {
-        // Mobile menu button click
-        if (this.mobileMenuBtn) {
-            this.mobileMenuBtn.addEventListener('click', () => this.toggleMenu());
+        if (!this.isMobile || !this.mobileMenuBtn) {
+            console.log('bindEvents failed - isMobile:', this.isMobile, 'mobileMenuBtn:', !!this.mobileMenuBtn);
+            return;
         }
+
+        console.log('Binding mobile menu events...');
+
+        // Mobile menu button click - Enhanced for touch
+        const handleMenuToggle = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Mobile menu button clicked!');
+            this.toggleMenu();
+        };
+
+        this.mobileMenuBtn.addEventListener('click', handleMenuToggle);
+        this.mobileMenuBtn.addEventListener('touchend', handleMenuToggle, { passive: false });
+
+        console.log('Mobile menu button event listeners added (click + touch)');
 
         // Close menu overlay click
         if (this.mobileMenuOverlay) {
@@ -129,41 +204,38 @@ class MobileNavigation {
         }
 
         // Close button click
-        const closeBtn = document.querySelector('.mobile-menu-close');
+        const closeBtn = this.mobileMenu?.querySelector('.mobile-menu-close');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.closeMenu());
         }
 
         // Handle mobile logout
-        const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+        const mobileLogoutBtn = this.mobileMenu?.querySelector('#mobileLogoutBtn');
         if (mobileLogoutBtn) {
             mobileLogoutBtn.addEventListener('click', () => this.handleLogout());
         }
 
         // Close menu when clicking nav links
-        const mobileNavLinks = document.querySelectorAll('.mobile-nav-links a');
-        mobileNavLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                setTimeout(() => this.closeMenu(), 150);
+        const mobileNavLinks = this.mobileMenu?.querySelectorAll('.mobile-nav-links a');
+        if (mobileNavLinks) {
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    setTimeout(() => this.closeMenu(), 150);
+                });
             });
-        });
+        }
 
         // Handle escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isMenuOpen) {
-                this.closeMenu();
-            }
-        });
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 768 && this.isMenuOpen) {
+            if (e.key === 'Escape' && this.isMenuOpen && this.isMobile) {
                 this.closeMenu();
             }
         });
     }
 
     toggleMenu() {
+        if (!this.isMobile) return;
+        
         if (this.isMenuOpen) {
             this.closeMenu();
         } else {
@@ -172,6 +244,8 @@ class MobileNavigation {
     }
 
     openMenu() {
+        if (!this.isMobile || !this.mobileMenu) return;
+        
         this.isMenuOpen = true;
         document.body.style.overflow = 'hidden';
         
@@ -186,21 +260,11 @@ class MobileNavigation {
         if (this.mobileMenuBtn) {
             this.mobileMenuBtn.classList.add('active');
         }
-
-        // Animate menu items
-        const menuItems = document.querySelectorAll('.mobile-nav-links li');
-        menuItems.forEach((item, index) => {
-            item.style.opacity = '0';
-            item.style.transform = 'translateX(20px)';
-            setTimeout(() => {
-                item.style.transition = 'all 0.3s ease';
-                item.style.opacity = '1';
-                item.style.transform = 'translateX(0)';
-            }, index * 50);
-        });
     }
 
     closeMenu() {
+        if (!this.isMobile) return;
+        
         this.isMenuOpen = false;
         document.body.style.overflow = '';
         
@@ -217,8 +281,28 @@ class MobileNavigation {
         }
     }
 
+    cleanupMobileMenu() {
+        // Remove mobile menu elements when switching to desktop
+        if (this.mobileMenu) {
+            this.mobileMenu.remove();
+            this.mobileMenu = null;
+        }
+        if (this.mobileMenuOverlay) {
+            this.mobileMenuOverlay.remove();
+            this.mobileMenuOverlay = null;
+        }
+        
+        // Reset body overflow
+        document.body.style.overflow = '';
+        this.isMenuOpen = false;
+        
+        // Remove active class from button
+        if (this.mobileMenuBtn) {
+            this.mobileMenuBtn.classList.remove('active');
+        }
+    }
+
     checkLoginState() {
-        // Check multiple sources for login state
         const token = localStorage.getItem('token') || sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
         const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true' || sessionStorage.getItem('isLoggedIn') === 'true';
@@ -233,20 +317,19 @@ class MobileNavigation {
                 return JSON.parse(userData);
             }
             
-            // Fallback user info
             return {
                 name: localStorage.getItem('userName') || 'User',
                 email: localStorage.getItem('userEmail') || ''
             };
         } catch (error) {
-            console.log('Error parsing user data:', error);
             return { name: 'User', email: '' };
         }
     }
 
     updateAuthState() {
-        // This method can be called to refresh the menu when auth state changes
-        const authSection = document.querySelector('.mobile-auth-section');
+        if (!this.isMobile || !this.mobileMenu) return;
+        
+        const authSection = this.mobileMenu.querySelector('.mobile-auth-section');
         if (authSection) {
             const isLoggedIn = this.checkLoginState();
             const currentUser = this.getCurrentUser();
@@ -269,7 +352,6 @@ class MobileNavigation {
                     </div>
                 `;
                 
-                // Re-bind logout event
                 const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
                 if (mobileLogoutBtn) {
                     mobileLogoutBtn.addEventListener('click', () => this.handleLogout());
@@ -290,9 +372,10 @@ class MobileNavigation {
     }
 
     setActiveNavItem() {
-        // Highlight current page in mobile nav
+        if (!this.isMobile || !this.mobileMenu) return;
+        
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        const navLinks = document.querySelectorAll('.mobile-nav-links a');
+        const navLinks = this.mobileMenu.querySelectorAll('.mobile-nav-links a');
         
         navLinks.forEach(link => {
             const linkPage = link.getAttribute('href');
@@ -317,29 +400,19 @@ class MobileNavigation {
         sessionStorage.removeItem('userData');
         sessionStorage.removeItem('isLoggedIn');
         
-        // Close menu and redirect
         this.closeMenu();
         
-        // Show logout message
+        // Show logout message if function exists
         if (typeof showNotification === 'function') {
             showNotification('You have been logged out successfully', 'success');
         }
         
-        // Redirect to home page
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 500);
     }
 }
 
-// Initialize mobile navigation when script loads
+// Initialize mobile navigation - let the class handle device detection
 const mobileNav = new MobileNavigation();
-
-// Export for use in other scripts
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = MobileNavigation;
-}
-
-// Global access
-window.MobileNavigation = MobileNavigation;
 window.mobileNav = mobileNav;

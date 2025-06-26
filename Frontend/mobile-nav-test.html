@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Nav Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .test-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 2000;
+        }
+        
+        .content {
+            padding: 100px 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <div>Screen Width: <span id="screenWidth"></span>px</div>
+        <div>Is Mobile: <span id="isMobile"></span></div>
+        <div>Menu Button: <span id="menuButton"></span></div>
+        <div>Mobile Menu: <span id="mobileMenu"></span></div>
+    </div>
+
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <a href="index.html">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="DashBoard.html">Dashboard</a></li>
+                    <li><a href="MealPlans.html">Meal Plans</a></li>
+                    <li><a href="MealSuggestion.html">Suggestions</a></li>
+                    <li><a href="Recipes.html">Recipes</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <button class="btn btn-outline">Login</button>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="content">
+        <h1>Mobile Navigation Test</h1>
+        <p>Resize the window or open on mobile to test the mobile menu.</p>
+        <button onclick="testMobileMenu()">Test Mobile Menu</button>
+    </div>
+
+    <script src="mobile-nav.js?v=5"></script>
+    <script>
+        function updateInfo() {
+            document.getElementById('screenWidth').textContent = window.innerWidth;
+            document.getElementById('isMobile').textContent = window.innerWidth <= 768 ? 'Yes' : 'No';
+            document.getElementById('menuButton').textContent = document.querySelector('.mobile-menu-btn') ? 'Found' : 'Not Found';
+            document.getElementById('mobileMenu').textContent = document.querySelector('.mobile-menu') ? 'Created' : 'Not Created';
+        }
+        
+        function testMobileMenu() {
+            const btn = document.querySelector('.mobile-menu-btn');
+            if (btn) {
+                btn.click();
+                console.log('Mobile menu button clicked');
+            } else {
+                console.log('Mobile menu button not found');
+            }
+        }
+        
+        // Update info periodically
+        setInterval(updateInfo, 1000);
+        updateInfo();
+        
+        // Log mobile nav initialization
+        console.log('Mobile nav instance:', window.mobileNav);
+        
+        // Test on window resize
+        window.addEventListener('resize', () => {
+            setTimeout(updateInfo, 100);
+        });
+    </script>
+</body>
+</html>
