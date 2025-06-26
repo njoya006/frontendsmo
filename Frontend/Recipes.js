@@ -2,6 +2,103 @@ document.addEventListener('DOMContentLoaded', function() {
     // Global variables
     let recipeData = [];
     let allRecipes = []; // Keep original data for reset
+
+    // ======= IMAGE HANDLING UTILITIES =======
+    
+    // Default fallback images
+    const DEFAULT_RECIPE_IMAGE = 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=400&h=300&fit=crop';
+    const DEFAULT_PROFILE_IMAGE = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face';
+    
+    // Helper function to get properly formatted image URL with fallback
+    function getImageUrl(imageUrl, fallbackUrl) {
+        if (!imageUrl) return fallbackUrl;
+        
+        // If it's already a full URL, return as is
+        if (imageUrl.startsWith('http')) return imageUrl;
+        
+        // If it's a relative path, construct the full URL
+        if (imageUrl.startsWith('/')) {
+            return `https://njoya.pythonanywhere.com${imageUrl}`;
+        }
+        
+        // If it's just a filename, add the media path
+        return `https://njoya.pythonanywhere.com/media/${imageUrl}`;
+    }
+    
+    // Helper function to get recipe image with fallback
+    function getRecipeImageUrl(recipe) {
+        const imageUrl = recipe.image || recipe.photo || recipe.recipe_image;
+        return getImageUrl(imageUrl, DEFAULT_RECIPE_IMAGE);
+    }
+    
+    // Helper function to get profile image with fallback
+    function getProfileImageUrl(contributor) {
+        if (!contributor) return DEFAULT_PROFILE_IMAGE;
+        
+        const imageUrl = contributor.profile_photo || contributor.avatar || contributor.photo;
+        return getImageUrl(imageUrl, DEFAULT_PROFILE_IMAGE);
+    }
+    
+    // Helper function to create image element with error handling
+    function createImageWithFallback(src, alt, style, fallbackSrc) {
+        return `<img src="${src}" alt="${alt}" style="${style}" 
+                     onerror="this.onerror=null; this.src='${fallbackSrc || DEFAULT_RECIPE_IMAGE}';">`;
+    }
+    
+    // ======= GLOBAL IMAGE ERROR HANDLING =======
+    
+    // Add global error handling for all images on the page
+    function addGlobalImageErrorHandling() {
+        // Handle existing images
+        document.querySelectorAll('img').forEach(img => {
+            if (!img.dataset.errorHandled) {
+                img.addEventListener('error', function() {
+                    console.warn('🖼️ Image failed to load:', this.src);
+                    if (this.src !== DEFAULT_RECIPE_IMAGE && this.src !== DEFAULT_PROFILE_IMAGE) {
+                        // Determine which fallback to use based on image context
+                        const isProfile = this.alt === 'Profile' || this.style.borderRadius === '50%' || this.classList.contains('profile');
+                        this.src = isProfile ? DEFAULT_PROFILE_IMAGE : DEFAULT_RECIPE_IMAGE;
+                        this.dataset.errorHandled = 'true';
+                    }
+                });
+                img.dataset.errorHandled = 'true';
+            }
+        });
+        
+        // Handle background images that fail to load
+        document.querySelectorAll('.recipe-image').forEach(element => {
+            if (!element.dataset.errorHandled) {
+                const backgroundImage = element.style.backgroundImage;
+                if (backgroundImage && backgroundImage !== 'none') {
+                    // Create a test image to check if the background image loads
+                    const testImg = new Image();
+                    testImg.onload = function() {
+                        // Image loaded successfully
+                    };
+                    testImg.onerror = function() {
+                        console.warn('🖼️ Background image failed to load:', backgroundImage);
+                        element.style.backgroundImage = `url('${DEFAULT_RECIPE_IMAGE}')`;
+                    };
+                    
+                    // Extract URL from background-image style
+                    const match = backgroundImage.match(/url\(['"]?([^'")]+)['"]?\)/);
+                    if (match) {
+                        testImg.src = match[1];
+                    }
+                    element.dataset.errorHandled = 'true';
+                }
+            }
+        });
+    }
+    
+    // Call image error handling after content is loaded
+    function handleImagesAfterLoad() {
+        setTimeout(() => {
+            addGlobalImageErrorHandling();
+        }, 500);
+    }
+    
+    // ======= END GLOBAL IMAGE ERROR HANDLING =======
       // DOM Element Selectors
     const recipesGrid = document.getElementById('recipesGrid');
     const searchInput = document.getElementById('recipeSearch');
@@ -59,9 +156,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: "Sample Pasta Recipe",
                 name: "Quick Pasta",
                 description: "A delicious and quick pasta recipe perfect for any meal.",
-                image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400",
+                image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop",
                 time: "20",
-                contributor: { username: "ChopSmo Chef", basic_ingredients: "Available" },
+                calories: "350",
+                servings: "4",
+                contributor: { 
+                    username: "ChopSmo Chef", 
+                    basic_ingredients: "Available",
+                    profile_photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
+                },
                 ingredients: ["pasta", "tomato sauce", "garlic", "olive oil"],
                 categories: [{ name: "Lunch" }],
                 cuisines: [{ name: "Italian" }],
@@ -72,13 +175,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: "Sample Salad Recipe", 
                 name: "Fresh Garden Salad",
                 description: "A healthy and refreshing salad with fresh vegetables.",
-                image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400",
+                image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop",
                 time: "10",
-                contributor: { username: "Healthy Chef", basic_ingredients: "Available" },
+                calories: "150",
+                servings: "2",
+                contributor: { 
+                    username: "Healthy Chef", 
+                    basic_ingredients: "Available",
+                    profile_photo: "https://images.unsplash.com/photo-1494790108755-2616b332c3d7?w=100&h=100&fit=crop&crop=face"
+                },
                 ingredients: ["lettuce", "tomatoes", "cucumber", "dressing"],
                 categories: [{ name: "Vegetarian" }],
                 cuisines: [{ name: "American" }],
                 tags: ["healthy", "vegetarian"]
+            },
+            {
+                id: 3,
+                title: "Sample Soup Recipe",
+                name: "Hearty Vegetable Soup",
+                description: "A warming and nutritious soup packed with vegetables.",
+                image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop",
+                time: "30",
+                calories: "200",
+                servings: "6",
+                contributor: { 
+                    username: "Soup Master", 
+                    basic_ingredients: "Available",
+                    profile_photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+                },
+                ingredients: ["carrots", "celery", "onions", "vegetable broth"],
+                categories: [{ name: "Dinner" }],
+                cuisines: [{ name: "Cameroonian" }],
+                tags: ["healthy", "comfort food"]
             }
         ];
     }    // Display recipes (updated to show contributor info and profile photo)
@@ -91,37 +219,102 @@ document.addEventListener('DOMContentLoaded', function() {
         recipesGrid.innerHTML = '';
         
         if (!recipes || recipes.length === 0) {
-            recipesGrid.innerHTML = `
-                <div class="no-results" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                    <i class="fas fa-utensils" style="font-size: 50px; color: #ccc; margin-bottom: 20px;"></i>
-                    <h3 style="color: var(--gray-color); margin-bottom: 10px;">No recipes found</h3>
-                    <p style="color: var(--gray-color);">Try adjusting your search or filters</p>
+            console.log('🔄 No recipes found, showing fallback recipes...');
+            // Instead of showing "no results", show fallback recipes
+            const fallbackRecipes = getFallbackRecipes();
+            recipesGrid.innerHTML = '';
+            
+            // Add a notice that these are sample recipes
+            const noticeDiv = document.createElement('div');
+            noticeDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 20px; background: rgba(255,193,7,0.1); border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #ffc107;';
+            noticeDiv.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #e65100; font-weight: 600;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Sample recipes shown - backend may be offline</span>
                 </div>
             `;
+            recipesGrid.appendChild(noticeDiv);
+            
+            // Display fallback recipes
+            fallbackRecipes.forEach(recipe => {
+                const recipeImageUrl = getRecipeImageUrl(recipe);
+                const profileImageUrl = getProfileImageUrl(recipe.contributor);
+                
+                const recipeCard = document.createElement('div');
+                recipeCard.className = 'recipe-card';
+                recipeCard.style.cursor = 'pointer';
+                recipeCard.onclick = () => showToast('This is a sample recipe. Backend may be offline.', '#ff9800');
+                recipeCard.innerHTML = `
+                    <div class="recipe-image" style="background-image: url('${recipeImageUrl}'); background-size: cover; background-position: center;">
+                        <span class="favorite-btn" onclick="event.stopPropagation(); showToast('Sample recipe - favorites not available', '#ff9800');">
+                            <i class="far fa-heart"></i>
+                        </span>
+                        ${recipe.tags && recipe.tags.includes('vegetarian') ? '<span class="recipe-badge">Vegetarian</span>' : ''}
+                    </div>
+                    <div class="recipe-content">
+                        <div class="contributor-info" style="display:flex;align-items:center;margin-bottom:8px;">
+                            ${createImageWithFallback(
+                                profileImageUrl, 
+                                'Profile', 
+                                'width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;',
+                                DEFAULT_PROFILE_IMAGE
+                            )}
+                            <div>
+                                <div style="font-weight:600;font-size:14px;">${recipe.contributor.username}</div>
+                                <div style="font-size:12px;color:#888;">${recipe.contributor.basic_ingredients}</div>
+                            </div>
+                        </div>
+                        <h3>${recipe.title}</h3>
+                        <div class="recipe-meta">
+                            <span><i class="fas fa-clock"></i> ${recipe.time} mins</span>
+                            <span><i class="fas fa-fire"></i> ${recipe.calories} kcal</span>
+                            <span><i class="fas fa-utensils"></i> ${recipe.servings} servings</span>
+                        </div>
+                        <p class="recipe-description">${recipe.description}</p>
+                        <div class="recipe-actions" onclick="event.stopPropagation();">
+                            <button class="btn btn-primary btn-view" onclick="showToast('Sample recipe - full view not available', '#ff9800');">
+                                <i class="fas fa-eye"></i> View Recipe
+                            </button>
+                            <button class="btn btn-secondary" onclick="showToast('Sample recipe - saving not available', '#ff9800');">
+                                <i class="fas fa-bookmark"></i> Save
+                            </button>
+                        </div>
+                    </div>
+                `;
+                recipesGrid.appendChild(recipeCard);
+            });
+            
+            // Handle image loading errors for fallback recipes
+            handleImagesAfterLoad();
             return;
         }
         recipes.forEach(recipe => {
             let contributorHtml = '';
             if (recipe.contributor) {
-                let photoUrl = recipe.profile_photo || (recipe.contributor.profile_photo || '');
-                if (photoUrl && !photoUrl.startsWith('http')) {
-                    photoUrl = `https://njoya.pythonanywhere.com${photoUrl.startsWith('/media/') ? photoUrl : '/media/' + photoUrl}`;
-                }
+                const profileImageUrl = getProfileImageUrl(recipe.contributor);
                 contributorHtml = `
                     <div class="contributor-info" style="display:flex;align-items:center;margin-bottom:8px;">
-                        ${photoUrl ? `<img src="${photoUrl}" alt="Profile" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;">` : ''}
+                        ${createImageWithFallback(
+                            profileImageUrl, 
+                            'Profile', 
+                            'width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;',
+                            DEFAULT_PROFILE_IMAGE
+                        )}
                         <div>
-                            <div style="font-weight:600;font-size:14px;">${recipe.contributor.username || ''}</div>
-                            <div style="font-size:12px;color:#888;">${recipe.contributor.basic_ingredients || ''}</div>
+                            <div style="font-weight:600;font-size:14px;">${recipe.contributor.username || 'Unknown Chef'}</div>
+                            <div style="font-size:12px;color:#888;">${recipe.contributor.basic_ingredients || 'Ingredients Available'}</div>
                         </div>
                     </div>
                 `;
-            }            const recipeCard = document.createElement('div');
+            }
+
+            const recipeImageUrl = getRecipeImageUrl(recipe);
+            const recipeCard = document.createElement('div');
             recipeCard.className = 'recipe-card';
             recipeCard.style.cursor = 'pointer';
             recipeCard.onclick = () => window.location.href = `recipe-detail.html?id=${recipe.id}`;
             recipeCard.innerHTML = `
-                <div class="recipe-image" style="background-image: url(${recipe.image || ''})">
+                <div class="recipe-image" style="background-image: url('${recipeImageUrl}'); background-size: cover; background-position: center;">
                     <span class="favorite-btn ${recipe.favorited ? 'favorited' : ''}" onclick="event.stopPropagation();">
                         <i class="${recipe.favorited ? 'fas' : 'far'} fa-heart"></i>
                     </span>
@@ -129,13 +322,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="recipe-content">
                     ${contributorHtml}
-                    <h3><a href="recipe-detail.html?id=${recipe.id}" style="color:inherit;text-decoration:none;">${recipe.title || recipe.name || ''}</a></h3>
+                    <h3><a href="recipe-detail.html?id=${recipe.id}" style="color:inherit;text-decoration:none;">${recipe.title || recipe.name || 'Untitled Recipe'}</a></h3>
                     <div class="recipe-meta">
-                        <span><i class="fas fa-clock"></i> ${recipe.time || ''} mins</span>
-                        <span><i class="fas fa-fire"></i> ${recipe.calories || ''} kcal</span>
-                        <span><i class="fas fa-utensils"></i> ${recipe.servings || ''} servings</span>
+                        <span><i class="fas fa-clock"></i> ${recipe.time || '30'} mins</span>
+                        <span><i class="fas fa-fire"></i> ${recipe.calories || '250'} kcal</span>
+                        <span><i class="fas fa-utensils"></i> ${recipe.servings || '4'} servings</span>
                     </div>
-                    <p class="recipe-description">${recipe.description || ''}</p>                    <div class="recipe-actions" onclick="event.stopPropagation();">
+                    <p class="recipe-description">${recipe.description || 'A delicious recipe waiting to be discovered.'}</p>                    <div class="recipe-actions" onclick="event.stopPropagation();">
                         <a href="recipe-detail.html?id=${recipe.id}" class="btn btn-primary btn-view">
                             <i class="fas fa-eye"></i>
                             <span>View Recipe</span>
@@ -149,6 +342,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             recipesGrid.appendChild(recipeCard);
         });
+        
+        // Handle image loading errors after content is added
+        handleImagesAfterLoad();
         
         // Reattach event listeners to new elements
         document.querySelectorAll('.favorite-btn').forEach(btn => {
@@ -929,6 +1125,15 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
         recipeData = recipes;
         allRecipes = [...recipes]; // Keep original copy
         displayRecipes(recipeData);
+        
+        // Initialize global image error handling
+        setTimeout(() => {
+            addGlobalImageErrorHandling();
+        }, 1000);
+    }).catch(error => {
+        console.error('❌ Initial fetch failed:', error);
+        // Display fallback recipes
+        displayRecipes([]);
     });
     
     // Dropdown/autocomplete functionality for categories, cuisines, tags
