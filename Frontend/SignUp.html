@@ -7,37 +7,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">    <link rel="stylesheet" href="index.css">
     <style>
-        /* Unified Color Variables */
+        /* Ultra-Bright Color Variables */
         :root {
-            /* Cameroon Flag Colors Inspired Palette */
-            --cameroon-green: #00A651;
-            --cameroon-red: #CE1126;
-            --cameroon-yellow: #FFCD00;
+            /* Cameroon Flag Colors - Ultra Bright */
+            --cameroon-green: #00E676;
+            --cameroon-red: #FF1744;
+            --cameroon-yellow: #FFEA00;
             
-            /* Primary Colors - Nature-Inspired Greens */
-            --primary: var(--primary-color);
-            --primary-dark: #0D4715;
-            --primary-light: #2E7D32;
-            --primary-lighter: #4CAF50;
+            /* Primary Colors - Ultra-Bright Nature-Inspired Greens */
+            --primary: #8BC34A;
+            --primary-dark: #558B2F;
+            --primary-light: #AED581;
+            --primary-lighter: #C5E1A5;
             --primary-accent: var(--cameroon-green);
+            --primary-ultra: var(--cameroon-yellow);
             
-            /* Background Gradients */
-            --bg-gradient-primary: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 50%, #BBF7D0 100%);
-            --bg-gradient-accent: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary-accent) 100%);
+            /* Black Accents */
+            --black: #000000;
+            --black-soft: #0D0D0D;
+            --black-light: #1A1A1A;
+            
+            /* Background Gradients - Ultra Bright */
+            --bg-gradient-primary: linear-gradient(135deg, #F1F8E9 0%, #DCEDC8 50%, #C5E1A5 100%);
+            --bg-gradient-accent: linear-gradient(135deg, var(--cameroon-green) 0%, var(--primary) 50%, var(--cameroon-yellow) 100%);
             
             /* Neutral Colors */
-            --text: #1A202C;
-            --text-light: #4A5568;
+            --text: var(--black-soft);
+            --text-light: var(--black-light);
             --white: #FFFFFF;
             --border: #E2E8F0;
             --gray-50: #F7FAFC;
             --error: var(--cameroon-red);
-            --success: var(--primary-lighter);
+            --success: var(--cameroon-green);
             
-            /* Shadows */
-            --shadow-md: 0 4px 16px rgba(26, 32, 44, 0.08);
-            --shadow-lg: 0 8px 24px rgba(26, 32, 44, 0.12);
-            --shadow-xl: 0 16px 40px rgba(26, 32, 44, 0.16);
+            /* Enhanced Shadows */
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+            --shadow-xl: 0 16px 40px rgba(0,230,118,0.3);
             
             /* Transitions */
             --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -47,7 +53,7 @@
         /* Professional Auth Page Styles */
         .auth-page {
             min-height: 100vh;
-            background: var(--bg-gradient-primary);
+            background: var(--bg-gradient-accent);
             display: flex;
             align-items: center;
             padding: 40px 20px;
@@ -395,19 +401,21 @@
         }        .btn-primary {
             display: block;
             width: 100%;
-            padding: 18px;
+            padding: 20px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             border-radius: 12px;
             background: var(--bg-gradient-accent);
-            color: var(--white);
-            border: none;
+            color: var(--black-soft);
+            border: 2px solid rgba(0,0,0,0.1);
             cursor: pointer;
             transition: var(--transition-normal);
             margin-bottom: 28px;
             font-family: 'Poppins', sans-serif;
             position: relative;
             overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .btn-primary::before {
@@ -417,7 +425,7 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
             transition: left 0.5s;
         }
 
@@ -426,9 +434,10 @@
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-xl);
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 50px rgba(0,230,118,0.5);
+            background: linear-gradient(135deg, var(--cameroon-yellow) 0%, var(--cameroon-green) 100%);
+            border-color: rgba(0,0,0,0.2);
         }
 
         .btn-primary:active {

@@ -8,20 +8,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --primary: var(--primary-color);
-            --primary-light: #2E7D32;
-            --primary-accent: #00A651;
-            --error: #CE1126;
-            --success: #4CAF50;
+            --primary: #8BC34A;
+            --primary-light: #AED581;
+            --primary-accent: #00E676;
+            --primary-ultra: #FFEA00;
+            --black: #000000;
+            --black-soft: #0D0D0D;
+            --black-light: #1A1A1A;
+            --error: #FF1744;
+            --success: #00E676;
             --background: #F7FAFC;
             --white: #FFFFFF;
             --border: #E2E8F0;
-            --text: #1A202C;
-            --text-light: #4A5568;
+            --text: #0D0D0D;
+            --text-light: #333333;
             --font-family: 'Poppins', sans-serif;
         }        body {
             font-family: var(--font-family);
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 50%, #388E3C 100%);
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary) 50%, var(--primary-ultra) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -39,7 +43,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="1.5" fill="rgba(255,255,255,0.08)"/><circle cx="60" cy="30" r="1" fill="rgba(255,255,255,0.06)"/></svg>') repeat;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(0,0,0,0.05)"/><circle cx="80" cy="80" r="1.5" fill="rgba(0,0,0,0.03)"/><circle cx="60" cy="30" r="1" fill="rgba(0,0,0,0.02)"/></svg>') repeat;
             animation: float 30s ease-in-out infinite;
             pointer-events: none;
         }
@@ -279,20 +283,21 @@
             background: rgba(27,94,32,0.08);
         }        .btn {
             width: 100%;
-            padding: 1rem 1.5rem;
-            border: none;
+            padding: 1.2rem 1.5rem;
+            border: 2px solid rgba(0,0,0,0.1);
             border-radius: 0.75rem;
             font-size: 1.1rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-accent) 100%);
-            color: var(--white);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary) 50%, var(--primary-ultra) 100%);
+            color: var(--black-soft);
             cursor: pointer;
             margin-top: 1rem;
             transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            box-shadow: 0 8px 25px rgba(27,94,32,0.25);
+            box-shadow: 0 12px 40px rgba(0,230,118,0.6);
             position: relative;
             overflow: hidden;
             animation: fadeInUp 0.6s ease-out 0.9s both;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         
         @keyframes fadeInUp {
