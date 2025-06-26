@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const button = document.createElement('button');
         button.id = 'openCreateRecipeModal';
         button.className = 'btn btn-primary create-recipe-btn';
-        button.style.cssText = 'margin-bottom:30px;font-size:18px;padding:16px 40px;border-radius:50px;box-shadow:0 8px 25px rgba(27,94,32,0.2);font-weight:600;letter-spacing:0.5px;background:linear-gradient(135deg, var(--primary-color), #00A651);border:none;color:white;cursor:pointer;transition:all 0.3s cubic-bezier(0.23, 1, 0.32, 1);position:relative;overflow:hidden;';
+        button.style.cssText = 'margin-bottom:30px;font-size:18px;padding:16px 40px;border-radius:50px;box-shadow:0 6px 20px rgba(46,125,50,0.15);font-weight:600;letter-spacing:0.5px;background:linear-gradient(135deg, var(--primary-color), var(--primary-lighter));border:none;color:white;cursor:pointer;transition:all 0.3s cubic-bezier(0.23, 1, 0.32, 1);position:relative;overflow:hidden;';
         button.innerHTML = '<i class="fas fa-plus-circle" style="margin-right:10px;font-size:20px;"></i> Create New Recipe';
 
         // Add the button to the container

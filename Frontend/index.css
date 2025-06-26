@@ -1,55 +1,59 @@
 /* ChopSmo - Unified Cameroon-Inspired Design System */
 :root {
-    /* Cameroon Flag Colors Inspired Palette */
-    --cameroon-green: #00A651;      /* From Cameroon flag green */
-    --cameroon-red: #CE1126;        /* From Cameroon flag red */
-    --cameroon-yellow: #FFCD00;     /* From Cameroon flag yellow */
+    /* Cameroon Flag Colors Inspired Palette - Softer Version */
+    --cameroon-green: #52A86F;      /* Softer Cameroon flag green */
+    --cameroon-red: #D63447;        /* Softer Cameroon flag red */
+    --cameroon-yellow: #F9CA24;     /* Softer Cameroon flag yellow */
     
-    /* Primary Colors - Nature-Inspired Greens */
-    --primary-color: #1B5E20;       /* Deep forest green */
-    --primary-light: #2E7D32;       /* Forest green */
-    --primary-lighter: #4CAF50;     /* Fresh green */
-    --primary-accent: var(--cameroon-green);  /* Vibrant Cameroon green */
-    --primary-dark: #0D4715;        /* Very dark green */
+    /* Primary Colors - Softer Nature-Inspired Greens */
+    --primary-color: #2E7D32;       /* Medium forest green (was #1B5E20) */
+    --primary-light: #4CAF50;       /* Fresh green (unchanged) */
+    --primary-lighter: #66BB6A;     /* Light green (was #4CAF50) */
+    --primary-accent: var(--cameroon-green);  /* Softer Cameroon green */
+    --primary-dark: #1B5E20;        /* Dark green (moved from primary) */
     
     /* Secondary Colors - Warm Earth Tones */
-    --secondary-color: #8D6E63;     /* Earthy brown */
-    --secondary-light: #A1887F;     /* Light brown */
-    --secondary-dark: #5D4037;      /* Dark brown */
+    --secondary-color: #A1887F;     /* Lighter earthy brown (was #8D6E63) */
+    --secondary-light: #BCAAA4;     /* Very light brown (was #A1887F) */
+    --secondary-dark: #6D4C41;      /* Medium brown (was #5D4037) */
     
-    /* Accent Colors - Cameroon Inspired */
+    /* Accent Colors - Cameroon Inspired - Softer */
     --accent-red: var(--cameroon-red);
     --accent-yellow: var(--cameroon-yellow);
-    --accent-orange: #FF8F00;       /* Sunset orange */
-    --accent-gold: #FFB300;         /* Golden yellow */
+    --accent-orange: #FF9800;       /* Softer sunset orange (was #FF8F00) */
+    --accent-gold: #FFC107;         /* Softer golden yellow (was #FFB300) */
     
-    /* Neutral Colors */
-    --dark-color: #1A202C;          /* Rich dark */
-    --dark-secondary: #2D3748;      /* Medium dark */
-    --gray-color: #4A5568;          /* Medium gray */
-    --gray-light: #A0AEC0;          /* Light gray */
-    --gray-lighter: #E2E8F0;        /* Very light gray */
-    --light-color: #F7FAFC;         /* Off white */
-    --white-color: #FFFFFF;         /* Pure white */
+    /* Neutral Colors - Softer */
+    --dark-color: #37474F;          /* Softer dark (was #1A202C) */
+    --dark-secondary: #455A64;      /* Softer medium dark (was #2D3748) */
+    --gray-color: #607D8B;          /* Softer medium gray (was #4A5568) */
+    --gray-light: #B0BEC5;          /* Softer light gray (was #A0AEC0) */
+    --gray-lighter: #ECEFF1;        /* Softer very light gray (was #E2E8F0) */
+    --light-color: #FAFAFA;         /* Softer off white (was #F7FAFC) */
+    --white-color: #FFFFFF;         /* Pure white (unchanged) */
     
-    /* Status Colors */
+    /* Status Colors - Softer */
     --success-color: var(--primary-lighter);
     --warning-color: var(--accent-yellow);
     --danger-color: var(--accent-red);
-    --info-color: #3182CE;
+    --info-color: #42A5F5;          /* Softer blue (was #3182CE) */
     
-    /* Background Gradients */
-    --bg-gradient-primary: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 50%, #BBF7D0 100%);
-    --bg-gradient-secondary: linear-gradient(135deg, #FFF8E1 0%, #FFF3C4 50%, #FFECB3 100%);
-    --bg-gradient-accent: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--primary-accent) 100%);
+    /* Background Gradients - Much Softer */
+    --bg-gradient-primary: linear-gradient(135deg, #F8FFF8 0%, #F0F8F0 50%, #E8F5E8 100%);
+    --bg-gradient-secondary: linear-gradient(135deg, #FFFEF7 0%, #FFF9E6 50%, #FFF3D3 100%);
+    --bg-gradient-accent: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--primary-lighter) 100%);
     
-    /* Shadows */
-    --shadow-sm: 0 2px 4px rgba(26, 32, 44, 0.06);
-    --shadow-md: 0 4px 16px rgba(26, 32, 44, 0.08);
-    --shadow-lg: 0 8px 24px rgba(26, 32, 44, 0.12);
-    --shadow-xl: 0 16px 40px rgba(26, 32, 44, 0.16);
-    --shadow-primary: 0 4px 16px rgba(27, 94, 32, 0.15);
-    --shadow-accent: 0 4px 16px rgba(0, 166, 81, 0.2);
+    /* Shadows - Softer */
+    --shadow-sm: 0 2px 4px rgba(55, 71, 79, 0.04);
+    --shadow-md: 0 4px 16px rgba(55, 71, 79, 0.06);
+    --shadow-lg: 0 8px 24px rgba(55, 71, 79, 0.08);
+    --shadow-xl: 0 16px 40px rgba(55, 71, 79, 0.12);
+    --shadow-primary: 0 4px 16px rgba(46, 125, 50, 0.12);
+    --shadow-accent: 0 4px 16px rgba(82, 168, 111, 0.15);
+    
+    /* Box Shadow Variables for Buttons - Softer */
+    --box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
+    --box-shadow-hover: 0 8px 20px rgba(46, 125, 50, 0.2);
     
     /* Border Radius */
     --radius-sm: 6px;
@@ -62,6 +66,8 @@
     --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --border-radius: 12px;
     
     /* Typography */
     --font-family-primary: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -90,6 +96,9 @@
     --space-12: 3rem;      /* 48px */
     --space-16: 4rem;      /* 64px */
     --space-20: 5rem;      /* 80px */
+    
+    /* Additional Accent Color for backward compatibility */
+    --accent-color: var(--primary-accent);
 }
 
 * {
@@ -102,7 +111,7 @@ body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--dark-color);
-    background: linear-gradient(135deg, var(--light-color) 0%, #F0FDF4 100%);
+    background: linear-gradient(135deg, var(--light-color) 0%, #F8FFF8 100%);
     font-weight: 400;
     letter-spacing: 0.01em;
 }

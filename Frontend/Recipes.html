@@ -53,7 +53,7 @@
 .recipes-header h1 {
     font-size: var(--font-size-4xl);
     margin-bottom: var(--space-4);
-    background: linear-gradient(135deg, var(--primary-color), #00A651);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -69,7 +69,7 @@
     transform: translateX(-50%);
     width: 100px;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary-color), #00A651);
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-accent));
     border-radius: 2px;
 }
 
@@ -131,7 +131,7 @@
 
 .search-bar button {
     padding: 0 var(--space-6);
-    background: linear-gradient(135deg, var(--primary-color), #00A651);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
     color: var(--white-color);
     border: none;
     cursor: pointer;
@@ -157,7 +157,7 @@
 }
 
 .search-bar button:hover {
-    background: linear-gradient(135deg, #00A651, var(--primary-color));
+    background: linear-gradient(135deg, var(--primary-accent), var(--primary-color));
     transform: scale(1.05);
 }
 
@@ -227,7 +227,7 @@
 }
 
 .filter-tag.active {
-    background: linear-gradient(135deg, var(--primary-color), #00A651);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
     color: white;
     border-color: var(--primary-color);
     box-shadow: 0 8px 25px rgba(27,94,32,0.25);
@@ -235,7 +235,7 @@
 }
 
 .filter-tag.active:hover {
-    background: linear-gradient(135deg, #00A651, var(--primary-color));
+    background: linear-gradient(135deg, var(--primary-accent), var(--primary-color));
 }
 
 .recipes-grid {
@@ -266,7 +266,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary-color), #00A651, #4CAF50);
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-accent), #4CAF50);
     transform: scaleX(0);
     transition: transform 0.3s ease;
 }
@@ -353,7 +353,7 @@
     position: absolute;
     bottom: 15px;
     left: 15px;
-    background: linear-gradient(135deg, var(--primary-color), #00A651);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
     color: white;
     padding: 6px 16px;
     border-radius: 20px;
@@ -460,13 +460,13 @@
 }
 
 .recipe-actions .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), #00A651);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
     color: white;
     box-shadow: 0 4px 15px rgba(27,94,32,0.3);
 }
 
 .recipe-actions .btn-primary:hover {
-    background: linear-gradient(135deg, #00A651, var(--primary-color));
+    background: linear-gradient(135deg, var(--primary-accent), var(--primary-color));
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(27,94,32,0.4);
 }
@@ -524,7 +524,7 @@
 .create-recipe-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 15px 40px rgba(27,94,32,0.3);
-    background: linear-gradient(135deg, #00A651, var(--primary-color));
+    background: linear-gradient(135deg, var(--primary-accent), var(--primary-color));
 }
 
 .create-recipe-btn:active {
@@ -755,7 +755,7 @@
 
 .modal-content h2 {
     margin-bottom: 25px;
-    background: linear-gradient(135deg, var(--primary-color), #00A651);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -767,7 +767,7 @@
 }
 
 .modal-content h2 i {
-    background: linear-gradient(135deg, var(--primary-color), #00A651);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -820,7 +820,7 @@
 }
 
 #addIngredientBtn {
-    background: linear-gradient(135deg, #00A651, var(--primary-color));
+    background: linear-gradient(135deg, var(--primary-accent), var(--primary-color));
     color: white;
     border: none;
     padding: 10px 20px;
@@ -899,7 +899,7 @@
     cursor: pointer;
 }
 .modal-content button[type="submit"].btn-primary { /* Ensure submit button uses primary style */
-    background: linear-gradient(135deg, var(--primary-color), #00A651);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
     color: white;
     border: none;
     width: 100%;
@@ -934,7 +934,7 @@
 }
 
 .modal-content button[type="submit"].btn-primary:hover {
-    background: linear-gradient(135deg, #00A651, var(--primary-color));
+    background: linear-gradient(135deg, var(--primary-accent), var(--primary-color));
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(27,94,32,0.4);
 }
