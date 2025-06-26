@@ -637,13 +637,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Set up event listeners
     if (openCreateRecipeModalBtn) {
-        console.log('✅ Setting up simplified modal button click handler...');
-        openCreateRecipeModalBtn.addEventListener('click', function(event) {
-            console.log('🔵 Create Recipe button clicked (simplified handler)');
+        console.log('✅ Setting up verified contributor modal button click handler...');
+        openCreateRecipeModalBtn.addEventListener('click', async function(event) {
+            console.log('🔵 Create Recipe button clicked (verified contributor handler)');
             event.preventDefault();
             event.stopPropagation();
             
-            // Check for auth token (simplified check)
+            // Check for auth token
             const token = localStorage.getItem('authToken');
             if (!token) {
                 console.log('❌ No auth token - please log in');
@@ -651,8 +651,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('✅ Auth token present, opening modal...');
-            openModal();
+            // Verify contributor status before allowing recipe creation
+            console.log('🔐 Verifying contributor status...');
+            try {
+                await verifyContributorAccess();
+                console.log('✅ Contributor verification passed, opening modal...');
+                openModal();
+            } catch (error) {
+                console.log('❌ Contributor verification failed:', error.message);
+                showContributorAccessDeniedModal(error.message);
+            }
         });
     } else {
         console.error('❌ Create Recipe button not found!');
@@ -668,6 +676,197 @@ document.addEventListener('DOMContentLoaded', function() {
         createRecipeModal.addEventListener('click', function(event) {
             if (event.target === createRecipeModal) {
                 closeModal();
+            }
+        });
+    }
+
+    // ======= CONTRIBUTOR VERIFICATION FUNCTIONS =======
+    
+    // Verify that the current user is a verified contributor
+    async function verifyContributorAccess() {
+        try {
+            // Check if RecipeAPI is available for user profile check
+            if (typeof RecipeAPI !== 'undefined') {
+                const recipeAPI = new RecipeAPI('https://njoya.pythonanywhere.com');
+                
+                // Get current user profile with timeout
+                const profile = await Promise.race([
+                    recipeAPI.getCurrentUser(),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Profile request timeout')), 5000)
+                    )
+                ]);
+                
+                console.log('👤 Current user profile for verification:', profile);
+                
+                // Check verification status
+                const isVerified = profile.is_verified_contributor || 
+                                 profile.is_staff || 
+                                 profile.is_superuser ||
+                                 profile.can_create_recipes;
+                
+                if (!isVerified) {
+                    throw new Error('Recipe creation is restricted to verified contributors only. Please contact support to become a verified contributor.');
+                }
+                
+                console.log('✅ User is verified contributor');
+                return true;
+            } else {
+                console.warn('RecipeAPI not available, skipping backend verification');
+                // For now, allow if token exists (fallback behavior)
+                return true;
+            }
+        } catch (error) {
+            console.error('❌ Contributor verification failed:', error);
+            
+            // Provide helpful error messages
+            if (error.message.includes('timeout')) {
+                throw new Error('Unable to verify contributor status. Please check your connection and try again.');
+            } else if (error.message.includes('401') || error.message.includes('unauthorized')) {
+                throw new Error('Please log in again to create recipes.');
+            } else if (error.message.includes('verified contributor')) {
+                throw error; // Re-throw our custom verification message
+            } else {
+                throw new Error('Only verified contributors can create recipes. Please contact support if you believe this is an error.');
+            }
+        }
+    }
+    
+    // Show professional modal for contributor access denied
+    function showContributorAccessDeniedModal(message) {
+        const modal = document.createElement('div');
+        modal.className = 'contributor-access-modal-overlay';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        `;
+        
+        modal.innerHTML = `
+            <div class="contributor-access-modal" style="
+                background: white;
+                padding: 40px 30px;
+                border-radius: 15px;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+                text-align: center;
+                position: relative;
+            ">
+                <div style="
+                    width: 80px;
+                    height: 80px;
+                    background: linear-gradient(135deg, #ff6b6b, #ffa500);
+                    border-radius: 50%;
+                    margin: 0 auto 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 35px;
+                    color: white;
+                ">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                
+                <h3 style="
+                    color: #333;
+                    margin-bottom: 15px;
+                    font-size: 24px;
+                    font-weight: 600;
+                ">Verified Contributors Only</h3>
+                
+                <p style="
+                    color: #666;
+                    margin-bottom: 30px;
+                    line-height: 1.6;
+                    font-size: 16px;
+                ">${message}</p>
+                
+                <div style="margin-bottom: 25px;">
+                    <h4 style="
+                        color: #333;
+                        margin-bottom: 10px;
+                        font-size: 18px;
+                    ">How to Become a Verified Contributor:</h4>
+                    <ul style="
+                        text-align: left;
+                        color: #666;
+                        line-height: 1.8;
+                        margin: 0 auto;
+                        display: inline-block;
+                    ">
+                        <li>📧 Contact our support team</li>
+                        <li>📝 Submit a few sample recipes for review</li>
+                        <li>✅ Pass our quality and safety guidelines</li>
+                        <li>🎉 Get verified and start creating!</li>
+                    </ul>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button onclick="this.closest('.contributor-access-modal-overlay').remove()" style="
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button onclick="window.open('mailto:support@chopsmo.com?subject=Verified Contributor Request', '_blank')" style="
+                        background: linear-gradient(135deg, var(--primary-color), #00A651);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <i class="fas fa-envelope"></i> Contact Support
+                    </button>
+                </div>
+                
+                <button onclick="this.closest('.contributor-access-modal-overlay').remove()" style="
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    color: #aaa;
+                    cursor: pointer;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='#f5f5f5'; this.style.color='#333'" onmouseout="this.style.background='none'; this.style.color='#aaa'">
+                    ×
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.remove();
             }
         });
     }
@@ -1026,197 +1225,6 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
                 
                 // Get auth token for API request
                 const token = localStorage.getItem('authToken');
-                if (!token) {
-                    console.error('❌ No authentication token found');
-                    showToast('Please log in to create recipes', '#f44336');
-                    return;
-                }
-                
-                const requestHeaders = {
-                    'Authorization': `Token ${token}`,
-                    'X-CSRFToken': csrfToken,
-                };
-                
-                console.log('📤 Request headers:', requestHeaders);
-                console.log('📤 Request credentials: include');
-                console.log('📤 FormData entries count:', Array.from(formData.entries()).length);
-                
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
-                    method: 'POST',
-                    headers: requestHeaders,
-                    credentials: 'include',
-                    body: formData
-                });
-
-                let data;
-                try {
-                    data = await response.json();
-                } catch (jsonError) {
-                    console.error('❌ Failed to parse response JSON:', jsonError);
-                    if (response.status === 404) {
-                        showToast('API endpoint not found. Recipe creation is currently unavailable.', '#f44336');
-                        return;
-                    } else if (!response.ok) {
-                        showToast(`Server error (${response.status}). Please try again later.`, '#f44336');
-                        return;
-                    }
-                    // If response is ok but JSON parsing failed, try to get text
-                    try {
-                        const textResponse = await response.text();
-                        console.error('❌ Raw response:', textResponse.substring(0, 500));
-                        showToast('Server returned invalid response format', '#f44336');
-                        return;
-                    } catch (textError) {
-                        console.error('❌ Failed to get response text:', textError);
-                        showToast('Failed to process server response', '#f44336');
-                        return;
-                    }
-                }
-
-                if (!response.ok) {                    console.error('❌ Recipe creation failed:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        responseData: data,
-                        url: response.url
-                    });
-
-                    // Enhanced debugging for 400 errors
-                    if (response.status === 400) {
-                        console.error('🔍 400 Bad Request - Detailed Analysis:');
-                        console.error('📋 Full response data:', JSON.stringify(data, null, 2));
-                        
-                        // Check for common 400 error causes
-                        if (data && typeof data === 'object') {
-                            Object.keys(data).forEach(key => {
-                                console.error(`  ❌ Field '${key}':`, data[key]);
-                            });
-                        }
-                    }
-
-                    // Log the FormData that was sent for debugging
-                    console.log('📤 FormData sent:');
-                    for (let [key, value] of formData.entries()) {
-                        console.log(`${key}:`, typeof value === 'string' ? value.substring(0, 100) : value);
-                    }
-
-                    // Show field errors professionally
-                    if (typeof data === 'object' && data !== null) {
-                        let hasFieldErrors = false;
-                        for (const [field, errors] of Object.entries(data)) {
-                            let fieldId = null;
-                            if (field === 'name') fieldId = 'recipeName';
-                            else if (field === 'description') fieldId = 'recipeDescription';
-                            else if (field === 'ingredients') fieldId = 'recipeIngredients';
-                            else if (field === 'instructions') fieldId = 'recipeInstructions';
-                            else if (field === 'title') fieldId = 'recipeTitle';
-                            else if (field === 'categories') fieldId = 'recipeCategories';
-                            else if (field === 'cuisines') fieldId = 'recipeCuisines';
-                            else if (field === 'tags') fieldId = 'recipeTags';
-                            
-                            if (fieldId && document.getElementById(fieldId)) {
-                                showFieldError(fieldId, Array.isArray(errors) ? errors.join(' ') : errors);
-                                hasFieldErrors = true;
-                            } else {
-                                console.warn(`🔍 Unhandled field error: ${field}:`, errors);
-                            }
-                        }
-
-                        // Show general error if no field-specific errors were shown
-                        if (!hasFieldErrors) {
-                            let errorMsg = `Failed to create recipe (${response.status})`;
-                            if (data.detail) errorMsg = data.detail;
-                            else if (data.message) errorMsg = data.message;
-                            else if (data.non_field_errors) errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors.join(' ') : data.non_field_errors;
-                            else if (typeof data === 'string' && data.length < 200) errorMsg = data;
-                            
-                            showToast(errorMsg, '#f44336');
-                        }
-                    } else {
-                        showToast(`Failed to create recipe (${response.status}: ${response.statusText})`, '#f44336');
-                    }
-                    return;
-                }
-                showToast('Recipe created successfully!');
-                createRecipeModal.style.display = 'none';
-                fetchRecipes().then(newRecipes => { recipeData = newRecipes; displayRecipes(recipeData); });
-                createRecipeForm.reset();
-                // Reinitialize the form components
-                initializeIngredientForm();
-                initializeDropdowns();
-            } catch (error) {
-                alert('Network error. Please try again later.');
-                showToast('Network error. Please try again later.', '#f44336');
-            }
-        });
-    }    // Event listeners
-    if (searchButton) {
-        searchButton.addEventListener('click', searchRecipes);
-    }
-    
-    if (clearSearchButton) {
-        clearSearchButton.addEventListener('click', clearSearch);
-    }
-    
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') searchRecipes();
-        });
-        
-        // Show/hide clear button based on input
-        searchInput.addEventListener('input', function() {
-            if (clearSearchButton) {
-                if (this.value.trim()) {
-                    clearSearchButton.style.display = 'block';
-                } else {
-                    clearSearchButton.style.display = 'none';
-                    // Auto-clear search when input is empty
-                    if (recipeData.length !== allRecipes.length) {
-                        clearSearch();
-                    }
-                }
-            }
-        });
-    }
-    
-    filterTags.forEach(tag => {
-        tag.addEventListener('click', function() {
-            filterTags.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            // Extract text content without icon
-            const tagText = this.textContent.trim();
-            filterByTag(tagText);
-        });
-    });
-    
-    document.querySelectorAll('.favorite-btn').forEach(btn => {
-        btn.addEventListener('click', toggleFavorite);
-    });
-    
-    document.querySelectorAll('.btn-add-plan').forEach(btn => {
-        btn.addEventListener('click', addToMealPlan);
-    });
-
-    // Initial load: fetch from backend
-    fetchRecipes().then(recipes => {
-        recipeData = recipes;
-        allRecipes = [...recipes]; // Keep original copy
-        displayRecipes(recipeData);
-        
-        // Initialize global image error handling
-        setTimeout(() => {
-            addGlobalImageErrorHandling();
-        }, 1000);
-    }).catch(error => {
-        console.error('❌ Initial fetch failed:', error);
-        // Display fallback recipes
-        displayRecipes([]);
-    });
-    
-    // Dropdown/autocomplete functionality for categories, cuisines, tags
-    const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Snacks", "Vegetarian", "Quick Meals", "High Protein", "Budget Friendly", "Dessert", "Vegan"];
-    const cuisineOptions = ["Italian", "Mexican", "Cameroonian", "French", "Indian", "Chinese", "American", "Thai", "Moroccan", "Greek"];
-    const tagOptions = ["spicy", "quick", "gluten-free", "low-carb", "dairy-free", "nut-free", "family", "kids", "holiday", "comfort food"];
-
     function populateSelect(selectId, options) {
         const select = document.getElementById(selectId);
         if (!select) return;
