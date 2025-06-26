@@ -291,7 +291,9 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast('Search cleared', '#4CAF50');
     }
 
-    // Modal logic for recipe creation
+    // ======= SIMPLIFIED MODAL LOGIC (MAIN IMPLEMENTATION) =======
+    
+    // Get modal elements
     const openCreateRecipeModalBtn = document.getElementById('openCreateRecipeModal');
     const createRecipeModal = document.getElementById('createRecipeModal');
     const closeCreateRecipeModalBtn = document.getElementById('closeCreateRecipeModal');
@@ -299,34 +301,110 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Debug: Check if all elements exist
     console.log('🔍 Checking modal elements...');
-    debugModalElements();
+    console.log('📍 Open button:', openCreateRecipeModalBtn);
+    console.log('📍 Modal:', createRecipeModal);
+    console.log('📍 Close button:', closeCreateRecipeModalBtn);
+    console.log('📍 Form:', createRecipeForm);
 
-    // Helper: Check if user is a verified contributor (assume backend exposes this in profile)
-    async function isVerifiedContributor() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            console.log('❌ No auth token found');
-            showToast('Please log in to create recipes.', '#f44336');
-            return false;
-        }
-        
-        try {
-            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
-                method: 'GET',
-                headers: { 'Authorization': `Token ${token}` }
-            });
-            const data = await response.json();
-            console.log('🔍 User profile check:', { status: response.status, ok: response.ok });
-            
-            // For now, let's allow all authenticated users to create recipes
-            // You can change this to check for data.is_verified_contributor later
-            return response.ok && token; // Simple check - if user is logged in, allow recipe creation
-        } catch (error) {
-            console.error('❌ Profile check failed:', error);
-            showToast('Authentication error. Please log in again.', '#f44336');
-            return false;
+    // Simple modal open function
+    function openModal() {
+        console.log('🔓 Opening modal...');
+        if (createRecipeModal) {
+            createRecipeModal.style.display = 'flex';
+            console.log('✅ Modal display set to flex');
+            // Initialize form components
+            initializeIngredientForm();
+            initializeDropdowns();
+        } else {
+            console.error('❌ Modal element not found');
         }
     }
+
+    // Simple modal close function
+    function closeModal() {
+        console.log('🔒 Closing modal...');
+        if (createRecipeModal) {
+            createRecipeModal.style.display = 'none';
+            console.log('✅ Modal closed');
+        }
+    }
+
+    // Set up event listeners
+    if (openCreateRecipeModalBtn) {
+        console.log('✅ Setting up simplified modal button click handler...');
+        openCreateRecipeModalBtn.addEventListener('click', function(event) {
+            console.log('🔵 Create Recipe button clicked (simplified handler)');
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Check for auth token (simplified check)
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                console.log('❌ No auth token - please log in');
+                showToast('Please log in to create recipes.', '#f44336');
+                return;
+            }
+            
+            console.log('✅ Auth token present, opening modal...');
+            openModal();
+        });
+    } else {
+        console.error('❌ Create Recipe button not found!');
+    }
+
+    // Close modal events
+    if (closeCreateRecipeModalBtn) {
+        closeCreateRecipeModalBtn.addEventListener('click', closeModal);
+    }
+
+    // Close modal when clicking outside
+    if (createRecipeModal) {
+        createRecipeModal.addEventListener('click', function(event) {
+            if (event.target === createRecipeModal) {
+                closeModal();
+            }
+        });
+    }
+
+    // ======= DEBUGGING AND TESTING FUNCTIONS =======
+    
+    // Add debugging functions for testing modal and auth
+    window.debugAuth = function() {
+        const token = localStorage.getItem('authToken');
+        console.log('🔍 Current auth token:', token ? 'Present' : 'Missing');
+        console.log('🔍 Token value:', token);
+    };
+    
+    window.setTestAuth = function() {
+        localStorage.setItem('authToken', 'test-token-123');
+        console.log('✅ Test auth token set');
+    };
+    
+    window.clearAuth = function() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        console.log('🧹 Auth tokens cleared');
+    };
+
+    // Add a simple test function to force open modal (for debugging)
+    window.testOpenModal = function() {
+        console.log('🧪 Test: Force opening modal...');
+        openModal();
+    };
+    
+    // Add a simple synchronous test (bypass authentication for testing)
+    window.testOpenModalSync = function() {
+        console.log('🧪 Sync Test: Opening modal without auth check...');
+        if (createRecipeModal) {
+            createRecipeModal.style.display = 'flex';
+            console.log('� Modal display style set to:', createRecipeModal.style.display);
+            console.log('🔍 Modal computed display:', getComputedStyle(createRecipeModal).display);
+            initializeIngredientForm();
+            initializeDropdowns();
+        }
+    };
+
+    // ======= ADVANCED USER VERIFICATION (KEPT FOR FUTURE USE) =======
 
     // Ingredient management functions
     function createIngredientRow(name = '', quantity = '', unit = '', preparation = '') {
@@ -377,60 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast('Recipe creation is temporarily disabled. Please try again later.', '#f44336');
     }
 
-    if (openCreateRecipeModalBtn && createRecipeModal && closeCreateRecipeModalBtn) {
-        console.log('✅ All modal elements found, setting up event listeners...');
-        
-        openCreateRecipeModalBtn.addEventListener('click', async function() {
-            console.log('🔵 Create Recipe button clicked');
-            try {
-                if (await isVerifiedContributor()) {
-                    console.log('✅ User verified, opening modal...');
-                    createRecipeModal.style.display = 'flex';
-                    // Initialize the ingredient form and dropdowns when modal opens
-                    initializeIngredientForm();
-                    initializeDropdowns();
-                } else {
-                    console.log('❌ User not verified');
-                    showNotVerifiedModal();
-                }
-            } catch (error) {
-                console.error('❌ Error in modal opening:', error);
-                showToast('Error opening recipe creation form. Please try again.', '#f44336');
-            }
-        });
-        closeCreateRecipeModalBtn.addEventListener('click', function() {
-            createRecipeModal.style.display = 'none';
-        });
-        window.addEventListener('click', function(e) {
-            if (e.target === createRecipeModal) createRecipeModal.style.display = 'none';
-        });
-    } else {
-        console.error('❌ Missing required modal elements for recipe creation');
-    }
-
-    // Debug function to check if elements exist
-    function debugModalElements() {
-        const elements = {
-            openCreateRecipeModalBtn: document.getElementById('openCreateRecipeModal'),
-            createRecipeModal: document.getElementById('createRecipeModal'),
-            closeCreateRecipeModalBtn: document.getElementById('closeCreateRecipeModal'),
-            createRecipeForm: document.getElementById('createRecipeForm'),
-            ingredientsList: document.getElementById('ingredientsList'),
-            addIngredientBtn: document.getElementById('addIngredientBtn')
-        };
-        
-        console.log('Modal Elements Check:', elements);
-        
-        Object.entries(elements).forEach(([name, element]) => {
-            if (!element) {
-                console.error(`❌ Missing element: ${name}`);
-            } else {
-                console.log(`✅ Found element: ${name}`);
-            }
-        });
-        
-        return elements;
-    }
+    // ======= FORM SUBMISSION AND API INTEGRATION =======
 
     // --- Global Loading Spinner & Toasts ---
     // Ensure these elements exist in your HTML (e.g., Recipes.html, Login.html)
