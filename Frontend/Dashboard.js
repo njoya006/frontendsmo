@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => waitForTokenAndLoadUserData(retries - 1), 100);
             } else {
                 alert('You are not logged in.');
-                window.location.href = 'login.html';
+                window.location.href = '/Login.html';
             }
             return;
         }
