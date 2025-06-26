@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }, 800);
                 
                 setTimeout(() => {
-                    window.location.href = './DashBoard.html';
+                    window.location.href = '/DashBoard.html';
                 }, 1600);
                 
             } else {
