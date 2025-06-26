@@ -138,7 +138,7 @@ import json
 import requests
 
 def test_recipe_creation():
-    base_url = 'https://njoya.pythonanywhere.com'
+    base_url = 'http://127.0.0.1:8000'
     
     # Get auth token (replace with actual login)
     auth_token = 'your_auth_token_here'
