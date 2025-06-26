@@ -297,55 +297,105 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeCreateRecipeModalBtn = document.getElementById('closeCreateRecipeModal');
     const createRecipeForm = document.getElementById('createRecipeForm');
 
+    // Debug: Check if all elements exist
+    console.log('🔍 Checking modal elements...');
+    debugModalElements();
+
     // Helper: Check if user is a verified contributor (assume backend exposes this in profile)
     async function isVerifiedContributor() {
         const token = localStorage.getItem('authToken');
-        if (!token) return false;
+        if (!token) {
+            console.log('❌ No auth token found');
+            showToast('Please log in to create recipes.', '#f44336');
+            return false;
+        }
+        
         try {
             const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
                 method: 'GET',
                 headers: { 'Authorization': `Token ${token}` }
             });
             const data = await response.json();
-            // Assume backend returns is_verified_contributor: true/false
-            return !!data.is_verified_contributor;
-        } catch {
+            console.log('🔍 User profile check:', { status: response.status, ok: response.ok });
+            
+            // For now, let's allow all authenticated users to create recipes
+            // You can change this to check for data.is_verified_contributor later
+            return response.ok && token; // Simple check - if user is logged in, allow recipe creation
+        } catch (error) {
+            console.error('❌ Profile check failed:', error);
+            showToast('Authentication error. Please log in again.', '#f44336');
             return false;
         }
     }
 
-    // Professional modal for not verified contributors
-    function showNotVerifiedModal() {
-        let modal = document.getElementById('notVerifiedModal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'notVerifiedModal';
-            modal.style = 'display:flex;position:fixed;z-index:2000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;';
-            modal.innerHTML = `
-                <div style="background:#fff;padding:40px 30px;border-radius:16px;max-width:420px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.18);position:relative;">
-                    <span id="closeNotVerifiedModal" style="position:absolute;top:16px;right:24px;font-size:28px;cursor:pointer;">&times;</span>
-                    <img src='images/Bright.jpg' alt='Verification' style='width:80px;height:80px;border-radius:50%;margin-bottom:18px;border:3px solid #4CAF50;'>
-                    <h2 style='color:#4CAF50;margin-bottom:10px;'>Contributor Verification Required</h2>
-                    <p style='color:#555;font-size:16px;margin-bottom:18px;'>Only verified contributors can add new recipes.<br>To become verified, please contact our team or complete your profile and request verification.</p>
-                    <a href='Profile.html' class='btn btn-primary' style='margin:10px 0 0 0;display:inline-block;'>Go to Profile</a>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            document.getElementById('closeNotVerifiedModal').onclick = () => { modal.style.display = 'none'; };
-            window.addEventListener('click', function(e) {
-                if (e.target === modal) modal.style.display = 'none';
-            });
-        } else {
-            modal.style.display = 'flex';
+    // Ingredient management functions
+    function createIngredientRow(name = '', quantity = '', unit = '', preparation = '') {
+        const row = document.createElement('div');
+        row.className = 'ingredient-row';
+        row.style = 'display:flex;gap:8px;margin-bottom:6px;align-items:center;';
+        row.innerHTML = `
+            <input type="text" class="ingredient-name" placeholder="Name" value="${name}" style="flex:2;padding:7px 8px;border-radius:4px;border:1px solid #ccc;" required>
+            <input type="text" class="ingredient-quantity" placeholder="Qty" value="${quantity}" style="width:60px;padding:7px 8px;border-radius:4px;border:1px solid #ccc;" required>
+            <input type="text" class="ingredient-unit" placeholder="Unit" value="${unit}" style="width:60px;padding:7px 8px;border-radius:4px;border:1px solid #ccc;" required>
+            <input type="text" class="ingredient-preparation" placeholder="Prep (optional)" value="${preparation}" style="flex:1;padding:7px 8px;border-radius:4px;border:1px solid #ccc;" title="e.g. diced, chopped, minced">
+            <button type="button" class="remove-ingredient-btn" style="background:#ffdddd;color:#c00;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:15px;">&times;</button>
+        `;
+        row.querySelector('.remove-ingredient-btn').onclick = () => {
+            row.remove();
+            // Ensure at least one ingredient row remains
+            const ingredientsList = document.getElementById('ingredientsList');
+            if (ingredientsList && ingredientsList.children.length === 0) {
+                addIngredientRow();
+            }
+        };
+        return row;
+    }
+
+    function addIngredientRow(name = '', quantity = '', unit = '', preparation = '') {
+        const ingredientsList = document.getElementById('ingredientsList');
+        if (ingredientsList) {
+            ingredientsList.appendChild(createIngredientRow(name, quantity, unit, preparation));
         }
     }
 
+    // Initialize ingredient functionality
+    function initializeIngredientForm() {
+        const addIngredientBtn = document.getElementById('addIngredientBtn');
+        const ingredientsList = document.getElementById('ingredientsList');
+        
+        if (addIngredientBtn && ingredientsList) {
+            addIngredientBtn.onclick = () => addIngredientRow();
+            
+            // Clear and add one default row
+            ingredientsList.innerHTML = '';
+            addIngredientRow();
+        }
+    }
+
+    // Professional modal for not verified contributors (simplified for now)
+    function showNotVerifiedModal() {
+        showToast('Recipe creation is temporarily disabled. Please try again later.', '#f44336');
+    }
+
     if (openCreateRecipeModalBtn && createRecipeModal && closeCreateRecipeModalBtn) {
+        console.log('✅ All modal elements found, setting up event listeners...');
+        
         openCreateRecipeModalBtn.addEventListener('click', async function() {
-            if (await isVerifiedContributor()) {
-                createRecipeModal.style.display = 'flex';
-            } else {
-                showNotVerifiedModal();
+            console.log('🔵 Create Recipe button clicked');
+            try {
+                if (await isVerifiedContributor()) {
+                    console.log('✅ User verified, opening modal...');
+                    createRecipeModal.style.display = 'flex';
+                    // Initialize the ingredient form and dropdowns when modal opens
+                    initializeIngredientForm();
+                    initializeDropdowns();
+                } else {
+                    console.log('❌ User not verified');
+                    showNotVerifiedModal();
+                }
+            } catch (error) {
+                console.error('❌ Error in modal opening:', error);
+                showToast('Error opening recipe creation form. Please try again.', '#f44336');
             }
         });
         closeCreateRecipeModalBtn.addEventListener('click', function() {
@@ -354,6 +404,32 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('click', function(e) {
             if (e.target === createRecipeModal) createRecipeModal.style.display = 'none';
         });
+    } else {
+        console.error('❌ Missing required modal elements for recipe creation');
+    }
+
+    // Debug function to check if elements exist
+    function debugModalElements() {
+        const elements = {
+            openCreateRecipeModalBtn: document.getElementById('openCreateRecipeModal'),
+            createRecipeModal: document.getElementById('createRecipeModal'),
+            closeCreateRecipeModalBtn: document.getElementById('closeCreateRecipeModal'),
+            createRecipeForm: document.getElementById('createRecipeForm'),
+            ingredientsList: document.getElementById('ingredientsList'),
+            addIngredientBtn: document.getElementById('addIngredientBtn')
+        };
+        
+        console.log('Modal Elements Check:', elements);
+        
+        Object.entries(elements).forEach(([name, element]) => {
+            if (!element) {
+                console.error(`❌ Missing element: ${name}`);
+            } else {
+                console.log(`✅ Found element: ${name}`);
+            }
+        });
+        
+        return elements;
     }
 
     // --- Global Loading Spinner & Toasts ---
@@ -717,9 +793,9 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
                 createRecipeModal.style.display = 'none';
                 fetchRecipes().then(newRecipes => { recipeData = newRecipes; displayRecipes(recipeData); });
                 createRecipeForm.reset();
-                // Remove all ingredient rows and add one default row
-                document.getElementById('ingredientsList').innerHTML = '';
-                addIngredientRow();
+                // Reinitialize the form components
+                initializeIngredientForm();
+                initializeDropdowns();
             } catch (error) {
                 alert('Network error. Please try again later.');
                 showToast('Network error. Please try again later.', '#f44336');
@@ -779,4 +855,50 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
         allRecipes = [...recipes]; // Keep original copy
         displayRecipes(recipeData);
     });
+    
+    // Dropdown/autocomplete functionality for categories, cuisines, tags
+    const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Snacks", "Vegetarian", "Quick Meals", "High Protein", "Budget Friendly", "Dessert", "Vegan"];
+    const cuisineOptions = ["Italian", "Mexican", "Cameroonian", "French", "Indian", "Chinese", "American", "Thai", "Moroccan", "Greek"];
+    const tagOptions = ["spicy", "quick", "gluten-free", "low-carb", "dairy-free", "nut-free", "family", "kids", "holiday", "comfort food"];
+
+    function populateSelect(selectId, options) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        select.innerHTML = '';
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.textContent = opt;
+            select.appendChild(option);
+        });
+    }
+
+    function setupAutocomplete(inputId, selectId, options) {
+        const input = document.getElementById(inputId);
+        const select = document.getElementById(selectId);
+        if (!input || !select) return;
+        input.addEventListener('input', function() {
+            const filter = input.value.toLowerCase();
+            select.innerHTML = '';
+            options.filter(opt => opt.toLowerCase().includes(filter)).forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                select.appendChild(option);
+            });
+        });
+    }
+
+    function initializeDropdowns() {
+        populateSelect('recipeCategories', categoryOptions);
+        populateSelect('recipeCuisines', cuisineOptions);
+        populateSelect('recipeTags', tagOptions);
+
+        setupAutocomplete('categoryAutocomplete', 'recipeCategories', categoryOptions);
+        setupAutocomplete('cuisineAutocomplete', 'recipeCuisines', cuisineOptions);
+        setupAutocomplete('tagAutocomplete', 'recipeTags', tagOptions);
+    }
+
+    // Initialize dropdowns on page load
+    initializeDropdowns();
 });
