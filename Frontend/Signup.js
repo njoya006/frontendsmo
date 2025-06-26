@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
                 }
 
                 alert('Account created successfully! Redirecting to dashboard...');
-                window.location.href = 'dashboard.html';
+                window.location.href = 'DashBoard.html';
             } catch (error) {
                 alert('Network error. Please try again later.');
                 console.error(error);

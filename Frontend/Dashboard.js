@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('authToken');
         if (!token) {
             alert('You are not logged in.');
-            window.location.href = 'login.html';
+            window.location.href = 'Login.html';
             return;
         }
         try {
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert(errorMsg);
                 if (response.status === 401) {
                     localStorage.removeItem('authToken');
-                    window.location.href = 'login.html';
+                    window.location.href = 'Login.html';
                 }
                 return;
             }
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => waitForTokenAndLoadUserData(retries - 1), 100);
             } else {
                 alert('You are not logged in.');
-                window.location.href = '/Login.html';
+                window.location.href = 'Login.html';
             }
             return;
         }

@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('authToken');
             if (!token) {
                 alert('You are not logged in.');
-                window.location.href = 'login.html';
+                window.location.href = 'Login.html';
                 return;
             }
             // Get form values
