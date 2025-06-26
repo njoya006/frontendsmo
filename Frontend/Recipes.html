@@ -1413,7 +1413,8 @@
                 </div>
             </section>
 
-            <button id="openCreateRecipeModal" class="btn btn-primary create-recipe-btn" style="margin-bottom:30px;font-size:18px;padding:16px 40px;border-radius:50px;box-shadow:0 8px 25px rgba(27,94,32,0.2);font-weight:600;letter-spacing:0.5px;background:linear-gradient(135deg, var(--primary-color), #00A651);border:none;color:white;cursor:pointer;transition:all 0.3s cubic-bezier(0.23, 1, 0.32, 1);position:relative;overflow:hidden;"><i class="fas fa-plus-circle" style="margin-right:10px;font-size:20px;"></i> Create New Recipe</button>
+            <!-- Create New Recipe button will be dynamically inserted here for verified users only -->
+            <div id="createRecipeButtonContainer"></div>
             
             <div id="createRecipeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="createRecipeModalTitle">
               <div class="modal-content">

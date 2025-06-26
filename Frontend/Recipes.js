@@ -597,17 +597,122 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast('Search cleared', '#4CAF50');
     }
 
+    // ======= USER VERIFICATION CHECK AND CONDITIONAL BUTTON RENDERING =======
+    
+    // Function to check if user is verified and conditionally render Create Recipe button
+    async function initializeCreateRecipeButton() {
+        console.log('🔍 Checking user verification status...');
+        
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.log('❌ No auth token - user not logged in, Create Recipe button will not be rendered');
+            return; // Don't render button for non-logged in users
+        }
+
+        try {
+            console.log('🔄 Fetching user profile for verification check...');
+            // Fetch user profile to check verification status
+            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Token ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.log(`❌ Failed to fetch user profile: ${response.status} ${response.statusText}`);
+                console.log('ℹ️ Create Recipe button will not be rendered due to API error');
+                return; // Don't render button if can't verify user
+            }
+
+            const userProfile = await response.json();
+            console.log('✅ User profile loaded successfully:', userProfile);
+
+            // Check if user is verified contributor or staff
+            const isVerified = userProfile.is_verified_contributor || userProfile.is_staff;
+            console.log('🔍 User verification status:', { 
+                username: userProfile.username,
+                is_verified_contributor: userProfile.is_verified_contributor,
+                is_staff: userProfile.is_staff,
+                finalVerificationStatus: isVerified 
+            });
+
+            if (isVerified) {
+                console.log('✅ User is verified - rendering Create Recipe button');
+                renderCreateRecipeButton();
+            } else {
+                console.log('❌ User is not verified - Create Recipe button will not be rendered');
+                console.log('ℹ️ Only verified contributors can create recipes');
+            }
+
+        } catch (error) {
+            console.error('❌ Error checking user verification:', error);
+            console.log('ℹ️ Create Recipe button will not be rendered due to error');
+            // Don't render button if there's an error
+        }
+    }
+
+    // Function to render the Create Recipe button for verified users
+    function renderCreateRecipeButton() {
+        const container = document.getElementById('createRecipeButtonContainer');
+        if (!container) {
+            console.error('❌ Create Recipe button container not found');
+            return;
+        }
+
+        // Create the button element
+        const button = document.createElement('button');
+        button.id = 'openCreateRecipeModal';
+        button.className = 'btn btn-primary create-recipe-btn';
+        button.style.cssText = 'margin-bottom:30px;font-size:18px;padding:16px 40px;border-radius:50px;box-shadow:0 8px 25px rgba(27,94,32,0.2);font-weight:600;letter-spacing:0.5px;background:linear-gradient(135deg, var(--primary-color), #00A651);border:none;color:white;cursor:pointer;transition:all 0.3s cubic-bezier(0.23, 1, 0.32, 1);position:relative;overflow:hidden;';
+        button.innerHTML = '<i class="fas fa-plus-circle" style="margin-right:10px;font-size:20px;"></i> Create New Recipe';
+
+        // Add the button to the container
+        container.appendChild(button);
+
+        console.log('✅ Create Recipe button rendered successfully');
+
+        // Set up the event listener for the newly created button
+        setupCreateRecipeButtonListener();
+    }
+
+    // Function to set up event listener for the Create Recipe button
+    function setupCreateRecipeButtonListener() {
+        const openCreateRecipeModalBtn = document.getElementById('openCreateRecipeModal');
+        
+        if (openCreateRecipeModalBtn) {
+            console.log('✅ Setting up Create Recipe button event listener...');
+            openCreateRecipeModalBtn.addEventListener('click', function(event) {
+                console.log('🔵 Create Recipe button clicked');
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Since we only render the button for verified users, we can directly open the modal
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    console.log('❌ No auth token - please log in');
+                    showToast('Please log in to create recipes.', '#f44336');
+                    return;
+                }
+                
+                console.log('✅ Opening modal for verified user...');
+                openModal();
+            });
+        } else {
+            console.error('❌ Create Recipe button not found after rendering!');
+        }
+    }
+
     // ======= SIMPLIFIED MODAL LOGIC (MAIN IMPLEMENTATION) =======
     
-    // Get modal elements
-    const openCreateRecipeModalBtn = document.getElementById('openCreateRecipeModal');
+    // Get modal elements (button will be dynamically created)
     const createRecipeModal = document.getElementById('createRecipeModal');
     const closeCreateRecipeModalBtn = document.getElementById('closeCreateRecipeModal');
     const createRecipeForm = document.getElementById('createRecipeForm');
 
-    // Debug: Check if all elements exist
+    // Debug: Check if modal elements exist
     console.log('🔍 Checking modal elements...');
-    console.log('📍 Open button:', openCreateRecipeModalBtn);
     console.log('📍 Modal:', createRecipeModal);
     console.log('📍 Close button:', closeCreateRecipeModalBtn);
     console.log('📍 Form:', createRecipeForm);
@@ -633,29 +738,6 @@ document.addEventListener('DOMContentLoaded', function() {
             createRecipeModal.style.display = 'none';
             console.log('✅ Modal closed');
         }
-    }
-
-    // Set up event listeners
-    if (openCreateRecipeModalBtn) {
-        console.log('✅ Setting up simplified modal button click handler...');
-        openCreateRecipeModalBtn.addEventListener('click', function(event) {
-            console.log('🔵 Create Recipe button clicked (simplified handler)');
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // Check for auth token (simplified check)
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                console.log('❌ No auth token - please log in');
-                showToast('Please log in to create recipes.', '#f44336');
-                return;
-            }
-            
-            console.log('✅ Auth token present, opening modal...');
-            openModal();
-        });
-    } else {
-        console.error('❌ Create Recipe button not found!');
     }
 
     // Close modal events
@@ -684,12 +766,27 @@ document.addEventListener('DOMContentLoaded', function() {
     window.setTestAuth = function() {
         localStorage.setItem('authToken', 'test-token-123');
         console.log('✅ Test auth token set');
+        console.log('ℹ️ Reinitializing Create Recipe button...');
+        initializeCreateRecipeButton();
     };
     
     window.clearAuth = function() {
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
         console.log('🧹 Auth tokens cleared');
+        console.log('ℹ️ Reinitializing Create Recipe button...');
+        // Clear the button container
+        const container = document.getElementById('createRecipeButtonContainer');
+        if (container) {
+            container.innerHTML = '';
+        }
+        initializeCreateRecipeButton();
+    };
+
+    // Add a function to manually check verification status
+    window.checkUserVerification = function() {
+        console.log('🧪 Manual verification check...');
+        initializeCreateRecipeButton();
     };
 
     // Add a simple test function to force open modal (for debugging)
@@ -1211,6 +1308,9 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
         // Display fallback recipes
         displayRecipes([]);
     });
+    
+    // Initialize Create Recipe button based on user verification status
+    initializeCreateRecipeButton();
     
     // Dropdown/autocomplete functionality for categories, cuisines, tags
     const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Snacks", "Vegetarian", "Quick Meals", "High Protein", "Budget Friendly", "Dessert", "Vegan"];
