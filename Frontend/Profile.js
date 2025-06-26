@@ -30,13 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Logout Functionality
     const logoutBtn = document.getElementById('logoutBtn');
     logoutBtn.addEventListener('click', function() {
-        // In a real app, you would:
-        // 1. Send a logout request to your server
-        // 2. Clear any client-side authentication tokens
-        // 3. Redirect to home page
-        
-        // For this demo, we'll just clear localStorage and redirect
-        localStorage.removeItem('currentUser');
+        // Clear authentication token and redirect
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser'); // Clean up any legacy data
         window.location.href = 'index.html';
     });
 
@@ -539,7 +535,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (confirm('Are you absolutely sure you want to delete your account? This cannot be undone.')) {
                 // In a real app, you would send a request to your backend
-                localStorage.removeItem('currentUser');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser'); // Clean up any legacy data
                 alert('Account deleted successfully. Redirecting to home page...');
                 window.location.href = 'index.html';
             }

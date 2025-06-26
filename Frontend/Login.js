@@ -167,6 +167,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
             
             if (response.ok) {
+                // Store the authentication token
+                if (data.token) {
+                    localStorage.setItem('authToken', data.token);
+                    console.log('Authentication token stored successfully');
+                } else {
+                    console.warn('No token received in login response:', data);
+                }
+                
                 showToast('Login successful! Redirecting...', 'success');
                 
                 // Enhanced success animation

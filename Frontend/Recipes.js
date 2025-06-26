@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Logout Functionality
     const logoutBtn = document.getElementById('logoutBtn');
     logoutBtn.addEventListener('click', function() {
-        localStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser'); // Clean up any legacy data
         window.location.href = 'index.html';
     });
 
