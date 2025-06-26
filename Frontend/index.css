@@ -1,59 +1,79 @@
-/* ChopSmo - Unified Cameroon-Inspired Design System */
+/* ChopSmo - Enhanced Modern Color System */
 :root {
-    /* Cameroon Flag Colors Inspired Palette - Softer Version */
-    --cameroon-green: #52A86F;      /* Softer Cameroon flag green */
-    --cameroon-red: #D63447;        /* Softer Cameroon flag red */
-    --cameroon-yellow: #F9CA24;     /* Softer Cameroon flag yellow */
+    /* Primary Green Palette - Refined & Sophisticated */
+    --primary-50: #F0F9F0;          /* Very light green background */
+    --primary-100: #C8E6C9;         /* Light green accents */
+    --primary-200: #A5D6A7;         /* Soft green highlights */
+    --primary-300: #81C784;         /* Medium light green */
+    --primary-400: #66BB6A;         /* Balanced green */
+    --primary-500: #4CAF50;         /* Core brand green */
+    --primary-600: #43A047;         /* Medium green */
+    --primary-700: #388E3C;         /* Deep green */
+    --primary-800: #2E7D32;         /* Dark green */
+    --primary-900: #1B5E20;         /* Deepest green */
     
-    /* Primary Colors - Softer Nature-Inspired Greens */
-    --primary-color: #2E7D32;       /* Medium forest green (was #1B5E20) */
-    --primary-light: #4CAF50;       /* Fresh green (unchanged) */
-    --primary-lighter: #66BB6A;     /* Light green (was #4CAF50) */
-    --primary-accent: var(--cameroon-green);  /* Softer Cameroon green */
-    --primary-dark: #1B5E20;        /* Dark green (moved from primary) */
+    /* Semantic Color Mapping */
+    --primary-color: var(--primary-700);        /* Main brand color */
+    --primary-light: var(--primary-500);        /* Lighter interactions */
+    --primary-lighter: var(--primary-400);      /* Subtle highlights */
+    --primary-accent: var(--primary-600);       /* Accent elements */
+    --primary-dark: var(--primary-800);         /* Dark elements */
     
-    /* Secondary Colors - Warm Earth Tones */
-    --secondary-color: #A1887F;     /* Lighter earthy brown (was #8D6E63) */
-    --secondary-light: #BCAAA4;     /* Very light brown (was #A1887F) */
-    --secondary-dark: #6D4C41;      /* Medium brown (was #5D4037) */
+    /* Cameroon-Inspired Accent Colors - Refined */
+    --cameroon-green: var(--primary-600);       /* Harmonious with main palette */
+    --cameroon-red: #E57373;                    /* Soft coral red */
+    --cameroon-yellow: #FFD54F;                 /* Warm golden yellow */
     
-    /* Accent Colors - Cameroon Inspired - Softer */
-    --accent-red: var(--cameroon-red);
-    --accent-yellow: var(--cameroon-yellow);
-    --accent-orange: #FF9800;       /* Softer sunset orange (was #FF8F00) */
-    --accent-gold: #FFC107;         /* Softer golden yellow (was #FFB300) */
+    /* Neutral Gray Palette - Warm & Professional */
+    --gray-50: #FAFAFA;             /* Background white */
+    --gray-100: #F5F5F5;            /* Light background */
+    --gray-200: #EEEEEE;            /* Border light */
+    --gray-300: #E0E0E0;            /* Border */
+    --gray-400: #BDBDBD;            /* Border dark */
+    --gray-500: #9E9E9E;            /* Text light */
+    --gray-600: #757575;            /* Text medium */
+    --gray-700: #616161;            /* Text */
+    --gray-800: #424242;            /* Text dark */
+    --gray-900: #212121;            /* Text darkest */
     
-    /* Neutral Colors - Softer */
-    --dark-color: #37474F;          /* Softer dark (was #1A202C) */
-    --dark-secondary: #455A64;      /* Softer medium dark (was #2D3748) */
-    --gray-color: #607D8B;          /* Softer medium gray (was #4A5568) */
-    --gray-light: #B0BEC5;          /* Softer light gray (was #A0AEC0) */
-    --gray-lighter: #ECEFF1;        /* Softer very light gray (was #E2E8F0) */
-    --light-color: #FAFAFA;         /* Softer off white (was #F7FAFC) */
-    --white-color: #FFFFFF;         /* Pure white (unchanged) */
+    /* Semantic Neutral Mapping */
+    --dark-color: var(--gray-800);              /* Main text */
+    --dark-secondary: var(--gray-700);          /* Secondary text */
+    --gray-color: var(--gray-600);              /* Muted text */
+    --gray-light: var(--gray-400);              /* Light borders */
+    --gray-lighter: var(--gray-200);            /* Subtle borders */
+    --light-color: var(--gray-50);              /* Light backgrounds */
+    --white-color: #FFFFFF;                     /* Pure white */
     
-    /* Status Colors - Softer */
-    --success-color: var(--primary-lighter);
-    --warning-color: var(--accent-yellow);
-    --danger-color: var(--accent-red);
-    --info-color: #42A5F5;          /* Softer blue (was #3182CE) */
+    /* Status Colors - Balanced & Accessible */
+    --success-color: var(--primary-600);        /* Success green */
+    --warning-color: #FFB74D;                   /* Warm orange */
+    --danger-color: var(--cameroon-red);        /* Soft red */
+    --info-color: #64B5F6;                      /* Gentle blue */
     
-    /* Background Gradients - Much Softer */
-    --bg-gradient-primary: linear-gradient(135deg, #F8FFF8 0%, #F0F8F0 50%, #E8F5E8 100%);
+    /* Modern Gradient System */
+    --gradient-primary: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%);
+    --gradient-primary-soft: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-50) 100%);
+    --gradient-background: linear-gradient(135deg, var(--gray-50) 0%, var(--primary-50) 100%);
+    --gradient-hero: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-600) 50%, var(--primary-500) 100%);
+    
+    /* Enhanced Shadow System */
+    --shadow-xs: 0 1px 2px rgba(33, 33, 33, 0.06);
+    --shadow-sm: 0 2px 4px rgba(33, 33, 33, 0.08);
+    --shadow-md: 0 4px 12px rgba(33, 33, 33, 0.10);
+    --shadow-lg: 0 8px 24px rgba(33, 33, 33, 0.12);
+    --shadow-xl: 0 16px 32px rgba(33, 33, 33, 0.14);
+    --shadow-primary: 0 4px 14px rgba(76, 175, 80, 0.25);
+    --shadow-primary-lg: 0 8px 24px rgba(76, 175, 80, 0.30);
+    
+    /* Button Shadow System */
+    --box-shadow: var(--shadow-md);
+    --box-shadow-hover: var(--shadow-primary-lg);
+    
+    /* Background Gradients - Elegant & Subtle */
+    --bg-gradient-primary: var(--gradient-background);
     --bg-gradient-secondary: linear-gradient(135deg, #FFFEF7 0%, #FFF9E6 50%, #FFF3D3 100%);
-    --bg-gradient-accent: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--primary-lighter) 100%);
-    
-    /* Shadows - Softer */
-    --shadow-sm: 0 2px 4px rgba(55, 71, 79, 0.04);
-    --shadow-md: 0 4px 16px rgba(55, 71, 79, 0.06);
-    --shadow-lg: 0 8px 24px rgba(55, 71, 79, 0.08);
-    --shadow-xl: 0 16px 40px rgba(55, 71, 79, 0.12);
-    --shadow-primary: 0 4px 16px rgba(46, 125, 50, 0.12);
-    --shadow-accent: 0 4px 16px rgba(82, 168, 111, 0.15);
-    
-    /* Box Shadow Variables for Buttons - Softer */
-    --box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
-    --box-shadow-hover: 0 8px 20px rgba(46, 125, 50, 0.2);
+    --bg-gradient-accent: var(--gradient-hero);
     
     /* Border Radius */
     --radius-sm: 6px;
@@ -111,7 +131,7 @@ body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--dark-color);
-    background: linear-gradient(135deg, var(--light-color) 0%, #F8FFF8 100%);
+    background: var(--bg-gradient-primary);
     font-weight: 400;
     letter-spacing: 0.01em;
 }
@@ -177,13 +197,13 @@ img {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    background: var(--gradient-primary);
     color: var(--white-color);
     box-shadow: var(--box-shadow);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+    background: var(--gradient-hero);
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-hover);
 }
@@ -196,7 +216,7 @@ img {
 }
 
 .btn-outline:hover {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    background: var(--gradient-primary);
     color: var(--white-color);
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-hover);
