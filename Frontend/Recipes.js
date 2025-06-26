@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Recipes.js loaded successfully with image fallback utilities!');
     // Global variables
     let recipeData = [];
     let allRecipes = []; // Keep original data for reset
@@ -28,7 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to get recipe image with fallback
     function getRecipeImageUrl(recipe) {
         const imageUrl = recipe.image || recipe.photo || recipe.recipe_image;
-        return getImageUrl(imageUrl, DEFAULT_RECIPE_IMAGE);
+        const result = getImageUrl(imageUrl, DEFAULT_RECIPE_IMAGE);
+        console.log(`🖼️ Recipe image: ${imageUrl} → ${result}`);
+        return result;
     }
     
     // Helper function to get profile image with fallback
@@ -36,7 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!contributor) return DEFAULT_PROFILE_IMAGE;
         
         const imageUrl = contributor.profile_photo || contributor.avatar || contributor.photo;
-        return getImageUrl(imageUrl, DEFAULT_PROFILE_IMAGE);
+        const result = getImageUrl(imageUrl, DEFAULT_PROFILE_IMAGE);
+        console.log(`👤 Profile image: ${imageUrl} → ${result}`);
+        return result;
     }
     
     // Helper function to create image element with error handling
@@ -150,6 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fallback recipes for when API is not available
     function getFallbackRecipes() {
+        console.log('🍳 Loading fallback recipes with image utilities...');
         return [
             {
                 id: 1,
