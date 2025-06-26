@@ -56,21 +56,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to get recipe image with fallback
     function getRecipeImageUrl(recipe) {
+        console.log('🎯 getRecipeImageUrl called with recipe:', recipe);
         // Since backend now returns full URLs in the 'image' field, use it directly
         const imageUrl = recipe.image;
         console.log('🔍 Recipe image data:', {
             recipeId: recipe.id,
             title: recipe.title,
             image: recipe.image,
-            imageType: typeof recipe.image
+            imageType: typeof recipe.image,
+            imageLength: recipe.image ? recipe.image.length : 0,
+            startsWithHttp: recipe.image ? recipe.image.startsWith('http') : false
         });
         
-        if (imageUrl && imageUrl.startsWith('http')) {
+        if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('http')) {
             console.log('✅ Using full backend URL:', imageUrl);
             return imageUrl;
         }
         
-        console.log('🔄 No valid image URL found, using fallback');
+        console.log('🔄 No valid image URL found, using fallback. Reason:', {
+            imageUrl,
+            hasImage: !!imageUrl,
+            isString: typeof imageUrl === 'string',
+            startsWithHttp: imageUrl ? imageUrl.startsWith('http') : false
+        });
         return getRandomRecipeImage();
     }
     
@@ -188,13 +196,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return getFallbackRecipes();
             }
             console.log('✅ Successfully fetched recipes from API');
-            console.log('🔍 API Response - First recipe sample:', data[0]);
-            console.log('🔍 API Response - Recipe image fields:', {
-                image: data[0]?.image,
-                photo: data[0]?.photo,
-                recipe_image: data[0]?.recipe_image,
-                allFields: Object.keys(data[0] || {})
-            });
+            console.log('🔍 Raw API Response:', data);
+            console.log('🔍 Total recipes fetched:', data.length);
+            console.log('🔍 First recipe complete object:', JSON.stringify(data[0], null, 2));
+            if (data[0]) {
+                console.log('🔍 First recipe image field:', data[0].image);
+                console.log('🔍 First recipe image type:', typeof data[0].image);
+                console.log('🔍 First recipe all fields:', Object.keys(data[0]));
+            }
             // Only use recipes that have a contributor (created by users)
             return data.filter(recipe => recipe.contributor);
         } catch (error) {
