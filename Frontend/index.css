@@ -24,17 +24,17 @@
     --black-alpha-50: rgba(0, 0, 0, 0.5);    /* Heavy black overlay */
     --black-alpha-70: rgba(0, 0, 0, 0.7);    /* Ultra-heavy black overlay */
     
-    /* Semantic Color Mapping - Ultra Bright */
-    --primary-color: var(--primary-600);        /* Main brand color - brighter */
-    --primary-light: var(--primary-400);        /* Ultra-bright interactions */
-    --primary-lighter: var(--primary-200);      /* Bright highlights */
-    --primary-accent: var(--primary-500);       /* Rich accent elements */
-    --primary-dark: var(--primary-700);         /* Dark elements */
+    /* Semantic Color Mapping - Single Bright Colors */
+    --primary-color: #00E676;                    /* Single bright green */
+    --primary-light: #4AE54A;                    /* Slightly lighter green */
+    --primary-lighter: #69F169;                  /* Light green highlights */
+    --primary-accent: #00FF7F;                   /* Bright accent green */
+    --primary-dark: #00C853;                     /* Darker green */
     
-    /* Cameroon-Inspired Accent Colors - Ultra Bright & Bold */
-    --cameroon-green: #00E676;                  /* Ultra-bright Cameroon green */
-    --cameroon-red: #FF1744;                    /* Electric red */
-    --cameroon-yellow: #FFEA00;                 /* Electric golden yellow */
+    /* Cameroon-Inspired Accent Colors - Single Bright Colors */
+    --cameroon-green: #00E676;                   /* Main bright green */
+    --cameroon-red: #FF1744;                     /* Electric red */
+    --cameroon-yellow: #FFEA00;                  /* Electric golden yellow */
     
     /* Enhanced Neutral Palette with Bold Black Integration */
     --gray-50: #FAFAFA;             /* Background white */
@@ -63,17 +63,17 @@
     --danger-color: var(--cameroon-red);        /* Electric red */
     --info-color: #00B0FF;                      /* Electric blue */
     
-    /* Ultra-Bright & Bold Gradient System */
-    --gradient-primary: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-400) 100%);
-    --gradient-primary-bright: linear-gradient(135deg, var(--cameroon-green) 0%, var(--primary-400) 100%);
-    --gradient-primary-ultra: linear-gradient(135deg, var(--cameroon-green) 0%, var(--primary-500) 50%, var(--cameroon-yellow) 100%);
-    --gradient-primary-soft: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-50) 100%);
-    --gradient-background: linear-gradient(135deg, var(--gray-50) 0%, var(--primary-50) 100%);
-    --gradient-hero: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-500) 50%, var(--cameroon-green) 100%);
-    --gradient-hero-black: linear-gradient(135deg, var(--black-alpha-70) 0%, var(--black-alpha-30) 100%);
-    --gradient-black-overlay: linear-gradient(135deg, var(--black-alpha-50) 0%, var(--black-alpha-20) 100%);
-    --gradient-dark-card: linear-gradient(135deg, var(--black-light) 0%, var(--black-soft) 100%);
-    --gradient-black-accent: linear-gradient(135deg, var(--black) 0%, var(--black-medium) 100%);
+    /* Single Color System - No Gradients */
+    --gradient-primary: var(--primary-color);
+    --gradient-primary-bright: var(--primary-accent);
+    --gradient-primary-ultra: var(--primary-light);
+    --gradient-primary-soft: var(--primary-lighter);
+    --gradient-background: var(--gray-50);
+    --gradient-hero: var(--primary-color);
+    --gradient-hero-black: var(--black-alpha-70);
+    --gradient-black-overlay: var(--black-alpha-50);
+    --gradient-dark-card: var(--black-light);
+    --gradient-black-accent: var(--black);
     
     /* Enhanced Shadow System with Bold Black */
     --shadow-xs: 0 1px 2px var(--black-alpha-10);
@@ -87,16 +87,16 @@
     --shadow-primary-lg: 0 8px 24px rgba(0, 230, 118, 0.6);
     --shadow-primary-xl: 0 16px 40px rgba(0, 230, 118, 0.8);
     
-    /* Button Shadow System - Ultra Bright */
+    /* Button Shadow System - Bright Green */
     --box-shadow: var(--shadow-md);
     --box-shadow-hover: var(--shadow-primary-xl);
     --box-shadow-black: var(--shadow-black-heavy);
     
-    /* Background Gradients - Ultra Bright */
-    --bg-gradient-primary: var(--gradient-background);
-    --bg-gradient-secondary: linear-gradient(135deg, #FFFEF7 0%, #FFF9E6 50%, var(--cameroon-yellow) 100%);
-    --bg-gradient-accent: var(--gradient-hero);
-    --bg-gradient-black: var(--gradient-black-accent);
+    /* Background Colors - Single Colors */
+    --bg-gradient-primary: var(--gray-50);
+    --bg-gradient-secondary: var(--primary-50);
+    --bg-gradient-accent: var(--primary-color);
+    --bg-gradient-black: var(--black);
     
     /* Border Radius */
     --radius-sm: 6px;
@@ -220,15 +220,15 @@ img {
 }
 
 .btn-primary {
-    background: var(--gradient-primary-ultra);
+    background: var(--primary-color);
     color: var(--white-color);
     box-shadow: var(--box-shadow-hover);
-    border: 1px solid var(--black-alpha-10);
+    border: 2px solid var(--black-alpha-10);
     font-weight: 700;
 }
 
 .btn-primary:hover {
-    background: var(--gradient-hero);
+    background: var(--primary-accent);
     transform: translateY(-4px);
     box-shadow: var(--shadow-primary-xl);
     border-color: var(--black-alpha-30);
@@ -236,31 +236,31 @@ img {
 
 .btn-outline {
     background-color: transparent;
-    border: 2px solid var(--primary-accent);
-    color: var(--primary-accent);
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
     box-shadow: var(--shadow-sm);
     font-weight: 600;
 }
 
 .btn-outline:hover {
-    background: var(--gradient-primary-ultra);
+    background: var(--primary-color);
     color: var(--white-color);
     transform: translateY(-4px);
     box-shadow: var(--box-shadow-hover);
-    border-color: var(--cameroon-green);
+    border-color: var(--primary-accent);
 }
 
 /* Enhanced Black Accent Button */
 .btn-black {
-    background: var(--gradient-black-accent);
+    background: var(--black);
     color: var(--white-color);
     box-shadow: var(--box-shadow-black);
-    border: 1px solid var(--black-alpha-20);
+    border: 2px solid var(--black-alpha-20);
     font-weight: 700;
 }
 
 .btn-black:hover {
-    background: var(--black);
+    background: var(--black-light);
     transform: translateY(-4px);
     box-shadow: var(--shadow-black-heavy);
     border-color: var(--black);
@@ -276,25 +276,25 @@ img {
 }
 
 .btn-outline-black:hover {
-    background: var(--gradient-black-accent);
+    background: var(--black);
     color: var(--white-color);
     transform: translateY(-4px);
     box-shadow: var(--box-shadow-black);
     border-color: var(--black);
 }
 
-/* New Ultra-Bright Accent Button */
+/* Bright Accent Button - Single Color */
 .btn-accent {
-    background: linear-gradient(135deg, var(--cameroon-green) 0%, var(--cameroon-yellow) 100%);
+    background: var(--cameroon-yellow);
     color: var(--black-soft);
     box-shadow: var(--shadow-primary-lg);
-    border: 1px solid var(--black-alpha-10);
+    border: 2px solid var(--black-alpha-10);
     font-weight: 700;
 }
 
 .btn-accent:hover {
-    background: linear-gradient(135deg, var(--cameroon-yellow) 0%, var(--cameroon-green) 100%);
-    color: var(--black);
+    background: var(--primary-accent);
+    color: var(--white-color);
     transform: translateY(-4px);
     box-shadow: var(--shadow-primary-xl);
     border-color: var(--black-alpha-20);
@@ -367,18 +367,12 @@ nav {
 .logo i {
     margin-right: 12px;
     font-size: 32px;
-    background: var(--gradient-primary-ultra);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary-color);
     filter: drop-shadow(0 2px 4px var(--black-alpha-20));
 }
 
 .logo span {
-    background: linear-gradient(135deg, var(--black-soft) 0%, var(--primary-accent) 50%, var(--black-soft) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--black-soft);
 }
 
 .nav-links {
@@ -636,9 +630,9 @@ nav {
 
     .mobile-nav-links a:hover,
     .mobile-nav-links a.active {
-        background: var(--gradient-primary-soft);
-        color: var(--primary-accent);
-        border-left-color: var(--cameroon-green);
+        background: var(--primary-50);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
         transform: translateX(4px);
         box-shadow: var(--shadow-sm);
     }
@@ -648,10 +642,7 @@ nav {
         font-size: 20px;
         width: 24px;
         text-align: center;
-        background: var(--gradient-primary-bright);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--primary-color);
     }
 
     .mobile-auth-section {
@@ -787,7 +778,7 @@ nav {
 /* Hero Section */
 .hero {
     padding: 150px 0 80px;
-    background: var(--gradient-background);
+    background: var(--primary-50);
     position: relative;
     overflow: hidden;
 }
@@ -799,7 +790,7 @@ nav {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, var(--primary-50) 0%, var(--white-color) 50%, var(--primary-100) 100%);
+    background: var(--white-color);
     z-index: -1;
 }
 
@@ -855,10 +846,6 @@ nav {
     margin-bottom: 60px;
     color: var(--black-soft);
     font-weight: 800;
-    background: linear-gradient(135deg, var(--black-soft) 0%, var(--primary-accent) 50%, var(--black-soft) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .features-grid {
@@ -868,7 +855,7 @@ nav {
 }
 
 .feature-card {
-    background: linear-gradient(135deg, var(--white-color) 0%, var(--primary-50) 100%);
+    background: var(--white-color);
     padding: 35px;
     border-radius: var(--radius-lg);
     text-align: center;
@@ -886,21 +873,19 @@ nav {
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--gradient-primary-ultra);
+    background: var(--primary-color);
 }
 
 .feature-card:hover {
     transform: translateY(-12px) scale(1.02);
     box-shadow: var(--shadow-xl);
-    border-color: var(--primary-200);
+    border-color: var(--primary-color);
+    background: var(--primary-50);
 }
 
 .feature-icon {
     font-size: 48px;
-    background: var(--gradient-primary-ultra);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary-color);
     margin-bottom: 25px;
     filter: drop-shadow(0 2px 4px var(--black-alpha-20));
 }
@@ -921,7 +906,7 @@ nav {
 /* Enhanced How It Works Section */
 .how-it-works {
     padding: 80px 0;
-    background: linear-gradient(135deg, var(--primary-50) 0%, var(--white-color) 50%, var(--primary-100) 100%);
+    background: var(--primary-50);
     position: relative;
 }
 
@@ -932,7 +917,7 @@ nav {
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="%23000" opacity="0.05"/></svg>');
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="%2300E676" opacity="0.1"/></svg>');
     background-size: 20px 20px;
     z-index: 0;
 }

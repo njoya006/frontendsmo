@@ -53,7 +53,7 @@
         /* Professional Auth Page Styles */
         .auth-page {
             min-height: 100vh;
-            background: var(--bg-gradient-accent);
+            background: var(--primary-color);
             display: flex;
             align-items: center;
             padding: 40px 20px;
@@ -405,8 +405,8 @@
             font-size: 16px;
             font-weight: 700;
             border-radius: 12px;
-            background: var(--bg-gradient-accent);
-            color: var(--black-soft);
+            background: var(--primary-accent);
+            color: var(--white);
             border: 2px solid rgba(0,0,0,0.1);
             cursor: pointer;
             transition: var(--transition-normal);
@@ -415,7 +415,6 @@
             position: relative;
             overflow: hidden;
             box-shadow: var(--shadow-xl);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .btn-primary::before {
@@ -436,7 +435,7 @@
         .btn-primary:hover {
             transform: translateY(-3px);
             box-shadow: 0 20px 50px rgba(0,230,118,0.5);
-            background: linear-gradient(135deg, var(--cameroon-yellow) 0%, var(--cameroon-green) 100%);
+            background: var(--primary-light);
             border-color: rgba(0,0,0,0.2);
         }
 
