@@ -11,7 +11,7 @@
         /* Profile Page Styles */
         .profile-page {
             padding: 100px 0;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--white-color) 100%);
+            background: var(--primary-50);
             min-height: 100vh;
         }
 
@@ -21,7 +21,8 @@
             padding: 40px 0;
             background: var(--white-color);
             border-radius: 20px;
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow-lg);
+            border-top: 4px solid var(--primary-color);
         }
 
         .profile-header h1 {
@@ -53,9 +54,10 @@
             background: var(--white-color);
             padding: 40px;
             border-radius: 20px;
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow-lg);
             text-align: center;
             height: fit-content;
+            border-top: 4px solid var(--primary-color);
         }
 
         .avatar-section {
@@ -68,14 +70,14 @@
             margin: 0 auto 20px;
             overflow: hidden;
             position: relative;
-            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 0 4px rgba(34, 139, 34, 0.1);
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
         .avatar-preview:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 0 6px rgba(76, 175, 80, 0.2);
+            box-shadow: 0 0 0 6px rgba(34, 139, 34, 0.2);
         }
 
         .avatar-preview img {
@@ -119,7 +121,7 @@
         }
 
         .avatar-upload label {
-            background: var(--primary-gradient);
+            background: var(--primary-color);
             color: var(--white-color);
             padding: 10px 20px;
             border-radius: 25px;
@@ -128,8 +130,9 @@
             font-weight: 600;
             transition: var(--transition);
         }        .avatar-upload label:hover {
+            background: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: var(--button-shadow);
+            box-shadow: var(--shadow-md);
         }
 
         .avatar-info {
@@ -161,10 +164,11 @@
         }
 
         .stat-item {
-            background: var(--primary-light);
+            background: var(--primary-50);
             padding: 20px;
             border-radius: 15px;
             text-align: center;
+            border: 2px solid rgba(34, 139, 34, 0.1);
         }
 
         .stat-number {
@@ -185,9 +189,10 @@
         .profile-nav {
             background: var(--white-color);
             border-radius: 20px;
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow-lg);
             margin-bottom: 30px;
             overflow: hidden;
+            border-top: 3px solid var(--primary-color);
         }
 
         .nav-tabs {
@@ -214,13 +219,13 @@
         }
 
         .nav-tab.active button {
-            color: var(--primary-color);
-            background: var(--primary-light);
-            border-bottom-color: var(--primary-color);
+            color: var(--white-color);
+            background: var(--primary-color);
+            border-bottom-color: var(--primary-dark);
         }
 
         .nav-tab button:hover {
-            background: var(--primary-light);
+            background: var(--primary-50);
             color: var(--primary-color);
         }
 
@@ -228,8 +233,9 @@
         .tab-content {
             background: var(--white-color);
             border-radius: 20px;
-            box-shadow: var(--card-shadow);
+            box-shadow: var(--shadow-lg);
             padding: 40px;
+            border-top: 3px solid var(--primary-color);
         }
 
         /* Recipe Search Styles */
@@ -241,7 +247,7 @@
             text-align: center;
             margin-bottom: 40px;
             padding-bottom: 20px;
-            border-bottom: 2px solid var(--primary-light);
+            border-bottom: 3px solid var(--primary-color);
         }
 
         .search-header h3 {
@@ -286,7 +292,7 @@
             background: var(--primary-color);
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3);
         }
 
         .search-content {
@@ -318,12 +324,12 @@
         .search-input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 0 4px rgba(34, 139, 34, 0.1);
         }
 
         .search-button {
             padding: 16px 24px;
-            background: var(--primary-gradient);
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 12px;
@@ -338,8 +344,9 @@
         }
 
         .search-button:hover {
+            background: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 6px 20px rgba(34, 139, 34, 0.3);
         }
 
         .filters-section {
@@ -347,8 +354,9 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             padding: 20px;
-            background: var(--primary-light);
+            background: var(--primary-50);
             border-radius: 15px;
+            border: 2px solid rgba(34, 139, 34, 0.1);
         }
 
         .filter-group {
@@ -376,7 +384,7 @@
         .filter-select:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.1);
         }
 
         .ingredients-help {
@@ -679,7 +687,7 @@
         .form-group textarea:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.1);
         }
 
         .form-group textarea {
@@ -711,14 +719,15 @@
         }
 
         .btn-save {
-            background: var(--primary-gradient);
+            background: var(--primary-color);
             color: white;
             border: none;
         }
 
         .btn-save:hover {
+            background: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 4px 12px rgba(34, 139, 34, 0.3);
         }
 
         .btn-cancel {
@@ -831,7 +840,7 @@
                 border-radius: 20px;
                 background: var(--white-color);
                 box-shadow: 0 8px 32px rgba(27,94,32,0.08);
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                border: 1px solid rgba(34, 139, 34, 0.1);
             }
 
             .profile-header h1 {
@@ -861,7 +870,7 @@
                 order: -1;
                 background: linear-gradient(135deg, var(--white-color) 0%, #f9fffe 100%);
                 box-shadow: 0 8px 32px rgba(27,94,32,0.08);
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                border: 1px solid rgba(34, 139, 34, 0.1);
                 margin-bottom: 20px;
             }
 
@@ -870,7 +879,7 @@
                 height: 110px;
                 margin-bottom: 20px;
                 border: 3px solid var(--primary-color);
-                box-shadow: 0 8px 24px rgba(76, 175, 80, 0.15);
+                box-shadow: 0 8px 24px rgba(34, 139, 34, 0.15);
             }
 
             .avatar-upload label {
@@ -878,7 +887,7 @@
                 font-size: 15px;
                 border-radius: 25px;
                 font-weight: 600;
-                box-shadow: 0 4px 16px rgba(76, 175, 80, 0.25);
+                box-shadow: 0 4px 16px rgba(34, 139, 34, 0.25);
             }
 
             .user-info h2 {
@@ -903,8 +912,8 @@
             .stat-item {
                 padding: 20px 15px;
                 border-radius: 16px;
-                background: linear-gradient(135deg, var(--primary-light) 0%, rgba(76, 175, 80, 0.05) 100%);
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                background: linear-gradient(135deg, var(--primary-light) 0%, rgba(34, 139, 34, 0.05) 100%);
+                border: 1px solid rgba(34, 139, 34, 0.1);
             }
 
             .stat-number {
@@ -926,7 +935,7 @@
                 margin-bottom: 25px;
                 overflow: hidden;
                 box-shadow: 0 6px 24px rgba(27,94,32,0.08);
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                border: 1px solid rgba(34, 139, 34, 0.1);
                 background: var(--white-color);
             }
 
@@ -965,14 +974,14 @@
             }
 
             .nav-tab.active button {
-                background: var(--primary-gradient);
+                background: var(--primary-color);
                 color: white;
-                box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
-                border-color: var(--primary-color);
+                box-shadow: 0 4px 16px rgba(34, 139, 34, 0.3);
+                border-color: var(--primary-dark);
             }
 
             .nav-tab button:hover:not(.active) {
-                background: var(--primary-light);
+                background: var(--primary-50);
                 transform: translateY(-2px);
             }
 
@@ -986,7 +995,7 @@
                 border-radius: 20px;
                 background: var(--white-color);
                 box-shadow: 0 6px 24px rgba(27,94,32,0.08);
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                border: 1px solid rgba(34, 139, 34, 0.1);
             }
 
             /* Enhanced Form Sections Mobile */
@@ -995,7 +1004,7 @@
                 padding: 25px 20px;
                 border-radius: 16px;
                 background: linear-gradient(135deg, #fafffe 0%, var(--white-color) 100%);
-                border: 1px solid rgba(76, 175, 80, 0.08);
+                border: 1px solid rgba(34, 139, 34, 0.08);
             }
 
             .form-section h3 {
@@ -1017,10 +1026,10 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: var(--primary-gradient);
+                background: var(--primary-color);
                 color: white;
                 border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+                box-shadow: 0 2px 8px rgba(34, 139, 34, 0.3);
             }
 
             .form-row {
@@ -1065,7 +1074,7 @@
             .form-group textarea:focus {
                 outline: none;
                 border-color: var(--primary-color);
-                box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+                box-shadow: 0 0 0 4px rgba(34, 139, 34, 0.1);
                 background: #fafffe;
             }
 
@@ -1101,14 +1110,14 @@
             }
 
             .btn-save {
-                background: var(--primary-gradient);
+                background: var(--primary-color);
                 color: white;
-                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.25);
+                box-shadow: 0 6px 20px rgba(34, 139, 34, 0.25);
             }
 
             .btn-save:hover {
                 transform: translateY(-3px);
-                box-shadow: 0 8px 25px rgba(76, 175, 80, 0.35);
+                box-shadow: 0 8px 25px rgba(34, 139, 34, 0.35);
             }
 
             .btn-cancel {
@@ -1132,7 +1141,7 @@
                 padding: 25px 20px;
                 border-radius: 16px;
                 background: linear-gradient(135deg, #fafffe 0%, var(--white-color) 100%);
-                border: 2px solid rgba(76, 175, 80, 0.1);
+                border: 2px solid rgba(34, 139, 34, 0.1);
                 box-shadow: 0 4px 16px rgba(27,94,32,0.05);
             }
 
@@ -1150,7 +1159,7 @@
                 content: '';
                 width: 4px;
                 height: 20px;
-                background: var(--primary-gradient);
+                background: var(--primary-color);
                 border-radius: 2px;
             }
 
@@ -1158,14 +1167,14 @@
                 margin-bottom: 16px;
                 padding: 12px 16px;
                 border-radius: 10px;
-                background: rgba(76, 175, 80, 0.02);
-                border: 1px solid rgba(76, 175, 80, 0.08);
+                background: rgba(34, 139, 34, 0.02);
+                border: 1px solid rgba(34, 139, 34, 0.08);
                 transition: all 0.3s ease;
             }
 
             .checkbox-group:hover {
-                background: rgba(76, 175, 80, 0.05);
-                border-color: rgba(76, 175, 80, 0.15);
+                background: rgba(34, 139, 34, 0.05);
+                border-color: rgba(34, 139, 34, 0.15);
             }
 
             .checkbox-group input[type="checkbox"] {
@@ -1193,9 +1202,9 @@
             .search-header {
                 margin-bottom: 30px;
                 padding: 25px 20px;
-                background: linear-gradient(135deg, var(--primary-light) 0%, rgba(76, 175, 80, 0.05) 100%);
+                background: linear-gradient(135deg, var(--primary-light) 0%, rgba(34, 139, 34, 0.05) 100%);
                 border-radius: 16px;
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                border: 1px solid rgba(34, 139, 34, 0.1);
             }
 
             .search-header h3 {
@@ -1209,11 +1218,11 @@
             }
 
             .search-header h3 i {
-                background: var(--primary-gradient);
+                background: var(--primary-color);
                 color: white;
                 padding: 8px;
                 border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+                box-shadow: 0 2px 8px rgba(34, 139, 34, 0.3);
             }
 
             .search-header p {
@@ -1247,10 +1256,10 @@
 
             .search-tab-btn.active,
             .search-tab-btn:hover {
-                background: var(--primary-gradient);
+                background: var(--primary-color);
                 color: white;
                 transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.25);
+                box-shadow: 0 6px 20px rgba(34, 139, 34, 0.25);
             }
 
             .search-input-group,
@@ -1273,7 +1282,7 @@
             .search-input:focus {
                 outline: none;
                 border-color: var(--primary-color);
-                box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+                box-shadow: 0 0 0 4px rgba(34, 139, 34, 0.1);
                 background: #fafffe;
             }
 
@@ -1284,16 +1293,16 @@
                 font-weight: 600;
                 width: 100%;
                 justify-content: center;
-                background: var(--primary-gradient);
+                background: var(--primary-color);
                 color: white;
                 border: none;
-                box-shadow: 0 4px 16px rgba(76, 175, 80, 0.25);
+                box-shadow: 0 4px 16px rgba(34, 139, 34, 0.25);
                 transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
             }
 
             .search-button:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.35);
+                box-shadow: 0 6px 20px rgba(34, 139, 34, 0.35);
             }
 
             .filters-section {
@@ -1302,7 +1311,7 @@
                 padding: 20px;
                 border-radius: 16px;
                 background: linear-gradient(135deg, #fafffe 0%, var(--white-color) 100%);
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                border: 1px solid rgba(34, 139, 34, 0.1);
             }
 
             .filter-group label {
@@ -1325,7 +1334,7 @@
             .filter-select:focus {
                 outline: none;
                 border-color: var(--primary-color);
-                box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+                box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.1);
             }
 
             /* Professional Recipe Grid Mobile */
@@ -1340,14 +1349,14 @@
                 overflow: hidden;
                 background: var(--white-color);
                 box-shadow: 0 6px 24px rgba(27,94,32,0.08);
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                border: 1px solid rgba(34, 139, 34, 0.1);
                 transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
             }
 
             .recipe-card:hover {
                 transform: translateY(-4px);
                 box-shadow: 0 12px 32px rgba(27,94,32,0.15);
-                border-color: rgba(76, 175, 80, 0.2);
+                border-color: rgba(34, 139, 34, 0.2);
             }
 
             .recipe-image {
@@ -1380,7 +1389,7 @@
                 justify-content: space-between;
                 align-items: center;
                 padding-top: 12px;
-                border-top: 1px solid rgba(76, 175, 80, 0.1);
+                border-top: 1px solid rgba(34, 139, 34, 0.1);
             }
 
             /* Enhanced Results Header Mobile */
@@ -1390,9 +1399,9 @@
                 text-align: center;
                 margin-bottom: 20px;
                 padding: 20px;
-                background: linear-gradient(135deg, var(--primary-light) 0%, rgba(76, 175, 80, 0.05) 100%);
+                background: linear-gradient(135deg, var(--primary-light) 0%, rgba(34, 139, 34, 0.05) 100%);
                 border-radius: 16px;
-                border: 1px solid rgba(76, 175, 80, 0.1);
+                border: 1px solid rgba(34, 139, 34, 0.1);
             }
 
             .results-header h4 {
@@ -1405,13 +1414,13 @@
                 padding: 8px 16px;
                 font-size: 13px;
                 font-weight: 700;
-                background: var(--primary-gradient);
+                background: var(--primary-color);
                 color: white;
                 border-radius: 20px;
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+                box-shadow: 0 2px 8px rgba(34, 139, 34, 0.3);
             }
 
             /* Professional Delete Account Section */
@@ -1660,7 +1669,7 @@
             .form-group textarea:focus,
             .search-input:focus,
             .filter-select:focus {
-                outline: 3px solid rgba(76, 175, 80, 0.3);
+                outline: 3px solid rgba(34, 139, 34, 0.3);
                 outline-offset: 2px;
             }
 
@@ -1673,7 +1682,7 @@
                 margin: 20px -25px -30px;
                 border-radius: 20px 20px 0 0;
                 box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-                border-top: 1px solid rgba(76, 175, 80, 0.1);
+                border-top: 1px solid rgba(34, 139, 34, 0.1);
             }
 
             /* Enhanced loading states */
@@ -1700,7 +1709,7 @@
             .spinner {
                 width: 32px;
                 height: 32px;
-                border: 3px solid rgba(76, 175, 80, 0.1);
+                border: 3px solid rgba(34, 139, 34, 0.1);
                 border-top: 3px solid var(--primary-color);
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
