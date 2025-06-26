@@ -56,23 +56,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Helper function to get recipe image with fallback
     function getRecipeImageUrl(recipe) {
-        const imageUrl = recipe.image || recipe.photo || recipe.recipe_image;
+        // Since backend now returns full URLs in the 'image' field, use it directly
+        const imageUrl = recipe.image;
         console.log('🔍 Recipe image data:', {
             recipeId: recipe.id,
             title: recipe.title,
             image: recipe.image,
-            photo: recipe.photo,
-            recipe_image: recipe.recipe_image,
-            finalImageUrl: imageUrl
+            imageType: typeof recipe.image
         });
         
-        if (imageUrl) {
-            const backendUrl = getImageUrl(imageUrl, null);
-            console.log('🔍 Constructed backend URL:', backendUrl);
-            return backendUrl;
+        if (imageUrl && imageUrl.startsWith('http')) {
+            console.log('✅ Using full backend URL:', imageUrl);
+            return imageUrl;
         }
         
-        console.log('🔄 No image URL found, using fallback');
+        console.log('🔄 No valid image URL found, using fallback');
         return getRandomRecipeImage();
     }
     
@@ -80,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getProfileImageUrl(contributor) {
         if (!contributor) return getRandomProfileImage();
         
+        // Check common profile image field names
         const imageUrl = contributor.profile_photo || contributor.avatar || contributor.photo;
         console.log('🔍 Profile image data:', {
             username: contributor.username,
@@ -89,13 +88,12 @@ document.addEventListener('DOMContentLoaded', function() {
             finalImageUrl: imageUrl
         });
         
-        if (imageUrl) {
-            const backendUrl = getImageUrl(imageUrl, null);
-            console.log('🔍 Constructed profile URL:', backendUrl);
-            return backendUrl;
+        if (imageUrl && imageUrl.startsWith('http')) {
+            console.log('✅ Using full profile URL:', imageUrl);
+            return imageUrl;
         }
         
-        console.log('🔄 No profile image URL found, using fallback');
+        console.log('🔄 No valid profile image URL found, using fallback');
         return getRandomProfileImage();
     }
     
@@ -999,9 +997,9 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
             cuisines.forEach(val => formData.append('cuisine_names', val));
             tags.forEach(val => formData.append('tag_names', val));
             
-            // Add image if present
+            // Add image if present - use image_upload field name for uploads
             if (imageInput && imageInput.files[0]) {
-                formData.append('image', imageInput.files[0]);
+                formData.append('image_upload', imageInput.files[0]);
             }            try {
                 console.log('📤 Sending FormData with CSRF token...');
                 console.log('🔒 Final CSRF token being sent:', csrfToken ? csrfToken.substring(0, 20) + '...' : 'null');
