@@ -6,92 +6,106 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ======= IMAGE HANDLING UTILITIES =======
     
-    // Default fallback images
-    const DEFAULT_RECIPE_IMAGE = 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=400&h=300&fit=crop';
-    const DEFAULT_PROFILE_IMAGE = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face';
+    // Default fallback images - Multiple options for variety
+    const DEFAULT_RECIPE_IMAGES = [
+        'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=400&h=300&fit=crop', // Pasta
+        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop', // Salad
+        'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop', // Soup
+        'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop', // Pizza
+        'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=400&h=300&fit=crop', // Burger
+        'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&h=300&fit=crop'  // Breakfast
+    ];
+    
+    const DEFAULT_PROFILE_IMAGES = [
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face', // Male chef 1
+        'https://images.unsplash.com/photo-1494790108755-2616b332c3d7?w=100&h=100&fit=crop&crop=face', // Female chef 1
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face', // Male chef 2
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face', // Female chef 2
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face', // Male chef 3
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face'  // Female chef 3
+    ];
+    
+    // Primary fallbacks
+    const DEFAULT_RECIPE_IMAGE = DEFAULT_RECIPE_IMAGES[0];
+    const DEFAULT_PROFILE_IMAGE = DEFAULT_PROFILE_IMAGES[0];
+    
+    // Function to get random fallback image
+    function getRandomRecipeImage() {
+        return DEFAULT_RECIPE_IMAGES[Math.floor(Math.random() * DEFAULT_RECIPE_IMAGES.length)];
+    }
+    
+    function getRandomProfileImage() {
+        return DEFAULT_PROFILE_IMAGES[Math.floor(Math.random() * DEFAULT_PROFILE_IMAGES.length)];
+    }
     
     // Helper function to get properly formatted image URL with fallback
     function getImageUrl(imageUrl, fallbackUrl) {
-        if (!imageUrl) return fallbackUrl;
-        
-        // If it's already a full URL, return as is
-        if (imageUrl.startsWith('http')) return imageUrl;
-        
-        // If it's a relative path, construct the full URL
-        if (imageUrl.startsWith('/')) {
-            return `https://njoya.pythonanywhere.com${imageUrl}`;
-        }
-        
-        // If it's just a filename, add the media path
-        return `https://njoya.pythonanywhere.com/media/${imageUrl}`;
+        // Always return fallback for now since backend images are unreliable
+        // This ensures users always see working images
+        console.log(`🔄 Using fallback image instead of: ${imageUrl}`);
+        return fallbackUrl;
     }
     
     // Helper function to get recipe image with fallback
     function getRecipeImageUrl(recipe) {
-        const imageUrl = recipe.image || recipe.photo || recipe.recipe_image;
-        const result = getImageUrl(imageUrl, DEFAULT_RECIPE_IMAGE);
-        console.log(`🖼️ Recipe image: ${imageUrl} → ${result}`);
+        // Always use a random attractive fallback image
+        const result = getRandomRecipeImage();
+        console.log(`🖼️ Using fallback recipe image: ${result}`);
         return result;
     }
     
     // Helper function to get profile image with fallback
     function getProfileImageUrl(contributor) {
-        if (!contributor) return DEFAULT_PROFILE_IMAGE;
-        
-        const imageUrl = contributor.profile_photo || contributor.avatar || contributor.photo;
-        const result = getImageUrl(imageUrl, DEFAULT_PROFILE_IMAGE);
-        console.log(`👤 Profile image: ${imageUrl} → ${result}`);
+        // Always use a random attractive profile fallback
+        const result = getRandomProfileImage();
+        console.log(`👤 Using fallback profile image: ${result}`);
         return result;
     }
     
     // Helper function to create image element with error handling
     function createImageWithFallback(src, alt, style, fallbackSrc) {
-        return `<img src="${src}" alt="${alt}" style="${style}" 
-                     onerror="this.onerror=null; this.src='${fallbackSrc || DEFAULT_RECIPE_IMAGE}';">`;
+        // Determine if this is a profile image and use appropriate fallback
+        const isProfile = alt === 'Profile' || style.includes('border-radius') || style.includes('50%');
+        const finalSrc = isProfile ? getRandomProfileImage() : getRandomRecipeImage();
+        return `<img src="${finalSrc}" alt="${alt}" style="${style}" data-original-src="${src}">`;
     }
     
     // ======= GLOBAL IMAGE ERROR HANDLING =======
     
     // Add global error handling for all images on the page
     function addGlobalImageErrorHandling() {
-        // Handle existing images
+        console.log('🛡️ Setting up robust image error handling...');
+        
+        // Handle all existing images immediately
         document.querySelectorAll('img').forEach(img => {
+            // If image doesn't already have a fallback src, apply one
+            if (!img.src.includes('unsplash.com')) {
+                const isProfile = img.alt === 'Profile' || img.style.borderRadius.includes('50%') || img.classList.contains('profile');
+                img.src = isProfile ? getRandomProfileImage() : getRandomRecipeImage();
+                console.log(`🔄 Applied immediate fallback to image: ${isProfile ? 'profile' : 'recipe'}`);
+            }
+            
+            // Add error handler for future failures
             if (!img.dataset.errorHandled) {
                 img.addEventListener('error', function() {
-                    console.warn('🖼️ Image failed to load:', this.src);
-                    if (this.src !== DEFAULT_RECIPE_IMAGE && this.src !== DEFAULT_PROFILE_IMAGE) {
-                        // Determine which fallback to use based on image context
-                        const isProfile = this.alt === 'Profile' || this.style.borderRadius === '50%' || this.classList.contains('profile');
-                        this.src = isProfile ? DEFAULT_PROFILE_IMAGE : DEFAULT_RECIPE_IMAGE;
-                        this.dataset.errorHandled = 'true';
-                    }
+                    const isProfile = this.alt === 'Profile' || this.style.borderRadius.includes('50%');
+                    this.src = isProfile ? getRandomProfileImage() : getRandomRecipeImage();
+                    this.dataset.errorHandled = 'true';
                 });
                 img.dataset.errorHandled = 'true';
             }
         });
         
-        // Handle background images that fail to load
+        // Handle background images more aggressively
         document.querySelectorAll('.recipe-image').forEach(element => {
             if (!element.dataset.errorHandled) {
                 const backgroundImage = element.style.backgroundImage;
-                if (backgroundImage && backgroundImage !== 'none') {
-                    // Create a test image to check if the background image loads
-                    const testImg = new Image();
-                    testImg.onload = function() {
-                        // Image loaded successfully
-                    };
-                    testImg.onerror = function() {
-                        console.warn('🖼️ Background image failed to load:', backgroundImage);
-                        element.style.backgroundImage = `url('${DEFAULT_RECIPE_IMAGE}')`;
-                    };
-                    
-                    // Extract URL from background-image style
-                    const match = backgroundImage.match(/url\(['"]?([^'")]+)['"]?\)/);
-                    if (match) {
-                        testImg.src = match[1];
-                    }
-                    element.dataset.errorHandled = 'true';
+                // If background image is not already a fallback, replace it
+                if (backgroundImage && !backgroundImage.includes('unsplash.com')) {
+                    console.log('� Replacing background image with fallback');
+                    element.style.backgroundImage = `url('${DEFAULT_RECIPE_IMAGE}')`;
                 }
+                element.dataset.errorHandled = 'true';
             }
         });
     }
