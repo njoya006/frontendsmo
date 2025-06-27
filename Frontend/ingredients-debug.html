@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingredients Debug - ChopSmo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .debug-title {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>Recipe Ingredients Debug Tool</h1>
+        <p>This tool helps diagnose why ingredients aren't showing on the recipe detail page.</p>
+        
+        <div class="debug-section">
+            <div class="debug-title">Test Controls</div>
+            <button onclick="testAPI()">Test API Connection</button>
+            <button onclick="fetchRecipe(1)">Fetch Recipe ID 1</button>
+            <button onclick="fetchRecipe(2)">Fetch Recipe ID 2</button>
+            <button onclick="fetchRecipe(3)">Fetch Recipe ID 3</button>
+            <button onclick="testMockData()">Test Mock Data</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let recipeAPI;
+        
+        // Initialize API
+        try {
+            recipeAPI = new RecipeAPI();
+            console.log('RecipeAPI initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize RecipeAPI:', error);
+        }
+
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `debug-section ${type}`;
+            div.innerHTML = `
+                <div class="debug-title">${title}</div>
+                <pre>${typeof content === 'object' ? JSON.stringify(content, null, 2) : content}</pre>
+            `;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testAPI() {
+            addResult('API Connection Test', 'Testing API connection...', 'info');
+            
+            try {
+                if (!recipeAPI) {
+                    throw new Error('RecipeAPI not initialized');
+                }
+                
+                addResult('API Base URL', recipeAPI.baseUrl, 'success');
+                addResult('Auth Token', recipeAPI.authToken ? `${recipeAPI.authToken.substring(0, 20)}...` : 'No token', 'info');
+
+                // Test basic endpoint
+                const response = await fetch(`${recipeAPI.baseUrl}/api/recipes/`, {
+                    method: 'GET',
+                    headers: recipeAPI.getHeaders(),
+                    credentials: 'include'
+                });
+
+                addResult('API Response Status', `${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('API Response Sample', {
+                        count: data.count || data.length || 'unknown',
+                        first_recipe: data.results?.[0] || data[0] || 'no recipes',
+                        has_ingredients: (data.results?.[0]?.ingredients || data[0]?.ingredients) ? 'YES' : 'NO'
+                    }, 'success');
+                } else {
+                    addResult('API Error', await response.text().catch(() => 'Could not read error'), 'error');
+                }
+                
+            } catch (error) {
+                addResult('API Connection Error', error.message, 'error');
+                console.error('API test failed:', error);
+            }
+        }
+
+        async function fetchRecipe(id) {
+            addResult(`Fetching Recipe ${id}`, `Starting fetch for recipe ID ${id}...`, 'info');
+            
+            try {
+                if (!recipeAPI) {
+                    throw new Error('RecipeAPI not initialized');
+                }
+                
+                const recipe = await recipeAPI.getRecipe(id);
+                
+                addResult(`Recipe ${id} - Basic Info`, {
+                    id: recipe.id,
+                    title: recipe.title || recipe.name,
+                    description: recipe.description?.substring(0, 100) + '...',
+                    has_ingredients: recipe.ingredients ? 'YES' : 'NO',
+                    ingredients_type: Array.isArray(recipe.ingredients) ? 'Array' : typeof recipe.ingredients,
+                    ingredients_length: recipe.ingredients?.length || 0
+                }, 'success');
+
+                if (recipe.ingredients) {
+                    addResult(`Recipe ${id} - Ingredients Structure`, {
+                        raw_ingredients: recipe.ingredients,
+                        first_ingredient: recipe.ingredients[0],
+                        ingredient_keys: recipe.ingredients[0] ? Object.keys(recipe.ingredients[0]) : 'N/A'
+                    }, 'info');
+                    
+                    // Test ingredient processing
+                    const processedIngredients = processIngredients(recipe.ingredients);
+                    addResult(`Recipe ${id} - Processed Ingredients`, processedIngredients, 'success');
+                } else {
+                    addResult(`Recipe ${id} - No Ingredients`, 'No ingredients found in recipe data', 'error');
+                }
+                
+            } catch (error) {
+                addResult(`Recipe ${id} - Fetch Error`, error.message, 'error');
+                console.error(`Failed to fetch recipe ${id}:`, error);
+            }
+        }
+
+        function processIngredients(ingredients) {
+            if (!ingredients || !Array.isArray(ingredients)) {
+                return 'Invalid ingredients data';
+            }
+
+            return ingredients.map((ingredient, index) => {
+                let name, quantity;
+                
+                if (typeof ingredient === 'string') {
+                    name = ingredient;
+                    quantity = '';
+                } else {
+                    // Try multiple possible field names for ingredient name
+                    name = ingredient.ingredient?.name || 
+                           ingredient.ingredient?.ingredient_name ||
+                           ingredient.ingredient?.title ||
+                           ingredient.ingredient_name || 
+                           ingredient.name || 
+                           ingredient.item || 
+                           ingredient.ingredient ||
+                           ingredient.title ||
+                           ingredient.display_name ||
+                           ingredient.ingredient__name ||
+                           ingredient.ingredient__ingredient_name ||
+                           `Unknown ingredient ${index + 1}`;
+                    
+                    // Try multiple possible field names for quantity
+                    const qty = ingredient.quantity || 
+                               ingredient.amount || 
+                               ingredient.qty || 
+                               ingredient.volume ||
+                               ingredient.weight ||
+                               ingredient.measure ||
+                               ingredient.unit_of_measurement ||
+                               ingredient.measure_unit ||
+                               '';
+                               
+                    const unit = ingredient.unit || 
+                                ingredient.units || 
+                                ingredient.measurement || 
+                                ingredient.unit_of_measurement ||
+                                ingredient.measure_unit ||
+                                '';
+                    
+                    quantity = qty && unit ? `${qty} ${unit}` : (qty || '');
+                }
+
+                return {
+                    index: index + 1,
+                    original: ingredient,
+                    processed_name: name,
+                    processed_quantity: quantity
+                };
+            });
+        }
+
+        function testMockData() {
+            addResult('Mock Data Test', 'Testing with mock ingredient data...', 'info');
+            
+            const mockIngredients = [
+                { name: 'Chicken breast', quantity: '500', unit: 'g' },
+                { ingredient_name: 'Onions', amount: '2', units: 'pieces' },
+                { ingredient: { name: 'Garlic' }, qty: '3', measurement: 'cloves' },
+                'Salt to taste',
+                { title: 'Black pepper', volume: '1', unit_of_measurement: 'tsp' }
+            ];
+
+            const processed = processIngredients(mockIngredients);
+            addResult('Mock Data - Processed Result', processed, 'success');
+        }
+
+        // Auto-run basic tests on page load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                addResult('Debug Tool Loaded', 'Ready to test ingredients functionality', 'success');
+                testAPI();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

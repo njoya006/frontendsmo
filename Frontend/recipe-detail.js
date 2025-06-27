@@ -111,6 +111,23 @@ class RecipeDetailManager {
             console.error('❌ Error loading recipe:', error);
             this.hideLoading();
             
+            // Try fallback to mock data before showing error
+            console.log('🔄 Trying fallback to mock data...');
+            try {
+                const mockRecipe = this.getMockRecipe(this.recipeId);
+                if (mockRecipe) {
+                    console.log('✅ Using mock data as fallback');
+                    this.currentRecipe = mockRecipe;
+                    this.isOwner = false; // Mock data is never owned
+                    this.renderRecipe(mockRecipe);
+                    this.hideLoading();
+                    this.showToast('Using demo recipe data (API connection failed)', 'warning');
+                    return;
+                }
+            } catch (mockError) {
+                console.error('❌ Mock data fallback also failed:', mockError);
+            }
+            
             // Show appropriate error message
             if (error.message.includes('HTTP error! status: 404')) {
                 this.showError(`Recipe with ID ${this.recipeId} not found in the database.`);
@@ -617,86 +634,46 @@ class RecipeDetailManager {
         
         this.contributorSection.classList.remove('hidden');
     }    renderIngredients(ingredients) {
-        if (!ingredients || ingredients.length === 0) {
+        console.log('🍯 === INGREDIENTS RENDER DEBUG ===');
+        console.log('Raw ingredients input:', ingredients);
+        console.log('Type:', typeof ingredients);
+        console.log('Is Array:', Array.isArray(ingredients));
+        console.log('Length:', ingredients?.length);
+        
+        if (!ingredients) {
+            console.log('❌ No ingredients provided (null/undefined)');
+            this.ingredientsList.innerHTML = '<li class="ingredient-item"><span class="ingredient-name">No ingredients data received</span></li>';
+            return;
+        }
+
+        if (ingredients.length === 0) {
+            console.log('❌ Empty ingredients array');
             this.ingredientsList.innerHTML = '<li class="ingredient-item"><span class="ingredient-name">No ingredients listed</span></li>';
             return;
         }
 
-        console.log('=== INGREDIENTS DEBUG ===');
-        console.log('Raw ingredients data:', ingredients);
-        console.log('Number of ingredients:', ingredients.length);
-        console.log('Type of ingredients:', typeof ingredients);
-        console.log('Is Array:', Array.isArray(ingredients));
-        ingredients.forEach((ing, i) => {
-            console.log(`Ingredient ${i}:`, ing, 'Type:', typeof ing);
-        });
-        console.log('=== END INGREDIENTS DEBUG ===');
-
+        // Enhanced ingredient processing
         const ingredientItems = ingredients.map((ingredient, index) => {
+            console.log(`🔍 Processing ingredient ${index + 1}:`, ingredient);
+            
             let name, quantity;
             
             if (typeof ingredient === 'string') {
                 name = ingredient;
                 quantity = '';
+                console.log(`✅ String ingredient: "${name}"`);
+            } else if (typeof ingredient === 'object' && ingredient !== null) {
+                console.log(`🔧 Object ingredient keys:`, Object.keys(ingredient));
+                
+                // Enhanced name extraction - try multiple approaches
+                name = this.extractIngredientName(ingredient, index);
+                quantity = this.extractIngredientQuantity(ingredient);
+                
+                console.log(`✅ Processed ingredient ${index + 1}:`, { name, quantity });
             } else {
-                // Log the structure of each ingredient object for debugging
-                console.log(`Ingredient ${index + 1} structure:`, Object.keys(ingredient), ingredient);                // Try multiple possible field names for ingredient name
-                // Handle nested ingredient object structure from Django
-                name = ingredient.ingredient?.name || 
-                       ingredient.ingredient?.ingredient_name ||
-                       ingredient.ingredient?.title ||
-                       ingredient.ingredient_name || 
-                       ingredient.name || 
-                       ingredient.item || 
-                       ingredient.ingredient ||
-                       ingredient.title ||
-                       ingredient.display_name ||
-                       // Common Django field names
-                       ingredient.ingredient__name ||
-                       ingredient.ingredient__ingredient_name ||
-                       JSON.stringify(ingredient.ingredient) || // Show nested ingredient object
-                       JSON.stringify(ingredient) || // Fallback to show the object structure
-                       `Unknown ingredient ${index + 1}`;
-                
-                // Try multiple possible field names for quantity
-                const qty = ingredient.quantity || 
-                           ingredient.amount || 
-                           ingredient.qty || 
-                           ingredient.volume ||
-                           ingredient.weight ||
-                           ingredient.measure ||
-                           ingredient.unit_of_measurement ||
-                           ingredient.measure_unit ||
-                           '';
-                           
-                const unit = ingredient.unit || 
-                            ingredient.units || 
-                            ingredient.measurement || 
-                            ingredient.unit_of_measurement ||
-                            ingredient.measure_unit ||
-                            '';
-                
-                quantity = qty && unit ? `${qty} ${unit}` : (qty || '');
-                  // If we still have "Unknown ingredient", try to extract from any available field
-                if (name && typeof name === 'string' && name.startsWith('Ingredient ') && Object.keys(ingredient).length > 0) {
-                    // Try to find any field that might contain the ingredient name
-                    const possibleNameFields = Object.keys(ingredient).filter(key => 
-                        typeof ingredient[key] === 'string' && 
-                        ingredient[key].length > 0 &&
-                        !['id', 'created_at', 'updated_at', 'recipe_id'].includes(key)
-                    );
-                    
-                    if (possibleNameFields.length > 0) {
-                        name = ingredient[possibleNameFields[0]];
-                    }
-                }
-                
-                // Debug log for each ingredient
-                console.log(`Ingredient ${index + 1} processed:`, {
-                    original: ingredient,
-                    name: name,
-                    quantity: quantity
-                });
+                console.log(`❌ Unknown ingredient type:`, typeof ingredient, ingredient);
+                name = `Unknown ingredient ${index + 1}`;
+                quantity = '';
             }
 
             return `
@@ -707,7 +684,97 @@ class RecipeDetailManager {
             `;
         }).join('');
 
+        console.log('🎯 Final ingredients HTML:', ingredientItems.substring(0, 200) + '...');
         this.ingredientsList.innerHTML = ingredientItems;
+        console.log('🍯 === END INGREDIENTS RENDER DEBUG ===');
+    }
+
+    // Helper method to extract ingredient name from various possible formats
+    extractIngredientName(ingredient, index) {
+        // Try direct name fields first
+        const directNameFields = [
+            'name', 'ingredient_name', 'title', 'item', 'display_name'
+        ];
+        
+        for (const field of directNameFields) {
+            if (ingredient[field] && typeof ingredient[field] === 'string') {
+                console.log(`Found name in field '${field}': ${ingredient[field]}`);
+                return ingredient[field];
+            }
+        }
+        
+        // Try nested ingredient object
+        if (ingredient.ingredient && typeof ingredient.ingredient === 'object') {
+            console.log('Found nested ingredient object:', ingredient.ingredient);
+            
+            for (const field of directNameFields) {
+                if (ingredient.ingredient[field] && typeof ingredient.ingredient[field] === 'string') {
+                    console.log(`Found name in nested field '${field}': ${ingredient.ingredient[field]}`);
+                    return ingredient.ingredient[field];
+                }
+            }
+        }
+        
+        // Try Django-style field names
+        const djangoFields = [
+            'ingredient__name', 'ingredient__ingredient_name', 'ingredient__title'
+        ];
+        
+        for (const field of djangoFields) {
+            if (ingredient[field] && typeof ingredient[field] === 'string') {
+                console.log(`Found name in Django field '${field}': ${ingredient[field]}`);
+                return ingredient[field];
+            }
+        }
+        
+        // Last resort: look for any string field that might be the name
+        const stringFields = Object.keys(ingredient).filter(key => 
+            typeof ingredient[key] === 'string' && 
+            ingredient[key].length > 0 &&
+            !['id', 'created_at', 'updated_at', 'recipe_id', 'recipe'].includes(key)
+        );
+        
+        if (stringFields.length > 0) {
+            console.log(`Using fallback string field '${stringFields[0]}': ${ingredient[stringFields[0]]}`);
+            return ingredient[stringFields[0]];
+        }
+        
+        // If all else fails, show object structure for debugging
+        console.log(`❌ Could not extract name, showing object structure`);
+        return `[DEBUG] ${JSON.stringify(ingredient)}`;
+    }
+
+    // Helper method to extract quantity information
+    extractIngredientQuantity(ingredient) {
+        const quantityFields = ['quantity', 'amount', 'qty', 'volume', 'weight', 'measure'];
+        const unitFields = ['unit', 'units', 'measurement', 'unit_of_measurement', 'measure_unit'];
+        
+        let qty = '';
+        let unit = '';
+        
+        // Find quantity
+        for (const field of quantityFields) {
+            if (ingredient[field]) {
+                qty = ingredient[field];
+                break;
+            }
+        }
+        
+        // Find unit
+        for (const field of unitFields) {
+            if (ingredient[field]) {
+                unit = ingredient[field];
+                break;
+            }
+        }
+        
+        if (qty && unit) {
+            return `${qty} ${unit}`;
+        } else if (qty) {
+            return qty.toString();
+        }
+        
+        return '';
     }
 
     renderInstructions(instructions) {
@@ -1261,29 +1328,79 @@ class RecipeDetailManager {
 
     // Show debug information (optional)
     showDebugInfo(recipe) {
-        // Only show debug info if there's a debug container on the page
-        const debugContainer = document.getElementById('debugInfo');
-        if (debugContainer) {
-            debugContainer.innerHTML = `
-                <div class="debug-panel">
-                    <h4>🔧 Debug Info</h4>
-                    <div class="debug-item">
-                        <strong>Recipe ID:</strong> ${recipe.id || 'N/A'}
+        // Show debug info in the debug panel only when there are ingredient issues
+        const debugContainer = document.getElementById('debugContent');
+        const debugPanel = document.getElementById('debugPanel');
+        
+        if (debugContainer && debugPanel) {
+            // Only show debug panel if ingredients are missing or problematic
+            const showDebug = !recipe.ingredients || 
+                            !Array.isArray(recipe.ingredients) || 
+                            recipe.ingredients.length === 0 ||
+                            // Show debug if first ingredient looks problematic
+                            (recipe.ingredients.length > 0 && 
+                             typeof recipe.ingredients[0] === 'object' && 
+                             !this.hasValidIngredientName(recipe.ingredients[0]));
+            
+            if (showDebug) {
+                debugPanel.style.display = 'block';
+                
+                debugContainer.innerHTML = `
+                    <div class="debug-panel">
+                        <h4>🔧 Recipe Debug Info (Ingredients Issue Detected)</h4>
+                        <div class="debug-item">
+                            <strong>Recipe ID:</strong> ${recipe.id || 'N/A'}
+                        </div>
+                        <div class="debug-item">
+                            <strong>Title:</strong> ${recipe.title || recipe.name || 'N/A'}
+                        </div>
+                        <div class="debug-item">
+                            <strong>🍯 Ingredients Debug:</strong>
+                            <div style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                                <div><strong>Has ingredients:</strong> ${recipe.ingredients ? '✅ YES' : '❌ NO'}</div>
+                                <div><strong>Ingredients type:</strong> ${typeof recipe.ingredients}</div>
+                                <div><strong>Is array:</strong> ${Array.isArray(recipe.ingredients) ? '✅ YES' : '❌ NO'}</div>
+                                <div><strong>Ingredients length:</strong> ${recipe.ingredients?.length || 0}</div>
+                                ${recipe.ingredients && recipe.ingredients.length > 0 ? `
+                                    <div><strong>First ingredient structure:</strong></div>
+                                    <pre style="background: #333; color: #fff; padding: 10px; margin: 5px 0; border-radius: 3px; font-size: 12px; overflow-x: auto;">${JSON.stringify(recipe.ingredients[0], null, 2)}</pre>
+                                    <div><strong>First ingredient keys:</strong> ${Object.keys(recipe.ingredients[0] || {}).join(', ')}</div>
+                                ` : ''}
+                                <div style="margin-top: 10px; padding: 8px; background: #e3f2fd; border-radius: 4px; font-size: 12px;">
+                                    <strong>💡 Tip:</strong> If ingredients aren't showing, the API might be returning them in a different format than expected. Check the browser console for detailed processing logs.
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="debug-item">
-                        <strong>Title:</strong> ${recipe.title || 'N/A'}
-                    </div>
-                    <div class="debug-item">
-                        <strong>Contributor:</strong> ${recipe.contributor?.username || 'N/A'}
-                    </div>                    <div class="debug-item">
-                        <strong>Image URL:</strong> ${recipe.image || 'N/A'}
-                    </div>
-                    <div class="debug-item">
-                        <strong>Is Owner:</strong> ${this.isOwner ? '✅ Yes' : '❌ No'}
-                    </div>
-                </div>
-            `;
+                `;
+            } else {
+                debugPanel.style.display = 'none';
+            }
         }
+    }
+
+    // Helper method to check if an ingredient object has a valid name field
+    hasValidIngredientName(ingredient) {
+        if (typeof ingredient === 'string') return true;
+        if (typeof ingredient !== 'object' || ingredient === null) return false;
+        
+        const nameFields = [
+            'name', 'ingredient_name', 'title', 'item', 'display_name',
+            'ingredient.name', 'ingredient.ingredient_name', 'ingredient.title'
+        ];
+        
+        for (const field of nameFields) {
+            if (field.includes('.')) {
+                const parts = field.split('.');
+                if (ingredient[parts[0]] && ingredient[parts[0]][parts[1]]) {
+                    return true;
+                }
+            } else if (ingredient[field]) {
+                return true;
+            }
+        }
+        
+        return false;
     }    // Format ingredients for editing in textarea
     formatIngredientsForEdit() {
         if (!this.currentRecipe.ingredients || !Array.isArray(this.currentRecipe.ingredients)) {
