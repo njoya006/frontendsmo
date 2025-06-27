@@ -711,12 +711,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeCreateRecipeModalBtn = document.getElementById('closeCreateRecipeModal');
     const createRecipeForm = document.getElementById('createRecipeForm');
 
-    // Debug: Check if modal elements exist
-    console.log('🔍 Checking modal elements...');
-    console.log('📍 Modal:', createRecipeModal);
-    console.log('📍 Close button:', closeCreateRecipeModalBtn);
-    console.log('📍 Form:', createRecipeForm);
-
     // Simple modal open function
     function openModal() {
         console.log('🔓 Opening modal...');
@@ -753,59 +747,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    // ======= DEBUGGING AND TESTING FUNCTIONS =======
-    
-    // Add debugging functions for testing modal and auth
-    window.debugAuth = function() {
-        const token = localStorage.getItem('authToken');
-        console.log('🔍 Current auth token:', token ? 'Present' : 'Missing');
-        console.log('🔍 Token value:', token);
-    };
-    
-    window.setTestAuth = function() {
-        localStorage.setItem('authToken', 'test-token-123');
-        console.log('✅ Test auth token set');
-        console.log('ℹ️ Reinitializing Create Recipe button...');
-        initializeCreateRecipeButton();
-    };
-    
-    window.clearAuth = function() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
-        console.log('🧹 Auth tokens cleared');
-        console.log('ℹ️ Reinitializing Create Recipe button...');
-        // Clear the button container
-        const container = document.getElementById('createRecipeButtonContainer');
-        if (container) {
-            container.innerHTML = '';
-        }
-        initializeCreateRecipeButton();
-    };
-
-    // Add a function to manually check verification status
-    window.checkUserVerification = function() {
-        console.log('🧪 Manual verification check...');
-        initializeCreateRecipeButton();
-    };
-
-    // Add a simple test function to force open modal (for debugging)
-    window.testOpenModal = function() {
-        console.log('🧪 Test: Force opening modal...');
-        openModal();
-    };
-    
-    // Add a simple synchronous test (bypass authentication for testing)
-    window.testOpenModalSync = function() {
-        console.log('🧪 Sync Test: Opening modal without auth check...');
-        if (createRecipeModal) {
-            createRecipeModal.style.display = 'flex';
-            console.log('� Modal display style set to:', createRecipeModal.style.display);
-            console.log('🔍 Modal computed display:', getComputedStyle(createRecipeModal).display);
-            initializeIngredientForm();
-            initializeDropdowns();
-        }
-    };
 
     // ======= ADVANCED USER VERIFICATION (KEPT FOR FUTURE USE) =======
 
