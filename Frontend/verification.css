@@ -1,0 +1,712 @@
+/* ChopSmo User Verification System Styles */
+
+:root {
+    --verification-primary: #228B22;
+    --verification-secondary: #32CD32;
+    --verification-accent: #006400;
+    --verification-success: #4CAF50;
+    --verification-warning: #FF9800;
+    --verification-error: #f44336;
+    --verification-pending: #2196F3;
+    --verification-bg: #f8f9fa;
+    --verification-border: #e0e0e0;
+    --verification-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* ====== VERIFICATION BADGE STYLES ====== */
+.verification-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, var(--verification-success), #45a049);
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    animation: badgeGlow 2s ease-in-out infinite alternate;
+}
+
+.verification-badge i {
+    font-size: 14px;
+}
+
+@keyframes badgeGlow {
+    0% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
+    100% { box-shadow: 0 4px 16px rgba(76, 175, 80, 0.5); }
+}
+
+/* Verification Badge Styles - Global Integration */
+.verification-badge,
+.verification-badge-small,
+.verification-badge-large {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #228B22, #32CD32);
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.verification-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+}
+
+.verification-badge-small {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+}
+
+.verification-badge-large {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+}
+
+.verification-badge:hover,
+.verification-badge-small:hover,
+.verification-badge-large:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(34, 139, 34, 0.4);
+}
+
+/* ====== VERIFICATION STATUS PANEL ====== */
+.verification-status-panel {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin: 20px 0;
+    box-shadow: var(--verification-shadow);
+    border: 1px solid var(--verification-border);
+    transition: all 0.3s ease;
+}
+
+.verification-status-panel:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.verification-status-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.verification-status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.verification-status-icon.pending {
+    background: linear-gradient(135deg, var(--verification-pending), #1976D2);
+}
+
+.verification-status-icon.approved {
+    background: linear-gradient(135deg, var(--verification-success), #45a049);
+}
+
+.verification-status-icon.rejected {
+    background: linear-gradient(135deg, var(--verification-error), #d32f2f);
+}
+
+.verification-status-icon.none {
+    background: linear-gradient(135deg, #757575, #616161);
+}
+
+.verification-status-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.verification-status-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 4px 0 0 0;
+}
+
+/* ====== APPLICATION FORM STYLES ====== */
+.verification-form {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: var(--verification-shadow);
+    border: 1px solid var(--verification-border);
+}
+
+.verification-form-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.verification-form-title {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--verification-primary), var(--verification-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.verification-form-description {
+    color: #666;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.verification-form-group {
+    margin-bottom: 24px;
+}
+
+.verification-form-label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.verification-form-input,
+.verification-form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--verification-border);
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.verification-form-input:focus,
+.verification-form-textarea:focus {
+    outline: none;
+    border-color: var(--verification-primary);
+    box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.1);
+}
+
+.verification-form-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.verification-form-submit {
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--verification-primary), var(--verification-accent));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.verification-form-submit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.verification-form-submit:hover::before {
+    left: 100%;
+}
+
+.verification-form-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(34, 139, 34, 0.3);
+}
+
+.verification-form-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ====== REQUIREMENTS SECTION ====== */
+.verification-requirements {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    border-left: 4px solid var(--verification-primary);
+}
+
+.verification-requirements-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.verification-requirements-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.verification-requirements-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 8px 0;
+}
+
+.verification-requirements-item::before {
+    content: '✓';
+    color: var(--verification-success);
+    font-weight: bold;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.verification-requirements-item:last-child {
+    margin-bottom: 0;
+}
+
+/* ====== BENEFITS SECTION ====== */
+.verification-benefits {
+    background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    border-left: 4px solid var(--verification-success);
+}
+
+.verification-benefits-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.verification-benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.verification-benefit-card {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.verification-benefit-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.verification-benefit-icon {
+    font-size: 24px;
+    color: var(--verification-success);
+    margin-bottom: 8px;
+}
+
+.verification-benefit-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.verification-benefit-description {
+    font-size: 14px;
+    color: #666;
+}
+
+/* ====== PENDING STATUS STYLES ====== */
+.verification-pending {
+    text-align: center;
+    padding: 40px 24px;
+}
+
+.verification-pending-animation {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 24px;
+    border: 4px solid #e0e0e0;
+    border-top: 4px solid var(--verification-pending);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.verification-pending-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--verification-pending);
+    margin-bottom: 8px;
+}
+
+.verification-pending-message {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* ====== ADMIN PANEL STYLES ====== */
+.admin-applications-container {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--verification-shadow);
+}
+
+.admin-applications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.admin-applications-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+}
+
+.admin-applications-count {
+    background: var(--verification-pending);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.application-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    border: 1px solid var(--verification-border);
+    transition: all 0.3s ease;
+}
+
+.application-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.application-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.application-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.application-user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--verification-primary), var(--verification-accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.application-user-details h3 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.application-user-details p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.application-date {
+    font-size: 12px;
+    color: #999;
+    background: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.application-details {
+    margin-bottom: 20px;
+}
+
+.application-field {
+    margin-bottom: 12px;
+}
+
+.application-field-label {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.application-field-value {
+    color: #555;
+    line-height: 1.5;
+}
+
+.application-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn-approve,
+.btn-reject {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-approve {
+    background: linear-gradient(135deg, var(--verification-success), #45a049);
+    color: white;
+}
+
+.btn-approve:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.btn-reject {
+    background: linear-gradient(135deg, var(--verification-error), #d32f2f);
+    color: white;
+}
+
+.btn-reject:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+/* ====== REJECTED STATUS STYLES ====== */
+.verification-rejected {
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+    border-radius: 12px;
+    padding: 24px;
+    border-left: 4px solid var(--verification-error);
+}
+
+.verification-rejected-title {
+    color: var(--verification-error);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.verification-rejected-reason {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    border-left: 3px solid var(--verification-error);
+}
+
+.verification-rejected-reason-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.verification-rejected-reason-text {
+    color: #555;
+    line-height: 1.6;
+}
+
+.verification-reapply-btn {
+    background: linear-gradient(135deg, var(--verification-primary), var(--verification-accent));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.verification-reapply-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3);
+}
+
+/* ====== RESPONSIVE DESIGN ====== */
+@media (max-width: 768px) {
+    .verification-status-panel,
+    .verification-form,
+    .admin-applications-container {
+        padding: 20px;
+        margin: 16px 0;
+    }
+    
+    .verification-form-title {
+        font-size: 24px;
+    }
+    
+    .verification-benefits-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .application-card-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .application-actions {
+        justify-content: stretch;
+    }
+    
+    .btn-approve,
+    .btn-reject {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .admin-applications-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .verification-status-panel,
+    .verification-form,
+    .admin-applications-container {
+        padding: 16px;
+        border-radius: 12px;
+    }
+    
+    .verification-status-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .verification-form-submit {
+        padding: 14px 20px;
+    }
+    
+    .application-user-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .application-actions {
+        flex-direction: column;
+    }
+}
+
+/* Animation for verification badges */
+@keyframes verificationPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 139, 34, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(34, 139, 34, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 139, 34, 0);
+    }
+}
+
+.verification-badge.verified {
+    animation: verificationPulse 2s infinite;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .verification-status {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .status-verified {
+        background: rgba(34, 139, 34, 0.2);
+        color: #4ade80;
+    }
+
+    .status-pending {
+        background: rgba(255, 193, 7, 0.2);
+        color: #fbbf24;
+    }
+
+    .status-not-applied {
+        background: rgba(108, 117, 125, 0.2);
+        color: #9ca3af;
+    }
+
+    .status-rejected {
+        background: rgba(220, 53, 69, 0.2);
+        color: #f87171;
+    }
+
+    .verification-section {
+        border-top-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .verification-action-link {
+        color: #4ade80;
+    }
+
+    .verification-action-link:hover {
+        color: #22c55e;
+    }
+}
