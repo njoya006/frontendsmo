@@ -1,67 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Debug information
     console.log('ChopSmo Login Page Loaded');
-    console.log('Current URL:', window.location.href);
-    console.log('User Agent:', navigator.userAgent);
-    console.log('Online status:', navigator.onLine);
-    
-    // Create inline debug console for production debugging
-    if (window.location.hostname.includes('vercel.app')) {
-        const debugConsole = document.createElement('div');
-        debugConsole.id = 'debug-console';
-        debugConsole.style.cssText = `
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            width: 300px;
-            max-height: 200px;
-            background: rgba(0,0,0,0.9);
-            color: #00ff00;
-            font-family: monospace;
-            font-size: 11px;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-y: auto;
-            z-index: 10000;
-            display: none;
-        `;
-        document.body.appendChild(debugConsole);
-        
-        // Debug toggle button
-        const debugToggle = document.createElement('button');
-        debugToggle.textContent = '🐛';
-        debugToggle.style.cssText = `
-            position: fixed;
-            bottom: 10px;
-            right: 320px;
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            z-index: 10001;
-        `;
-        debugToggle.onclick = () => {
-            debugConsole.style.display = debugConsole.style.display === 'none' ? 'block' : 'none';
-        };
-        document.body.appendChild(debugToggle);
-        
-        // Custom console log function
-        window.debugLog = function(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('div');
-            logEntry.style.color = type === 'error' ? '#ff4444' : type === 'success' ? '#44ff44' : '#00ff00';
-            logEntry.textContent = `[${timestamp}] ${message}`;
-            debugConsole.appendChild(logEntry);
-            debugConsole.scrollTop = debugConsole.scrollHeight;
-            console.log(message);
-        };
-        
-        debugLog('Debug console initialized');
-        debugLog(`Domain: ${window.location.hostname}`);
-        debugLog(`Online: ${navigator.onLine}`);
-    }
     
     const loginForm = document.getElementById('loginForm');
     const emailInput = document.getElementById('email');
@@ -219,154 +157,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
         setLoading(true);
 
-        // Try multiple request strategies with specific focus on Vercel hosting
-        const strategies = [
-            {
-                name: 'Standard Fetch',
-                request: () => fetch('https://njoya.pythonanywhere.com/api/users/login/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                })
-            },
-            {
-                name: 'CORS with Credentials',
-                request: () => fetch('https://njoya.pythonanywhere.com/api/users/login/', {
-                    method: 'POST',
-                    mode: 'cors',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                })
-            },
-            {
-                name: 'No-CORS Mode',
-                request: async () => {
-                    // For no-cors mode, we can't read the response, so we use XMLHttpRequest
-                    return new Promise((resolve, reject) => {
-                        const xhr = new XMLHttpRequest();
-                        xhr.open('POST', 'https://njoya.pythonanywhere.com/api/users/login/', true);
-                        xhr.setRequestHeader('Content-Type', 'application/json');
-                        
-                        xhr.onload = function() {
-                            try {
-                                const response = {
-                                    ok: xhr.status >= 200 && xhr.status < 300,
-                                    status: xhr.status,
-                                    headers: {
-                                        get: (name) => xhr.getResponseHeader(name)
-                                    },
-                                    text: () => Promise.resolve(xhr.responseText)
-                                };
-                                resolve(response);
-                            } catch (e) {
-                                reject(new Error('Response error: ' + e.message));
-                            }
-                        };
-                        
-                        xhr.onerror = () => reject(new Error('Network error'));
-                        xhr.ontimeout = () => reject(new Error('Timeout'));
-                        xhr.timeout = 15000;
-                        
-                        xhr.send(JSON.stringify({ email, password }));
-                    });
-                }
-            }
-        ];
-
-        let lastError = null;
-        let response = null;
-        let data = null;
-
-        // Try each strategy until one works
-        for (const strategy of strategies) {
-            try {
-                const logMsg = `Attempting ${strategy.name}...`;
-                console.log(logMsg);
-                if (window.debugLog) window.debugLog(logMsg);
-                
-                console.log('Request payload:', { email, password: '***' });
-                
-                response = await strategy.request();
-                
-                const statusMsg = `${strategy.name} - Status: ${response.status}`;
-                console.log(statusMsg);
-                if (window.debugLog) window.debugLog(statusMsg, response.status < 400 ? 'success' : 'error');
-                
-                if (response.headers && response.headers.entries) {
-                    console.log(`${strategy.name} - Response headers:`, [...response.headers.entries()]);
-                }
-                
-                // Check content type before parsing JSON
-                const contentType = response.headers ? response.headers.get('content-type') : 'unknown';
-                console.log(`${strategy.name} - Content-Type: ${contentType}`);
-                if (window.debugLog) window.debugLog(`Content-Type: ${contentType}`);
-                
-                // Get response text first to see what we're dealing with
-                const responseText = await response.text();
-                console.log(`${strategy.name} - Raw response:`, responseText.substring(0, 200) + '...');
-                if (window.debugLog) window.debugLog(`Raw response: ${responseText.substring(0, 100)}...`);
-                
-                // Try to parse as JSON only if it looks like JSON
-                if (contentType && contentType.includes('application/json') && responseText.trim().startsWith('{')) {
-                    data = JSON.parse(responseText);
-                } else if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
-                    // Might be JSON without proper content-type
-                    try {
-                        data = JSON.parse(responseText);
-                    } catch (parseError) {
-                        throw new Error(`Server returned HTML instead of JSON. Response: ${responseText.substring(0, 100)}...`);
-                    }
-                } else {
-                    throw new Error(`Server error - received HTML instead of JSON. Status: ${response.status}`);
-                }
-                
-                console.log(`${strategy.name} - Success!`);
-                if (window.debugLog) window.debugLog(`${strategy.name} - Success!`, 'success');
-                break; // Success, exit the loop
-                
-            } catch (err) {
-                const errorMsg = `${strategy.name} failed: ${err.message}`;
-                console.error(errorMsg);
-                if (window.debugLog) window.debugLog(errorMsg, 'error');
-                lastError = err;
-                continue; // Try next strategy
-            }
-        }
-
-        // If all strategies failed
-        if (!response || !data) {
-            const errorMsg = 'All login strategies failed';
-            console.error(errorMsg, lastError);
-            if (window.debugLog) window.debugLog(`${errorMsg}: ${lastError?.message}`, 'error');
-            
-            let errorMessage;
-            if (lastError?.message.includes('HTML instead of JSON') || lastError?.message.includes('Server error')) {
-                errorMessage = 'The server is experiencing issues. Please try again in a few minutes or contact support.';
-            } else if (lastError?.name === 'TypeError' && lastError.message.includes('fetch')) {
-                errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
-            } else if (lastError?.name === 'AbortError') {
-                errorMessage = 'Request timeout. Please try again.';
-            } else if (lastError?.message.includes('CORS')) {
-                errorMessage = 'Connection blocked by browser security. Please try refreshing the page.';
-            } else {
-                errorMessage = `Network error: ${lastError?.message || 'Unknown error'}. Please try again.`;
-            }
-            
-            showToast(errorMessage, 'error');
-            shakeForm();
-            setLoading(false);
-            return;
-        }
-
-        // Process the response
         try {
+            console.log('Attempting login...');
+            
+            const response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const data = await response.json();
             if (response.ok) {
                 // Store the authentication token
                 if (data.token) {
@@ -415,9 +220,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 showToast(errorMessage, 'error');
                 shakeForm();
             }
-        } catch (dataError) {
-            console.error('Error processing response data:', dataError);
-            showToast('Invalid response from server. Please try again.', 'error');
+        } catch (err) {
+            console.error('Login error:', err);
+            
+            let errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+            
+            if (err.name === 'TypeError' && err.message.includes('fetch')) {
+                errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+            } else if (err.name === 'AbortError') {
+                errorMessage = 'Request timeout. Please try again.';
+            } else if (err.message.includes('CORS')) {
+                errorMessage = 'Connection blocked by browser security. Please try refreshing the page.';
+            } else {
+                errorMessage = `Network error: ${err.message}. Please try again.`;
+            }
+            
+            showToast(errorMessage, 'error');
             shakeForm();
         } finally {
             setLoading(false);
