@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize verification badge
+    if (typeof initializeVerificationBadge === 'function') {
+        initializeVerificationBadge();
+    }
+
     // Mobile Menu Toggle (same as index.js)
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');

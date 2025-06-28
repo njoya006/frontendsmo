@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize verification badge
+    if (typeof initializeVerificationBadge === 'function') {
+        initializeVerificationBadge();
+    }
+
     console.log('Profile page loaded, checking for elements...');
     
     // Debug: Check if critical elements exist

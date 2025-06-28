@@ -1,6 +1,11 @@
 const API_BASE_URL = 'https://njoya.pythonanywhere.com';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize verification badge
+    if (typeof initializeVerificationBadge === 'function') {
+        initializeVerificationBadge();
+    }
+
     const prevWeekBtn = document.getElementById('prevWeek');
     const nextWeekBtn = document.getElementById('nextWeek');
     const weekRangeDisplay = document.getElementById('weekRange');

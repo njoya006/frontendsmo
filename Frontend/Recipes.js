@@ -493,26 +493,194 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         displayRecipes(filteredRecipes);
-    }    // Search recipes
+    }    // Enhanced search recipes with API integration
     function searchRecipes() {
         const searchTerm = searchInput.value.toLowerCase().trim();
+        
+        console.log('🔍 Recipe search initiated for:', searchTerm);
+        
         if (!searchTerm) {
+            console.log('📋 Empty search, showing all recipes');
+            recipeData = [...allRecipes];
             displayRecipes(allRecipes);
             resetFilters();
             return;
         }
         
-        // Defensive: ensure recipeData is up-to-date
+        // Show loading state
+        const recipesGrid = document.querySelector('.recipes-grid');
+        if (recipesGrid) {
+            recipesGrid.innerHTML = '<div class="loading-search" style="grid-column: 1 / -1; text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 50px; color: #ff6b35; margin-bottom: 20px;"></i><h3>Searching recipes...</h3></div>';
+        }
+        
+        // Use enhanced API if available, otherwise fallback to local search
+        if (window.enhancedRecipeAPI) {
+            console.log('🚀 Using enhanced recipe API for search');
+            performAPISearch(searchTerm);
+        } else {
+            console.log('📋 Using local search fallback');
+            performLocalSearch(searchTerm);
+        }
+    }
+    
+    async function performAPISearch(searchTerm) {
+        try {
+            const results = await window.enhancedRecipeAPI.searchRecipes(searchTerm, {
+                includeIngredients: true,
+                limit: 50,
+                filters: {}
+            });
+            
+            console.log('✅ API search results:', results);
+            
+            if (results && results.length > 0) {
+                // Transform API results to match expected format
+                const formattedResults = results.map(recipe => ({
+                    ...recipe,
+                    // Ensure required fields exist
+                    title: recipe.title || recipe.name || 'Untitled Recipe',
+                    image: getRecipeImageUrl(recipe),
+                    contributor: recipe.contributor || recipe.author || {
+                        username: 'Unknown Chef',
+                        profile_photo: getRandomProfileImage()
+                    }
+                }));
+                
+                recipeData = formattedResults;
+                // Update allRecipes with new results (avoid duplicates)
+                formattedResults.forEach(newRecipe => {
+                    if (!allRecipes.find(existing => existing.id === newRecipe.id)) {
+                        allRecipes.push(newRecipe);
+                    }
+                });
+                
+                displayRecipes(formattedResults);
+                showToast(`Found ${formattedResults.length} recipe${formattedResults.length === 1 ? '' : 's'} for "${searchTerm}"`, '#4CAF50');
+            } else {
+                console.log('⚠️ No API results, falling back to local search');
+                performLocalSearch(searchTerm);
+            }
+            
+        } catch (error) {
+            console.error('❌ API search error:', error);
+            performLocalSearch(searchTerm); // Fallback to local search
+        }
+    }
+    
+    function performLocalSearch(searchTerm) {
+        console.log('📋 Performing local search for:', searchTerm);
+        
+        // Defensive: ensure allRecipes is available
         if (!Array.isArray(allRecipes) || allRecipes.length === 0) {
+            console.log('⚠️ No local recipes available, fetching from API...');
             fetchRecipes().then(recipes => {
                 allRecipes = recipes;
                 recipeData = recipes;
-                performSearch(searchTerm);
+                performLocalSearch(searchTerm);
+            }).catch(error => {
+                console.error('❌ Error fetching recipes for search:', error);
+                displaySearchError('Unable to load recipes for search');
             });
             return;
         }
         
-        performSearch(searchTerm);
+        const results = allRecipes.filter(recipe => {
+            // Enhanced search logic
+            const searchFields = [
+                recipe.title,
+                recipe.name,
+                recipe.description,
+                recipe.cuisine,
+                recipe.meal_type,
+                recipe.contributor?.username,
+                recipe.contributor?.first_name,
+                recipe.contributor?.last_name
+            ].filter(Boolean).join(' ').toLowerCase();
+            
+            // Search in basic fields
+            if (searchFields.includes(searchTerm)) {
+                return true;
+            }
+            
+            // Search in ingredients
+            if (recipe.ingredients && Array.isArray(recipe.ingredients)) {
+                const ingredientMatch = recipe.ingredients.some(ingredient => {
+                    if (typeof ingredient === 'string') {
+                        return ingredient.toLowerCase().includes(searchTerm);
+                    }
+                    if (typeof ingredient === 'object' && ingredient !== null) {
+                        const ingredientName = ingredient.ingredient?.name || 
+                                             ingredient.ingredient?.ingredient_name ||
+                                             ingredient.ingredient_name || 
+                                             ingredient.name || 
+                                             ingredient.item || '';
+                        return ingredientName.toLowerCase().includes(searchTerm);
+                    }
+                    return false;
+                });
+                
+                if (ingredientMatch) return true;
+            }
+            
+            // Search in categories/cuisines/tags
+            const arrayFields = [
+                recipe.categories,
+                recipe.cuisines, 
+                recipe.tags
+            ];
+            
+            for (const field of arrayFields) {
+                if (Array.isArray(field)) {
+                    const match = field.some(item => {
+                        if (typeof item === 'string') {
+                            return item.toLowerCase().includes(searchTerm);
+                        }
+                        if (typeof item === 'object' && item !== null) {
+                            return item.name && item.name.toLowerCase().includes(searchTerm);
+                        }
+                        return false;
+                    });
+                    
+                    if (match) return true;
+                }
+            }
+            
+            return false;
+        });
+        
+        console.log(`📊 Local search found ${results.length} results`);
+        
+        recipeData = results;
+        displayRecipes(results);
+        
+        // Show search results message
+        if (results.length === 0) {
+            displaySearchError(`No recipes found for "${searchTerm}"`);
+        } else {
+            showToast(`Found ${results.length} recipe${results.length === 1 ? '' : 's'} for "${searchTerm}"`, '#4CAF50');
+        }
+    }
+    
+    function displaySearchError(message) {
+        const recipesGrid = document.querySelector('.recipes-grid');
+        if (!recipesGrid) return;
+        
+        recipesGrid.innerHTML = `
+            <div class="search-error" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <i class="fas fa-search" style="font-size: 50px; color: #ccc; margin-bottom: 20px;"></i>
+                <h3>${message}</h3>
+                <p>Try:</p>
+                <ul style="text-align: left; display: inline-block; margin-top: 15px;">
+                    <li>Different keywords or spelling</li>
+                    <li>Broader search terms</li>
+                    <li>Recipe ingredients like "chicken", "pasta", "tomato"</li>
+                    <li>Cuisine types like "Italian", "Mexican", "Asian"</li>
+                </ul>
+                <button onclick="clearSearch()" style="margin-top: 15px; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    Clear Search
+                </button>
+            </div>
+        `;
     }
     
     function performSearch(searchTerm) {

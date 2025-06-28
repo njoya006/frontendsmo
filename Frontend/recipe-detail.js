@@ -69,15 +69,20 @@ class RecipeDetailManager {
         console.log('🔍 Loading recipe with ID:', this.recipeId);
 
         try {
-            if (!this.useAPI) {
-                throw new Error('RecipeAPI not available - using mock data');
-            }
-
-            // Fetch recipe directly from API
-            console.log('📡 Fetching from API:', `${this.recipeAPI.baseUrl}/api/recipes/${this.recipeId}/`);
-            const recipe = await this.recipeAPI.getRecipe(this.recipeId);
+            // Use enhanced recipe API if available, otherwise fallback to regular API
+            let recipe;
             
-            console.log('✅ Recipe data received from API:', recipe);
+            if (window.enhancedRecipeAPI) {
+                console.log('� Using enhanced recipe API for better ingredient parsing');
+                recipe = await window.enhancedRecipeAPI.getRecipe(this.recipeId);
+            } else if (this.useAPI) {
+                console.log('📡 Using standard recipe API');
+                recipe = await this.recipeAPI.getRecipe(this.recipeId);
+            } else {
+                throw new Error('No recipe API available');
+            }
+            
+            console.log('✅ Recipe data received:', recipe);
             
             if (!recipe) {
                 throw new Error('No recipe data received from API');
@@ -93,7 +98,7 @@ class RecipeDetailManager {
             this.renderRecipe(recipe);
             this.hideLoading();
             
-            console.log('🎉 Recipe loaded successfully from API!');
+            console.log('🎉 Recipe loaded successfully!');
             
         } catch (error) {
             console.error('❌ API Error loading recipe:', error);
