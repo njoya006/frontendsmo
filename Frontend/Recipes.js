@@ -930,8 +930,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 is_staff: profileData.is_staff
             });
             
-            // TEMPORARY DEBUG: Force verification for testing (REMOVE AFTER FIXING BACKEND)
-            isVerified = true; // REMOVE THIS LINE AFTER FIXING BACKEND
+            // Note: Backend verification should be properly configured to set is_verified = true for verified users
             
             return { 
                 isVerified, 
