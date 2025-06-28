@@ -930,6 +930,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 is_staff: profileData.is_staff
             });
             
+            // TEMPORARY DEBUG: Uncomment the next line to force verification for testing
+            // const isVerified = true;
+            
             return { 
                 isVerified, 
                 reason: isVerified ? 'verified' : 'not_verified',
@@ -1091,30 +1094,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize modal handlers
     setupModalHandlers();
 
-    // ======= SIMPLE DEBUG FUNCTIONS =======
+    // ======= QUICK DEBUG OVERRIDE =======
     
-    // Function to manually test verification status
-    window.testVerification = async function() {
-        try {
-            const result = await checkUserVerification();
-            console.log('🧪 Manual verification test result:', result);
-            
-            alert(`Verification Status:
-            
-isVerified: ${result.isVerified}
-reason: ${result.reason}
-            
-Check console for full details.`);
-            
-        } catch (error) {
-            console.error('🧪 Manual verification test error:', error);
-            alert('Error testing verification: ' + error.message);
-        }
-    };
-
-    // Function to force show create button
-    window.forceShowCreateButton = function() {
-        console.log('🔧 Force showing Create Recipe button (debug)');
+    // Quick function to test with forced verification
+    window.testWithForcedVerification = function() {
+        console.log('🔧 Testing with forced verification...');
         const container = document.getElementById('createRecipeButtonContainer');
         if (container) {
             container.innerHTML = '';
@@ -1128,8 +1112,8 @@ Check console for full details.`);
                         Create New Recipe
                     </button>
                     <p style="margin-top: 10px; font-size: 14px; color: #666;">
-                        <i class="fas fa-wrench" style="color: #ff9800; margin-right: 5px;"></i>
-                        Debug mode: Button forced to show
+                        <i class="fas fa-check-circle" style="color: #4caf50; margin-right: 5px;"></i>
+                        DEBUG: Forced verification test
                     </p>
                 </div>
             `;
@@ -1139,7 +1123,7 @@ Check console for full details.`);
             const createBtn = document.getElementById('createRecipeBtn');
             if (createBtn) {
                 createBtn.addEventListener('click', function() {
-                    console.log('🎯 Create Recipe button clicked (debug mode)');
+                    console.log('🎯 Create Recipe button clicked (forced test)');
                     const modal = document.getElementById('createRecipeModal');
                     if (modal) {
                         modal.style.display = 'block';
@@ -1147,6 +1131,8 @@ Check console for full details.`);
                     }
                 });
             }
+            
+            console.log('✅ Button created with forced verification');
         }
     };
 
