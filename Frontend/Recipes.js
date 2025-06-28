@@ -884,8 +884,66 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ======= CREATE RECIPE BUTTON INITIALIZATION =======
     
+    // ======= SIMPLE VERIFICATION CHECK =======
+    
+    async function checkUserVerification() {
+        console.log('� Checking user verification...');
+        
+        // Get auth token
+        const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        if (!authToken) {
+            console.log('❌ No auth token found');
+            return { isVerified: false, reason: 'not_logged_in' };
+        }
+        
+        try {
+            // Try to get profile data directly
+            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+                headers: {
+                    'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                console.log('❌ Profile request failed:', response.status);
+                return { isVerified: false, reason: 'api_error', status: response.status };
+            }
+            
+            const profileData = await response.json();
+            console.log('✅ Profile data received:', profileData);
+            
+            // Check multiple verification patterns
+            const isVerified = 
+                profileData.is_verified === true ||
+                profileData.verified === true ||
+                profileData.verification_status === 'approved' ||
+                profileData.verification_status === 'verified' ||
+                profileData.is_staff === true ||
+                (profileData.profile && profileData.profile.is_verified === true);
+            
+            console.log('🔍 Verification result:', isVerified);
+            console.log('🔍 Verification fields:', {
+                is_verified: profileData.is_verified,
+                verified: profileData.verified,
+                verification_status: profileData.verification_status,
+                is_staff: profileData.is_staff
+            });
+            
+            return { 
+                isVerified, 
+                reason: isVerified ? 'verified' : 'not_verified',
+                profileData 
+            };
+            
+        } catch (error) {
+            console.error('❌ Error checking verification:', error);
+            return { isVerified: false, reason: 'error', error: error.message };
+        }
+    }
+
     async function initializeCreateRecipeButton() {
-        console.log('🔧 Initializing Create Recipe button...');
+        console.log('� Initializing Create Recipe button...');
         
         const container = document.getElementById('createRecipeButtonContainer');
         if (!container) {
@@ -893,35 +951,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Clear any existing content
+        container.innerHTML = '';
+
         try {
-            // Check if user is verified using the universal verification system
-            const verification = new UniversalVerification();
-            const verificationStatus = await verification.getUniversalVerificationStatus();
+            const verificationResult = await checkUserVerification();
+            console.log('✅ Verification check result:', verificationResult);
             
-            console.log('✅ Full verification status:', verificationStatus);
-            console.log('✅ Is verified?', verificationStatus.is_verified);
-            console.log('✅ Status:', verificationStatus.status);
-            console.log('✅ Source:', verificationStatus.source);
-            
-            // Also check local storage for user data
-            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-            const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
-            console.log('🔑 Auth token exists?', !!authToken);
-            console.log('👤 User data:', userData ? JSON.parse(userData) : 'None');
-            
-            // Try multiple verification checks for debugging
-            const isVerifiedByFlag = verificationStatus.is_verified === true;
-            const isVerifiedByStatus = verificationStatus.status === 'approved' || verificationStatus.status === 'verified';
-            const hasVerificationSource = verificationStatus.source && verificationStatus.source !== 'none';
-            
-            console.log('🔍 Verification checks:');
-            console.log('  - By flag:', isVerifiedByFlag);
-            console.log('  - By status:', isVerifiedByStatus);
-            console.log('  - Has source:', hasVerificationSource);
-            
-            const isVerified = isVerifiedByFlag || isVerifiedByStatus || hasVerificationSource;
-            
-            if (isVerified) {
+            if (verificationResult.isVerified) {
                 console.log('✅ User is verified - showing Create Recipe button');
                 
                 // Create the Create Recipe button
@@ -950,21 +987,33 @@ document.addEventListener('DOMContentLoaded', function() {
                         const modal = document.getElementById('createRecipeModal');
                         if (modal) {
                             modal.style.display = 'block';
-                            document.body.style.overflow = 'hidden'; // Prevent background scroll
+                            document.body.style.overflow = 'hidden';
                         }
                     });
                 }
                 
-            } else {
-                console.log('❌ User is not verified - hiding Create Recipe button');
-                console.log('❌ Verification debug info:', {
-                    is_verified: verificationStatus.is_verified,
-                    status: verificationStatus.status,
-                    source: verificationStatus.source,
-                    data: verificationStatus
-                });
+            } else if (verificationResult.reason === 'not_logged_in') {
+                console.log('❌ User not logged in - showing login prompt');
                 
-                // Show verification requirement message
+                const loginPrompt = document.createElement('div');
+                loginPrompt.className = 'login-prompt';
+                loginPrompt.innerHTML = `
+                    <div class="container" style="text-align: center; margin: 20px 0;">
+                        <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #f44336; border-radius: 8px; padding: 15px; color: #c62828;">
+                            <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i>
+                            <strong>Login Required</strong>
+                            <p style="margin: 8px 0 0 0; font-size: 14px;">
+                                Please <a href="Login.html" style="color: #1b5e20; text-decoration: underline;">log in</a> to create recipes
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(loginPrompt);
+                
+            } else {
+                console.log('❌ User is not verified - showing verification notice');
+                
                 const verificationNotice = document.createElement('div');
                 verificationNotice.className = 'verification-notice';
                 verificationNotice.innerHTML = `
@@ -976,9 +1025,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 Only verified users can create recipes. 
                                 <a href="verification.html" style="color: #1b5e20; text-decoration: underline;">Apply for verification</a>
                             </p>
-                            <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">
-                                Debug: Status=${verificationStatus.status}, Flag=${verificationStatus.is_verified}, Source=${verificationStatus.source}
-                            </p>
                         </div>
                     </div>
                 `;
@@ -987,27 +1033,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
         } catch (error) {
-            console.error('❌ Error checking verification status:', error);
+            console.error('❌ Error in initializeCreateRecipeButton:', error);
             
-            // Fallback: show login prompt
-            const loginPrompt = document.createElement('div');
-            loginPrompt.className = 'login-prompt';
-            loginPrompt.innerHTML = `
+            // Show error message
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'error-notice';
+            errorMessage.innerHTML = `
                 <div class="container" style="text-align: center; margin: 20px 0;">
                     <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #f44336; border-radius: 8px; padding: 15px; color: #c62828;">
-                        <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i>
-                        <strong>Login Required</strong>
+                        <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                        <strong>Error Loading</strong>
                         <p style="margin: 8px 0 0 0; font-size: 14px;">
-                            Please <a href="Login.html" style="color: #1b5e20; text-decoration: underline;">log in</a> to create recipes
-                        </p>
-                        <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">
-                            Error: ${error.message}
+                            Unable to check verification status. Please refresh the page.
                         </p>
                     </div>
                 </div>
             `;
             
-            container.appendChild(loginPrompt);
+            container.appendChild(errorMessage);
         }
     }
 
@@ -1048,23 +1091,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize modal handlers
     setupModalHandlers();
 
-    // ======= TEMPORARY DEBUG FUNCTIONS =======
+    // ======= SIMPLE DEBUG FUNCTIONS =======
     
-    // Function to manually test verification status - for debugging only
+    // Function to manually test verification status
     window.testVerification = async function() {
         try {
-            const verification = new UniversalVerification();
-            const status = await verification.getUniversalVerificationStatus();
-            console.log('🧪 Manual verification test result:', status);
+            const result = await checkUserVerification();
+            console.log('🧪 Manual verification test result:', result);
             
-            // Show in alert for easy viewing
             alert(`Verification Status:
             
-is_verified: ${status.is_verified}
-status: ${status.status}
-source: ${status.source}
+isVerified: ${result.isVerified}
+reason: ${result.reason}
             
-Full data: ${JSON.stringify(status, null, 2)}`);
+Check console for full details.`);
             
         } catch (error) {
             console.error('🧪 Manual verification test error:', error);
@@ -1072,12 +1112,12 @@ Full data: ${JSON.stringify(status, null, 2)}`);
         }
     };
 
-    // Function to force show create button - for testing only
+    // Function to force show create button
     window.forceShowCreateButton = function() {
         console.log('🔧 Force showing Create Recipe button (debug)');
         const container = document.getElementById('createRecipeButtonContainer');
         if (container) {
-            container.innerHTML = '';  // Clear existing content
+            container.innerHTML = '';
             
             const createButton = document.createElement('div');
             createButton.className = 'create-recipe-section';
@@ -1096,7 +1136,6 @@ Full data: ${JSON.stringify(status, null, 2)}`);
             
             container.appendChild(createButton);
             
-            // Add click event to open the modal
             const createBtn = document.getElementById('createRecipeBtn');
             if (createBtn) {
                 createBtn.addEventListener('click', function() {
