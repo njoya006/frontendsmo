@@ -7,20 +7,56 @@
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">    <style>
+        /*
+        ==========================================
+        CHOPSMO RECIPE DETAIL PAGE - DESIGN CUSTOMIZATION GUIDE
+        ==========================================
+        
+        🎨 COLOR & BACKGROUND CUSTOMIZATION:
+        - Page background: See body {} - modify background gradient
+        - Recipe card: See .recipe-card {} - modify card background and shadow
+        - Navigation bar: See .navbar {} - modify nav background and blur
+        - Action buttons: See .action-btn {} - modify button colors
+        - Color variables are redefined below for this page
+        
+        🔘 BUTTON CUSTOMIZATION:
+        - Save recipe button: See .save-btn {} - modify background and hover
+        - Share buttons: See .share-btn {} classes
+        - Rating buttons: See .rating {} and star styling
+        - Action buttons: See .action-btn {} and .btn variants
+        
+        🍽️ RECIPE COMPONENTS:
+        - Recipe header: See .recipe-header {} - modify image and title styling
+        - Ingredients list: See .ingredients {} - modify list styling and backgrounds
+        - Instructions: See .instructions {} - modify step styling
+        - Nutrition info: See .nutrition {} - modify stats display
+        - Reviews section: See .reviews {} - modify review card styling
+        
+        📱 RESPONSIVE LAYOUT:
+        - Mobile layout: See @media queries - modify grid and spacing
+        - Image display: See .recipe-image {} - modify sizing and effects
+        - Content organization: See .recipe-content {} layout
+        
+        💡 Color variables are redefined at the top for page-specific theming
+        ==========================================
+        */
+        
+        /* === COLOR SYSTEM FOR RECIPE DETAIL PAGE === */
+        /* 🎨 CUSTOMIZE: Edit these color variables to change the page theme */
         :root {
-            --primary-color: #4CAF50;
-            --primary-dark: #388E3C;
-            --primary-light: #E8F5E8;
-            --secondary-color: #FF9800;
-            --accent-color: #00BCD4;
-            --dark-color: #2C3E50;
-            --gray-color: #7F8C8D;
-            --light-gray: #F8F9FA;
-            --border-color: #E0E0E0;
-            --white: #FFFFFF;
-            --error-color: #f44336;
-            --success-color: #4CAF50;
-            --warning-color: #FF9800;
+            --primary-color: #4CAF50;               /* 🔥 PRIMARY COLOR - main buttons and accents */
+            --primary-dark: #388E3C;                /* 🔥 DARKER PRIMARY - hover states */
+            --primary-light: #E8F5E8;               /* 🔥 LIGHT PRIMARY - subtle backgrounds */
+            --secondary-color: #FF9800;             /* 🟡 SECONDARY COLOR - highlights */
+            --accent-color: #00BCD4;                /* 🔵 ACCENT COLOR - special elements */
+            --dark-color: #2C3E50;                  /* 📝 DARK TEXT COLOR */
+            --gray-color: #7F8C8D;                  /* 📝 SECONDARY TEXT COLOR */
+            --light-gray: #F8F9FA;                  /* 🌐 LIGHT BACKGROUND COLOR */
+            --border-color: #E0E0E0;                /* 🔲 BORDER COLOR */
+            --white: #FFFFFF;                       /* ⚪ WHITE BACKGROUNDS */
+            --error-color: #f44336;                 /* ❌ ERROR COLOR */
+            --success-color: #4CAF50;               /* ✅ SUCCESS COLOR */
+            --warning-color: #FF9800;               /* ⚠️ WARNING COLOR */
         }
 
         * {
@@ -29,18 +65,22 @@
             box-sizing: border-box;
         }
 
+        /* === MAIN PAGE BACKGROUND === */
+        /* 🌐 CUSTOMIZE: Change page background gradient here */
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 🌐 PAGE BACKGROUND GRADIENT */
             min-height: 100vh;
             padding: 20px 0;
         }
 
+        /* === NAVIGATION BAR === */
+        /* 🧭 CUSTOMIZE: Change navigation bar styling here */
         /* Navigation Bar */
         .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);  /* 🧭 NAVBAR BACKGROUND */
+            backdrop-filter: blur(10px);            /* 🧭 NAVBAR BLUR EFFECT */
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1); /* 🧭 NAVBAR SHADOW */
             padding: 15px 0;
             position: fixed;
             top: 0;

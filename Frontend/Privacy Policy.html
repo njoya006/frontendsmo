@@ -7,15 +7,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /*
+        ==========================================
+        CHOPSMO PRIVACY POLICY PAGE - DESIGN CUSTOMIZATION GUIDE
+        ==========================================
+        
+        🎨 COLOR & BACKGROUND CUSTOMIZATION:
+        - Page background: See body {} - modify var(--light) background
+        - Main container: See .container {} - modify var(--white) background
+        - Text colors: See color variables below - modify --text and --primary
+        - Logo colors: See .logo {} styling
+        
+        🔘 BUTTON CUSTOMIZATION:
+        - Back navigation: See .back-link {} - modify colors and hover effects
+        - Any action buttons: See button styling if present
+        
+        📄 CONTENT STYLING:
+        - Headings: See h1, h2, h3 {} - modify typography and colors
+        - Body text: See p {} and text styling - modify readability
+        - Lists: See ul, ol {} - modify list styling
+        - Links: See a {} - modify link colors and hover effects
+        
+        📐 LAYOUT & SPACING:
+        - Container size: See .container {} - modify max-width and padding
+        - Content spacing: See margin and padding values throughout
+        - Mobile responsiveness: See @media queries
+        
+        💡 Color variables are defined at the top for easy customization
+        ==========================================
+        */
+        
+        /* === COLOR SYSTEM FOR PRIVACY POLICY PAGE === */
+        /* 🎨 CUSTOMIZE: Edit these color variables to change the page theme */
         /* Consistent with previous pages */
         :root {
-            --primary: #4CAF50;
-            --primary-dark: #388E3C;
-            --secondary: #FF9800;
-            --text: #333;
-            --light: #f5f5f5;
-            --white: #ffffff;
-            --border: #e0e0e0;
+            --primary: #4CAF50;                     /* 🔥 PRIMARY COLOR - links and accents */
+            --primary-dark: #388E3C;                /* 🔥 DARKER PRIMARY - hover states */
+            --secondary: #FF9800;                   /* 🟡 SECONDARY COLOR - highlights */
+            --text: #333;                           /* 📝 MAIN TEXT COLOR */
+            --light: #f5f5f5;                       /* 🌐 PAGE BACKGROUND COLOR */
+            --white: #ffffff;                       /* ⚪ CONTAINER BACKGROUND */
+            --border: #e0e0e0;                      /* 🔲 BORDER COLOR */
         }
         
         * {
@@ -25,8 +57,10 @@
             font-family: 'Poppins', sans-serif;
         }
         
+        /* === MAIN PAGE LAYOUT === */
+        /* 🌐 CUSTOMIZE: Change page background and layout here */
         body {
-            background-color: var(--light);
+            background-color: var(--light);        /* 🌐 PAGE BACKGROUND COLOR */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -34,15 +68,17 @@
             padding: 20px;
         }
         
+        /* 📦 CUSTOMIZE: Change main container styling here */
         .container {
-            background-color: var(--white);
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-color: var(--white);        /* 📦 CONTAINER BACKGROUND */
+            border-radius: 10px;                   /* 📦 CONTAINER ROUNDNESS */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* 📦 CONTAINER SHADOW */
             width: 100%;
-            max-width: 800px;
-            padding: 30px;
+            max-width: 800px;                      /* 📦 CONTAINER MAX WIDTH */
+            padding: 30px;                         /* 📦 CONTAINER INNER SPACING */
         }
         
+        /* 🏢 CUSTOMIZE: Change logo section styling here */
         .logo {
             text-align: center;
             margin-bottom: 25px;

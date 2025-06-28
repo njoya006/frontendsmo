@@ -7,72 +7,113 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">    <link rel="stylesheet" href="index.css">
     <style>
+        /*
+        ==========================================
+        CHOPSMO SIGNUP PAGE - DESIGN CUSTOMIZATION GUIDE
+        ==========================================
+        
+        🎨 COLOR & BACKGROUND CUSTOMIZATION:
+        - Page background: See .auth-page {} - modify var(--primary-color)
+        - Main form container: See .auth-container {} - modify var(--white)
+        - Left side image area: See .auth-image {} - modify var(--bg-gradient-accent)
+        - Form inputs: See .form-control {} - modify border and background colors
+        - All color variables redefined below for this page
+        
+        🔘 BUTTON CUSTOMIZATION:
+        - Primary signup button: See .btn-primary {} - modify background and hover colors
+        - Social login buttons: See .social-btn {} classes
+        - Form submit buttons: See form button styling sections
+        
+        📝 FORM STYLING:
+        - Input fields: See .form-control {} - modify borders, focus states, backgrounds
+        - Form labels: See .form-label {} - modify text colors and typography
+        - Error messages: See .error-message {} and validation styling
+        - Success states: See .success {} classes
+        
+        🖼️ IMAGE SECTION:
+        - Left side background: See .auth-image {} - modify gradient and patterns
+        - Welcome text: See .auth-image-content {} - modify text colors
+        - Icons and graphics: See icon styling within .auth-image-content
+        
+        💡 All main color variables are redefined at the top of this style section
+        ==========================================
+        */
+        
+        /* === COLOR SYSTEM FOR SIGNUP PAGE === */
+        /* 🎨 CUSTOMIZE: Edit these color variables to change the entire signup page theme */
         /* Thick Rich Green Color Variables */
         :root {
             /* Cameroon Flag Colors - Rich & Thick */
-            --cameroon-green: #228B22;
-            --cameroon-red: #DC143C;
-            --cameroon-yellow: #FFD700;
+            --cameroon-green: #228B22;              /* 🇨🇲 Main green theme color */
+            --cameroon-red: #DC143C;                /* 🇨🇲 Error/validation red */
+            --cameroon-yellow: #FFD700;             /* 🇨🇲 Accent/highlight yellow */
             
             /* Primary Colors - Thick Forest Greens */
-            --primary: #228B22;
-            --primary-dark: #013220;
-            --primary-light: #32CD32;
-            --primary-lighter: #90EE90;
-            --primary-accent: #006400;
-            --primary-ultra: var(--cameroon-yellow);
+            --primary: #228B22;                     /* 🔥 MAIN SIGNUP BUTTON COLOR */
+            --primary-dark: #013220;                /* 🔥 BUTTON HOVER/PRESSED STATE */
+            --primary-light: #32CD32;               /* 🔥 LIGHT ACCENT COLOR */
+            --primary-lighter: #90EE90;             /* 🔥 SUBTLE BACKGROUNDS */
+            --primary-accent: #006400;              /* 🔥 DARK ACCENT COLOR */
+            --primary-ultra: var(--cameroon-yellow); /* 🔥 SPECIAL HIGHLIGHT COLOR */
             
             /* Black Accents */
-            --black: #000000;
-            --black-soft: #0D0D0D;
-            --black-light: #1A1A1A;
+            --black: #000000;                       /* ⚫ Pure black text */
+            --black-soft: #0D0D0D;                  /* ⚫ Main text color */
+            --black-light: #1A1A1A;                 /* ⚫ Secondary text */
             
             /* Background Gradients - Ultra Bright */
-            --bg-gradient-primary: linear-gradient(135deg, #F1F8E9 0%, #DCEDC8 50%, #C5E1A5 100%);
-            --bg-gradient-accent: linear-gradient(135deg, var(--cameroon-green) 0%, var(--primary) 50%, var(--cameroon-yellow) 100%);
+            --bg-gradient-primary: linear-gradient(135deg, #F1F8E9 0%, #DCEDC8 50%, #C5E1A5 100%); /* 🌈 Page background gradient */
+            --bg-gradient-accent: linear-gradient(135deg, var(--cameroon-green) 0%, var(--primary) 50%, var(--cameroon-yellow) 100%); /* 🌈 Image section gradient */
             
             /* Neutral Colors */
-            --text: var(--black-soft);
-            --text-light: var(--black-light);
-            --white: #FFFFFF;
-            --border: #E2E8F0;
-            --gray-50: #F7FAFC;
-            --error: var(--cameroon-red);
-            --success: var(--cameroon-green);
+            --text: var(--black-soft);               /* 📝 Main text color */
+            --text-light: var(--black-light);       /* 📝 Light text color */
+            --white: #FFFFFF;                       /* ⚪ Pure white backgrounds */
+            --border: #E2E8F0;                      /* 🔲 Form borders */
+            --gray-50: #F7FAFC;                     /* 🔲 Light backgrounds */
+            --error: var(--cameroon-red);           /* ❌ Error message color */
+            --success: var(--cameroon-green);       /* ✅ Success message color */
             
             /* Enhanced Shadows */
-            --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
-            --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
-            --shadow-xl: 0 16px 40px rgba(0,230,118,0.3);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.1);    /* 💫 Medium shadow */
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);   /* 💫 Large shadow */
+            --shadow-xl: 0 16px 40px rgba(0,230,118,0.3); /* 💫 Extra large colored shadow */
             
             /* Transitions */
-            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);   /* ⚡ Fast animations */
+            --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);  /* ⚡ Normal animations */
         }
         
+        /* === MAIN PAGE LAYOUT === */
+        /* 🎨 CUSTOMIZE: Change main signup page background here */
         /* Professional Auth Page Styles */
         .auth-page {
             min-height: 100vh;
-            background: var(--primary-color);
+            background: var(--primary-color);      /* 🌐 MAIN PAGE BACKGROUND COLOR */
             display: flex;
             align-items: center;
             padding: 40px 20px;
-        }        .auth-container {
+        }
+        
+        /* 🎨 CUSTOMIZE: Change main form container styling here */
+        .auth-container {
             display: flex;
             max-width: 1200px;
             width: 100%;
             margin: 0 auto;
-            background: var(--white);
-            border-radius: 25px;
-            box-shadow: var(--shadow-xl);
+            background: var(--white);              /* 📦 CONTAINER BACKGROUND */
+            border-radius: 25px;                   /* 📦 CONTAINER ROUNDNESS */
+            box-shadow: var(--shadow-xl);          /* 📦 CONTAINER SHADOW */
             overflow: hidden;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
+        /* === LEFT SIDE IMAGE SECTION === */
+        /* 🖼️ CUSTOMIZE: Change left side image area background and styling here */
         .auth-image {
             flex: 1;
-            background: var(--bg-gradient-accent);
+            background: var(--bg-gradient-accent); /* 🖼️ IMAGE SECTION BACKGROUND GRADIENT */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -88,11 +129,13 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>'); /* 🖼️ PATTERN OVERLAY */
             opacity: 0.6;
-        }        .auth-image-content {
+        }
+        
+        .auth-image-content {
             text-align: center;
-            color: var(--white);
+            color: var(--white);                   /* 🖼️ WELCOME TEXT COLOR */
             position: relative;
             z-index: 2;
         }

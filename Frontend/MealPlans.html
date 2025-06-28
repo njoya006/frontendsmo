@@ -1,8 +1,44 @@
 <style>
+    /*
+    ==========================================
+    CHOPSMO MEAL PLANS PAGE - DESIGN CUSTOMIZATION GUIDE
+    ==========================================
+    
+    🎨 COLOR & BACKGROUND CUSTOMIZATION:
+    - Page background: See .meal-plans {} - modify var(--bg-gradient-primary)
+    - Plans header: See .plans-header {} - modify background gradient
+    - Plan cards: See .plan-card {} - modify card backgrounds and shadows
+    - Calendar view: See .calendar {} - modify calendar styling
+    - All color variables defined in index.css
+    
+    🔘 BUTTON CUSTOMIZATION:
+    - Plan action buttons: See .plan-btn {} classes
+    - Create plan button: See .create-plan-btn {}
+    - Filter buttons: See .filter-btn {} and .plans-filters {}
+    - Calendar navigation: See .calendar-nav {} button styling
+    
+    📅 MEAL PLAN COMPONENTS:
+    - Plan cards: See .plan-card {} - modify background, border, shadow, hover
+    - Calendar grid: See .calendar-grid {} - modify layout and day styling
+    - Meal items: See .meal-item {} - modify meal card appearance
+    - Stats display: See .plan-stats {} - modify statistics styling
+    
+    📊 LAYOUT SECTIONS:
+    - Main container: See .meal-plans {} and .container {}
+    - Header section: See .plans-header {}
+    - Filter section: See .plans-filters {}
+    - Content grid: See .plans-grid {} and .calendar-view {}
+    
+    💡 All CSS variables (colors, gradients, shadows) are defined in index.css
+    ==========================================
+    */
+    
+    /* === MAIN MEAL PLANS PAGE LAYOUT === */
+    /* 🎨 CUSTOMIZE: Change main page background and pattern here */
     /* Enhanced Meal Plans Page - Modern Design */
     .meal-plans {
         padding: 80px 0 60px;
-        background: var(--bg-gradient-primary);
+        background: var(--bg-gradient-primary);    /* 🌐 MAIN PAGE BACKGROUND */
         min-height: 100vh;
         position: relative;
     }
@@ -14,7 +50,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(27,94,32,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(27,94,32,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(27,94,32,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(27,94,32,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>'); /* 🌐 BACKGROUND PATTERN */
         opacity: 0.3;
         pointer-events: none;
     }
@@ -27,6 +63,8 @@
         z-index: 1;
     }
 
+    /* === MEAL PLANS HEADER SECTION === */
+    /* 🎨 CUSTOMIZE: Change header background, layout, and styling here */
     /* Enhanced Header */
     .plans-header {
         display: flex;
@@ -35,10 +73,10 @@
         margin-bottom: 2rem;
         flex-wrap: wrap;
         gap: 1.5rem;
-        background: linear-gradient(135deg, var(--white-color) 0%, rgba(255, 255, 255, 0.95) 100%);
+        background: linear-gradient(135deg, var(--white-color) 0%, rgba(255, 255, 255, 0.95) 100%); /* 📋 HEADER BACKGROUND */
         padding: 2rem;
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-lg);
+        border-radius: var(--radius-xl);         /* 📋 HEADER ROUNDNESS */
+        box-shadow: var(--shadow-lg);            /* 📋 HEADER SHADOW */
         border: 1px solid rgba(27, 94, 32, 0.1);
         position: relative;
         overflow: hidden;

@@ -8,19 +8,56 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="verification.css">
-    <style>        /* Enhanced Dashboard Specific Styles */
+    <style>
+        /*
+        ==========================================
+        CHOPSMO DASHBOARD PAGE - DESIGN CUSTOMIZATION GUIDE
+        ==========================================
+        
+        🎨 COLOR & BACKGROUND CUSTOMIZATION:
+        - Main dashboard background: See .dashboard {} - modify var(--bg-gradient-primary)
+        - Header section: See .dashboard-header {} - modify background gradient
+        - Card backgrounds: See .stat-card {}, .section-card {} - modify var(--white-color)
+        - All color variables defined in index.css
+        
+        🔘 BUTTON CUSTOMIZATION:
+        - Primary buttons: Search for .btn-primary {} throughout this file
+        - Secondary buttons: Search for .btn-outline {}, .btn-black {}
+        - Action buttons: See .action-btn {} classes
+        - Tab buttons: See .tab-btn {} classes
+        
+        📊 DASHBOARD COMPONENTS:
+        - Stats cards: See .stat-card {} - modify background, shadow, border
+        - Recipe cards: See .recipe-card {} - modify card styling
+        - Charts/graphs: See .chart-container {} and related classes
+        - Modal dialogs: See .modal {} and .modal-content {}
+        
+        🎯 LAYOUT SECTIONS:
+        - Header: .dashboard-header {}
+        - Main content: .dashboard-main {}
+        - Sidebar: .dashboard-sidebar {}
+        - Stats grid: .dashboard-stats {}
+        
+        💡 All CSS variables (colors, gradients, shadows) are defined in index.css
+        ==========================================
+        */
+        
+        /* === MAIN DASHBOARD LAYOUT === */
+        /* 🎨 CUSTOMIZE: Change main dashboard background and spacing here */
         .dashboard {
             padding: 0;
             margin: 0;
             min-height: 100vh;
-            background: var(--bg-gradient-primary);
+            background: var(--bg-gradient-primary); /* Main dashboard background */
             padding-top: 80px;
 
+        /* === DASHBOARD HEADER SECTION === */
+        /* 🎨 CUSTOMIZE: Change dashboard header background, colors, and styling here */
         .dashboard-header {
             margin-bottom: 2rem;
             text-align: center;
             padding: 2rem;
-            background: linear-gradient(135deg, var(--white-color) 0%, rgba(255, 255, 255, 0.95) 100%);
+            background: linear-gradient(135deg, var(--white-color) 0%, rgba(255, 255, 255, 0.95) 100%); /* Header background */
             border-radius: var(--radius-xl);
             box-shadow: var(--shadow-lg);
             border: 1px solid rgba(27, 94, 32, 0.1);
@@ -35,7 +72,7 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: var(--bg-gradient-accent);
+            background: var(--bg-gradient-accent); /* Header accent line color */
         }
 
         .dashboard-header h1 {
@@ -43,14 +80,14 @@
             margin-bottom: 0.5rem;
             color: var(--dark-color);
             font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%); /* Title gradient */
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
         .dashboard-header p {
-            color: var(--gray-color);
+            color: var(--gray-color); /* Header subtitle color */
             font-size: 1.1rem;
             margin-bottom: 1rem;
             font-weight: 500;
@@ -60,14 +97,16 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(27, 94, 32, 0.1);
+            background: rgba(27, 94, 32, 0.1); /* Date badge background */
             padding: 0.5rem 1rem;
             border-radius: var(--radius-full);
-            color: var(--primary-color);
+            color: var(--primary-color); /* Date text color */
             font-weight: 600;
             font-size: 0.9rem;
         }
 
+        /* === DASHBOARD STATISTICS CARDS === */
+        /* 🎨 CUSTOMIZE: Change stats grid layout here */
         .dashboard-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -75,11 +114,12 @@
             margin-bottom: 2rem;
         }
 
+        /* 🎨 CUSTOMIZE: Change stat card appearance, background, shadow here */
         .stat-card {
-            background: var(--white-color);
+            background: var(--white-color); /* Card background */
             padding: 1.5rem;
             border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-md); /* Card shadow */
             border: 1px solid rgba(27, 94, 32, 0.08);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
@@ -96,14 +136,14 @@
             left: 0;
             width: 4px;
             height: 100%;
-            background: var(--bg-gradient-accent);
+            background: var(--bg-gradient-accent); /* Card accent border */
             opacity: 0;
             transition: opacity 0.3s ease;
         }
 
         .stat-card:hover {
             transform: translateY(-4px);
-            box-shadow: var(--shadow-xl);
+            box-shadow: var(--shadow-xl); /* Hover shadow effect */
         }
 
         .stat-card:hover::before {            opacity: 1;
@@ -112,7 +152,8 @@
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: var(--shadow-xl);
-        }        .stat-icon {
+        }        /* 🎨 CUSTOMIZE: Change stat card icons here */
+        .stat-icon {
             width: 60px;
             height: 60px;
             border-radius: var(--radius-lg);
@@ -120,8 +161,8 @@
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
-            color: var(--white-color);
-            background: var(--bg-gradient-accent);
+            color: var(--white-color); /* Icon color */
+            background: var(--bg-gradient-accent); /* Icon background gradient */
             box-shadow: var(--shadow-md);
             flex-shrink: 0;
         }
@@ -133,7 +174,7 @@
         .stat-content h3 {
             font-size: 0.9rem;
             font-weight: 600;
-            color: var(--gray-color);
+            color: var(--gray-color); /* Stat label color */
             margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -142,7 +183,7 @@
         .stat-value {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--primary-color);
+            color: var(--primary-color); /* Stat value color */
             margin-bottom: 0.25rem;
             line-height: 1;
         }

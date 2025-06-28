@@ -7,9 +7,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="verification.css">
+
+<!-- ==========================================
+     RECIPES PAGE DESIGN CUSTOMIZATION GUIDE
+     ==========================================
+     
+     This section contains all the styling for the Recipes page.
+     Key customization areas are clearly marked below:
+     
+     1. PAGE BACKGROUND & COLORS
+     2. BUTTON STYLES & COLORS
+     3. SEARCH BAR DESIGN
+     4. FILTER TAGS DESIGN
+     5. RECIPE CARDS DESIGN
+     6. MODAL DESIGN
+     7. RESPONSIVE DESIGN
+     
+     Search for "CUSTOMIZE:" comments to find specific areas
+     ========================================== -->
+
 <style>    /* Recipes Page Styles - Enhanced Modern Design */
+
+/* ==========================================
+   PAGE BACKGROUND & MAIN COLORS
+   CUSTOMIZE: Change these values for overall page appearance
+   ========================================== */
 .recipes-page {
     padding: 140px 0 var(--space-16);
+    /* CUSTOMIZE: Main page background gradient - change colors here */
     background: linear-gradient(135deg, #f8fffe 0%, #f0f8f5 50%, #e8f5e8 100%);
     min-height: 100vh;
     position: relative;
@@ -22,6 +47,7 @@
     left: 0;
     right: 0;
     bottom: 0;
+    /* CUSTOMIZE: Decorative pattern colors - change rgba values */
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="25" cy="25" r="2" fill="rgba(27,94,32,0.03)"/><circle cx="75" cy="75" r="1.5" fill="rgba(46,125,50,0.02)"/><circle cx="50" cy="10" r="1" fill="rgba(76,175,80,0.02)"/></svg>') repeat;
     pointer-events: none;
     animation: float 30s ease-in-out infinite;
@@ -32,13 +58,19 @@
     50% { transform: translateY(-15px) rotate(180deg); }
 }
 
+/* ==========================================
+   HEADER SECTION DESIGN
+   CUSTOMIZE: Page header background and appearance
+   ========================================== */
 .recipes-header {
     margin-bottom: var(--space-16);
     text-align: center;
     padding: var(--space-16);
+    /* CUSTOMIZE: Header background - change rgba values for different transparency */
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     border-radius: var(--border-radius-xl);
+    /* CUSTOMIZE: Header shadow - change rgba values for shadow color */
     box-shadow: 0 20px 60px rgba(27,94,32,0.08);
     border: 1px solid rgba(255,255,255,0.3);
     position: relative;
@@ -82,71 +114,39 @@
     line-height: 1.6;
 }
 
-.search-controls {
-    margin-bottom: var(--space-12);
-    animation: fadeInUp 0.8s ease-out 0.2s both;
-}
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.search-bar {
-    display: flex;
-    max-width: 700px;
-    margin: 0 auto var(--space-4);
-    box-shadow: 0 12px 40px rgba(27,94,32,0.12);
-    border-radius: var(--border-radius-full);
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255,255,255,0.3);
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.search-bar:focus-within {
-    box-shadow: 0 20px 60px rgba(27,94,32,0.2);
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-}
-
-.search-bar input {
-    flex: 1;
-    padding: var(--space-4) var(--space-6);
+/* ==========================================
+   BUTTON STYLES & COLORS
+   CUSTOMIZE: Global button styles for the page
+   ========================================== */
+.btn {
+    padding: 12px 16px;
     border: none;
-    background: transparent;
-    font-size: var(--font-size-base);
-    transition: var(--transition-normal);
-    color: var(--dark-color);
-}
-
-.search-bar input:focus {
-    outline: none;
-}
-
-.search-bar input::placeholder {
-    color: var(--gray-color);
-    opacity: 0.8;
-}
-
-.search-bar button {
-    padding: 0 var(--space-6);
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
-    color: var(--white-color);
-    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
     position: relative;
     overflow: hidden;
-    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    min-height: 45px;
 }
 
-.search-bar button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-accent));
+    color: white;
+    box-shadow: 0 4px 15px rgba(27,94,32,0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-accent), var(--primary-color));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(27,
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);

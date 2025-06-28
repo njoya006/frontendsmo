@@ -9,44 +9,81 @@
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="verification.css">
     <style>
+        /*
+        ==========================================
+        CHOPSMO PROFILE PAGE - DESIGN CUSTOMIZATION GUIDE
+        ==========================================
+        
+        🎨 COLOR & BACKGROUND CUSTOMIZATION:
+        - Page background: See .profile-page {} - modify var(--primary-50)
+        - Profile header: See .profile-header {} - modify var(--white-color)
+        - Profile sidebar: See .profile-sidebar {} - modify background colors
+        - Content cards: See .profile-card {} - modify card backgrounds
+        - All color variables defined in index.css
+        
+        🔘 BUTTON CUSTOMIZATION:
+        - Profile action buttons: See .profile-btn {} classes
+        - Edit profile buttons: See .edit-btn {} and .save-btn {}
+        - Tab navigation: See .profile-tabs {} and .tab-btn {}
+        - Upload buttons: See .upload-btn {} and image upload styling
+        
+        📊 PROFILE COMPONENTS:
+        - User avatar: See .profile-avatar {} - modify size, borders, shadows
+        - Stats cards: See .profile-stats {} - modify background and styling
+        - Activity feed: See .activity-feed {} - modify card and item styling
+        - Settings panels: See .settings-panel {} - modify form and input styling
+        
+        📱 RESPONSIVE LAYOUT:
+        - Mobile layout: See @media queries - modify grid and spacing
+        - Sidebar collapse: See .profile-sidebar mobile behavior
+        - Card stacking: See grid template modifications for mobile
+        
+        💡 All CSS variables (colors, gradients, shadows) are defined in index.css
+        ==========================================
+        */
+        
+        /* === MAIN PROFILE PAGE LAYOUT === */
+        /* 🎨 CUSTOMIZE: Change profile page background here */
         /* Profile Page Styles */
         .profile-page {
             padding: 100px 0;
-            background: var(--primary-50);
+            background: var(--primary-50);         /* 🌐 PROFILE PAGE BACKGROUND */
             min-height: 100vh;
         }
 
+        /* 🎨 CUSTOMIZE: Change profile header styling here */
         .profile-header {
             text-align: center;
             margin-bottom: 50px;
             padding: 40px 0;
-            background: var(--white-color);
-            border-radius: 20px;
-            box-shadow: var(--shadow-lg);
-            border-top: 4px solid var(--primary-color);
+            background: var(--white-color);        /* 📋 HEADER BACKGROUND */
+            border-radius: 20px;                   /* 📋 HEADER ROUNDNESS */
+            box-shadow: var(--shadow-lg);          /* 📋 HEADER SHADOW */
+            border-top: 4px solid var(--primary-color); /* 📋 HEADER ACCENT BORDER */
         }
 
         .profile-header h1 {
             font-size: 42px;
             margin-bottom: 15px;
-            color: var(--dark-color);
+            color: var(--dark-color);              /* 📋 HEADER TITLE COLOR */
             font-weight: 700;
         }
 
         .profile-header p {
-            color: var(--gray-color);
+            color: var(--gray-color);              /* 📋 HEADER SUBTITLE COLOR */
             font-size: 18px;
         }
 
+        /* 🎯 CUSTOMIZE: Change profile content grid layout here */
         .profile-content {
             display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 40px;
+            grid-template-columns: 350px 1fr;      /* 🎯 SIDEBAR WIDTH vs MAIN CONTENT */
+            gap: 40px;                              /* 🎯 SPACING BETWEEN SECTIONS */
         }
 
         @media (max-width: 992px) {
             .profile-content {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr;        /* 🎯 MOBILE: SINGLE COLUMN LAYOUT */
             }
         }
 

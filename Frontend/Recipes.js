@@ -937,6 +937,152 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Create Recipe button based on user verification status
     initializeCreateRecipeButton();
     
+    // ======= CREATE RECIPE BUTTON INITIALIZATION =======
+    
+    async function initializeCreateRecipeButton() {
+        console.log('🔍 Initializing Create Recipe button based on verification status...');
+        
+        const buttonContainer = document.getElementById('createRecipeButtonContainer');
+        if (!buttonContainer) {
+            console.warn('❌ Create recipe button container not found');
+            return;
+        }
+        
+        try {
+            // Check if user is logged in first
+            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (!authToken) {
+                console.log('ℹ️ User not logged in - no create recipe button');
+                return;
+            }
+            
+            // Check verification status using universal verification if available
+            let isVerified = false;
+            
+            // Method 1: Use universal verification system if available
+            if (window.universalVerification) {
+                try {
+                    console.log('🔍 Checking verification with universal system...');
+                    const verificationStatus = await window.universalVerification.getCurrentUserVerificationStatus();
+                    isVerified = verificationStatus.is_verified;
+                    console.log('🎯 Universal verification result:', isVerified);
+                } catch (error) {
+                    console.warn('⚠️ Universal verification check failed:', error);
+                }
+            }
+            
+            // Method 2: Fallback to direct profile check
+            if (!isVerified) {
+                try {
+                    console.log('🔍 Fallback: Checking profile verification status...');
+                    const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+                        headers: {
+                            'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const profileData = await response.json();
+                        
+                        // Check multiple verification patterns
+                        isVerified = 
+                            profileData.is_verified === true ||
+                            profileData.verified === true ||
+                            profileData.is_staff === true ||
+                            profileData.is_superuser === true ||
+                            profileData.verification_status === 'approved' ||
+                            profileData.verification_status === 'verified' ||
+                            profileData.verification_approved === true;
+                        
+                        console.log('🎯 Profile verification result:', isVerified);
+                        console.log('📋 Profile verification fields:', {
+                            is_verified: profileData.is_verified,
+                            verified: profileData.verified,
+                            is_staff: profileData.is_staff,
+                            is_superuser: profileData.is_superuser,
+                            verification_status: profileData.verification_status,
+                            verification_approved: profileData.verification_approved
+                        });
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Profile verification check failed:', error);
+                }
+            }
+            
+            // Method 3: Check local verification override for testing
+            if (!isVerified) {
+                const manualOverride = localStorage.getItem('verificationOverride');
+                if (manualOverride) {
+                    try {
+                        const overrideData = JSON.parse(manualOverride);
+                        isVerified = overrideData.is_verified === true;
+                        console.log('🔧 Using manual verification override:', isVerified);
+                    } catch (e) {
+                        console.warn('⚠️ Invalid manual override data');
+                    }
+                }
+            }
+            
+            // Show or hide the create recipe button based on verification status
+            if (isVerified) {
+                console.log('✅ User is verified - showing create recipe button');
+                buttonContainer.innerHTML = `
+                    <div class="create-recipe-section" style="margin: 2rem 0; text-align: center;">
+                        <button id="createNewRecipeBtn" class="create-recipe-btn">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Create New Recipe</span>
+                        </button>
+                        <p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">
+                            <i class="fas fa-certificate" style="color: #4CAF50; margin-right: 0.25rem;"></i>
+                            Verified contributors can create and share recipes
+                        </p>
+                    </div>
+                `;
+                
+                // Add event listener to open the create recipe modal
+                const createBtn = document.getElementById('createNewRecipeBtn');
+                if (createBtn) {
+                    createBtn.addEventListener('click', function() {
+                        console.log('🚀 Opening create recipe modal...');
+                        const modal = document.getElementById('createRecipeModal');
+                        if (modal) {
+                            modal.style.display = 'block';
+                            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+                        }
+                    });
+                }
+                
+                showToast('Welcome back! You can create new recipes.', '#4CAF50');
+            } else {
+                console.log('❌ User is not verified - showing verification prompt');
+                buttonContainer.innerHTML = `
+                    <div class="verification-prompt" style="margin: 2rem 0; text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 1px solid #dee2e6;">
+                        <i class="fas fa-info-circle" style="color: #6c757d; font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                        <h4 style="margin: 0.5rem 0; color: #495057;">Want to Share Your Recipes?</h4>
+                        <p style="margin: 0.5rem 0 1rem 0; color: #6c757d; font-size: 0.9rem;">
+                            Get verified to create and share your own recipes with the ChopSmo community!
+                        </p>
+                        <a href="verification.html" class="btn btn-primary" style="text-decoration: none;">
+                            <i class="fas fa-certificate"></i>
+                            Apply for Verification
+                        </a>
+                    </div>
+                `;
+            }
+            
+        } catch (error) {
+            console.error('❌ Error initializing create recipe button:', error);
+            // Fallback: show verification prompt on error
+            buttonContainer.innerHTML = `
+                <div class="error-prompt" style="margin: 2rem 0; text-align: center; padding: 1rem; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+                    <i class="fas fa-exclamation-triangle" style="color: #856404; margin-right: 0.5rem;"></i>
+                    <span style="color: #856404;">Unable to check verification status. Please try refreshing the page.</span>
+                </div>
+            `;
+        }
+    }
+    
     // Dropdown/autocomplete functionality for categories, cuisines, tags
     const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Snacks", "Vegetarian", "Quick Meals", "High Protein", "Budget Friendly", "Dessert", "Vegan"];
     const cuisineOptions = ["Italian", "Mexican", "Cameroonian", "French", "Indian", "Chinese", "American", "Thai", "Moroccan", "Greek"];
@@ -982,4 +1128,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize dropdowns on page load
     initializeDropdowns();
+    
+    // ======= CREATE RECIPE MODAL FUNCTIONALITY =======
+    
+    // Handle modal close functionality
+    const closeCreateRecipeModal = document.getElementById('closeCreateRecipeModal');
+    if (closeCreateRecipeModal) {
+        closeCreateRecipeModal.addEventListener('click', function() {
+            console.log('🔒 Closing create recipe modal');
+            const modal = document.getElementById('createRecipeModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto'; // Restore scrolling
+            }
+        });
+    }
+    
+    // Close modal when clicking outside of it
+    const createRecipeModal = document.getElementById('createRecipeModal');
+    if (createRecipeModal) {
+        createRecipeModal.addEventListener('click', function(event) {
+            if (event.target === createRecipeModal) {
+                console.log('🔒 Closing modal by clicking outside');
+                createRecipeModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        });
+    }
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modal = document.getElementById('createRecipeModal');
+            if (modal && modal.style.display === 'block') {
+                console.log('🔒 Closing modal with Escape key');
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+    });
 });

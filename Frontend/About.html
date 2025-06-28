@@ -6,14 +6,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="index.css">
-    <style>        /* About Page Specific Styles */
+    <style>        
+        /* ==================================================
+           ABOUT PAGE CUSTOMIZATION AREAS
+           ================================================== */
+        
+        /* About Page Specific Styles */
         .about-page {
             padding-top: var(--spacing-5xl);
         }
 
+        /* 🌈 HERO SECTION BACKGROUND - Easy Customization Area */
+        /* Change the hero section background gradient here */
         .about-hero {
-            background: var(--bg-gradient-accent);
-            color: var(--white-color);
+            background: var(--bg-gradient-accent); /* ← CUSTOMIZE: Change hero background gradient */
+            color: var(--white-color); /* ← CUSTOMIZE: Change hero text color */
             text-align: center;
             padding: var(--spacing-6xl) 0;
             margin-bottom: var(--spacing-5xl);
@@ -21,6 +28,8 @@
             overflow: hidden;
         }
 
+        /* 🎨 HERO OVERLAY PATTERN - Background Effect Customization */
+        /* Change or remove the decorative pattern overlay */
         .about-hero::before {
             content: '';
             position: absolute;
@@ -28,25 +37,30 @@
             left: 0;
             right: 0;
             bottom: 0;
+            /* ← CUSTOMIZE: Change pattern, opacity, or remove entirely for solid background */
             background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
-        }        .about-hero h1 {
-            font-size: var(--font-size-5xl);
+            opacity: 0.3; /* ← CUSTOMIZE: Change overlay opacity (0.0 to 1.0) */
+        }        
+        
+        /* 📝 HERO TEXT STYLING - Title and Subtitle Customization */
+        .about-hero h1 {
+            font-size: var(--font-size-5xl); /* ← CUSTOMIZE: Change hero title size */
             margin-bottom: var(--spacing-lg);
-            font-weight: var(--font-weight-bold);
+            font-weight: var(--font-weight-bold); /* ← CUSTOMIZE: Change title font weight */
             position: relative;
             z-index: 2;
         }
 
         .about-hero p {
-            font-size: var(--font-size-xl);
-            opacity: 0.95;
+            font-size: var(--font-size-xl); /* ← CUSTOMIZE: Change hero subtitle size */
+            opacity: 0.95; /* ← CUSTOMIZE: Change subtitle opacity */
             position: relative;
             z-index: 2;
         }
 
+        /* 📊 MISSION SECTION - Content Area Styling */
         .mission-section {
-            padding: var(--spacing-section) 0;
+            padding: var(--spacing-section) 0; /* ← CUSTOMIZE: Change section padding */
         }
 
         .mission-content {
@@ -91,48 +105,51 @@
             transform: scale(1.05);
         }
 
+        /* ⭐ FEATURES SECTION - Highlighting Key Benefits */
+        /* CUSTOMIZE: Change features section background and styling */
         .features-section {
-            padding: var(--spacing-6xl) 0;
-            background: var(--bg-gradient-primary);
+            padding: var(--spacing-6xl) 0; /* ← CUSTOMIZE: Change section spacing */
+            background: var(--bg-gradient-primary); /* ← CUSTOMIZE: Change features background */
         }
 
         .features-section h2 {
             text-align: center;
-            font-size: 42px;
+            font-size: 42px; /* ← CUSTOMIZE: Change features title size */
             margin-bottom: 80px;
-            color: var(--dark-color);
-            font-weight: 700;
+            color: var(--dark-color); /* ← CUSTOMIZE: Change title color */
+            font-weight: 700; /* ← CUSTOMIZE: Change title weight */
         }
 
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 40px;
+            gap: 40px; /* ← CUSTOMIZE: Change gap between feature cards */
         }
 
+        /* 🃏 FEATURE CARDS - Individual Card Styling */
         .feature-card {
-            background: var(--white-color);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: var(--card-shadow);
+            background: var(--white-color); /* ← CUSTOMIZE: Change card background */
+            padding: 40px; /* ← CUSTOMIZE: Change card padding */
+            border-radius: 20px; /* ← CUSTOMIZE: Change card roundness */
+            box-shadow: var(--card-shadow); /* ← CUSTOMIZE: Change card shadow */
             text-align: center;
             transition: var(--transition);
-            border: 1px solid rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.1); /* ← CUSTOMIZE: Change card border */
         }
 
         .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: var(--button-shadow);
+            transform: translateY(-10px); /* ← CUSTOMIZE: Change hover lift effect */
+            box-shadow: var(--button-shadow); /* ← CUSTOMIZE: Change hover shadow */
         }
 
         .feature-icon {
-            font-size: 48px;
-            color: var(--primary-color);
-            margin-bottom: 25px;
+            font-size: 48px; /* ← CUSTOMIZE: Change icon size */
+            color: var(--primary-color); /* ← CUSTOMIZE: Change icon color */
+            margin-bottom: 25px; /* ← CUSTOMIZE: Change icon spacing */
         }
 
         .feature-card h3 {
-            font-size: 24px;
+            font-size: 24px; /* ← CUSTOMIZE: Change card title size */
             margin-bottom: 20px;
             color: var(--dark-color);
             font-weight: 600;
@@ -144,6 +161,7 @@
             line-height: 1.6;
         }
 
+        /* 👥 TEAM SECTION - Showcase Your Team */
         .team-section {
             padding: 100px 0;
         }
@@ -213,6 +231,7 @@
             line-height: 1.5;
         }
 
+        /* 💬 TESTIMONIALS SECTION - Build Trust with Social Proof */
         .testimonials-section {
             padding: 100px 0;
             background: var(--primary-light);
@@ -309,6 +328,7 @@
             box-shadow: var(--button-shadow);
         }
 
+        /* 📞 CTA SECTION - Encourage User Action */
         .cta-section {
             padding: 100px 0;
             text-align: center;

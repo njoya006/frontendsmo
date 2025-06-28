@@ -258,8 +258,8 @@ async function handleIngredientSuggestion() {
         return;
     }
     
-    if (ingredientNames.length < 2) {
-        alert('Please provide at least 2 ingredients for better suggestions.');
+    if (ingredientNames.length < 4) {
+        alert('Please provide at least 4 ingredients for better suggestions. This ensures more accurate recipe matches.');
         return;
     }
     

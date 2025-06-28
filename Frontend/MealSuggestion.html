@@ -1,8 +1,44 @@
 <style>
+    /*
+    ==========================================
+    CHOPSMO MEAL SUGGESTIONS PAGE - DESIGN CUSTOMIZATION GUIDE
+    ==========================================
+    
+    🎨 COLOR & BACKGROUND CUSTOMIZATION:
+    - Page background: See .meal-suggestions {} - modify background gradient
+    - Suggestions header: See .suggestions-header {} - modify background and accent colors
+    - Suggestion cards: See .suggestion-card {} - modify card backgrounds and shadows
+    - Filter panels: See .filters {} - modify filter styling
+    - All color variables defined in index.css
+    
+    🔘 BUTTON CUSTOMIZATION:
+    - Get suggestions button: See .get-suggestions-btn {}
+    - Filter buttons: See .filter-btn {} and .category-btn {}
+    - Suggestion action buttons: See .suggestion-actions {} button styling
+    - Preference buttons: See .preference-btn {} classes
+    
+    🍽️ MEAL SUGGESTION COMPONENTS:
+    - Suggestion cards: See .suggestion-card {} - modify background, border, shadow, hover
+    - Recipe preview: See .recipe-preview {} - modify image and text styling
+    - Nutrition info: See .nutrition-info {} - modify stats display
+    - Ingredients list: See .ingredients-list {} - modify list styling
+    
+    📱 INTERACTIVE ELEMENTS:
+    - Filters panel: See .suggestions-filters {} - modify filter controls
+    - Search inputs: See .search-input {} - modify input styling
+    - Dietary preferences: See .dietary-prefs {} - modify checkbox/radio styling
+    - Rating system: See .rating {} - modify star styling
+    
+    💡 All CSS variables (colors, gradients, shadows) are defined in index.css
+    ==========================================
+    */
+    
+    /* === MAIN MEAL SUGGESTIONS PAGE LAYOUT === */
+    /* 🎨 CUSTOMIZE: Change main page background gradient here */
     /* Meal Suggestions Page - Enhanced Modern Design */
     .meal-suggestions {
         padding: 100px 0 60px;
-        background: linear-gradient(135deg, #f8fffe 0%, #e8f5e8 50%, #f0fdf4 100%);
+        background: linear-gradient(135deg, #f8fffe 0%, #e8f5e8 50%, #f0fdf4 100%); /* 🌐 MAIN PAGE BACKGROUND GRADIENT */
         min-height: 100vh;
         position: relative;
     }
@@ -17,21 +53,23 @@
         background: 
             radial-gradient(circle at 20% 80%, rgba(76, 175, 80, 0.03) 0%, transparent 50%),
             radial-gradient(circle at 80% 20%, rgba(76, 175, 80, 0.05) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(76, 175, 80, 0.02) 0%, transparent 50%);
+            radial-gradient(circle at 40% 40%, rgba(76, 175, 80, 0.02) 0%, transparent 50%); /* 🌐 BACKGROUND PATTERN OVERLAYS */
         pointer-events: none;
     }
 
+    /* === SUGGESTIONS HEADER SECTION === */
+    /* 🎨 CUSTOMIZE: Change header background, styling, and accent colors here */
     .suggestions-header {
         text-align: center;
         margin-bottom: 60px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%); /* 📋 HEADER BACKGROUND */
         backdrop-filter: blur(10px);
         padding: 50px 40px;
-        border-radius: 24px;
+        border-radius: 24px;                     /* 📋 HEADER ROUNDNESS */
         box-shadow: 
-            0 20px 40px rgba(0, 0, 0, 0.08),
-            0 8px 16px rgba(76, 175, 80, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            0 20px 40px rgba(0, 0, 0, 0.08),    /* 📋 HEADER SHADOW */
+            0 8px 16px rgba(76, 175, 80, 0.1),  /* 📋 HEADER COLORED SHADOW */
+            inset 0 1px 0 rgba(255, 255, 255, 0.8); /* 📋 HEADER INNER HIGHLIGHT */
         border: 1px solid rgba(76, 175, 80, 0.1);
         position: relative;
         overflow: hidden;
@@ -44,7 +82,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 50%, #81C784 100%);
+        background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 50%, #81C784 100%); /* 📋 HEADER ACCENT BAR */
     }
 
     .suggestions-header h1 {

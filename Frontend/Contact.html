@@ -7,6 +7,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="index.css">
     <style>
+        /*
+        ==========================================
+        CHOPSMO CONTACT PAGE - DESIGN CUSTOMIZATION GUIDE
+        ==========================================
+        
+        🎨 COLOR & BACKGROUND CUSTOMIZATION:
+        - Page background gradient: See body {} - modify var(--primary-light) and var(--white-color)
+        - Main container background: See .container {} - modify var(--white-color)
+        - Contact method cards: See .contact-method {} - modify var(--primary-light)
+        - All color variables defined in index.css
+        
+        🔘 BUTTON CUSTOMIZATION:
+        - Primary button: See .btn-primary {} - modify var(--primary-gradient)
+        - Button hover effects: See .btn-primary:hover {}
+        - Back link button: See .back-link a {} and .back-link a:hover {}
+        
+        📝 FORM STYLING:
+        - Form inputs: See .form-control {} - modify border, background, focus colors
+        - Form labels: See .form-group label {}
+        - Error/success messages: See .error-message {} and .success-message {}
+        
+        💡 All CSS variables (colors, gradients, shadows) are defined in index.css
+        ==========================================
+        */
+        
+        /* === PAGE BACKGROUND & LAYOUT === */
+        /* 🎨 CUSTOMIZE: Change page background gradient here */
         body {
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--white-color) 100%);
             display: flex;
@@ -16,6 +43,8 @@
             padding: 20px;
         }
         
+        /* === MAIN CONTAINER === */
+        /* 🎨 CUSTOMIZE: Change main container background, border radius, shadow here */
         .container {
             background-color: var(--white-color);
             border-radius: 20px;
@@ -27,6 +56,8 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
+        /* === LOGO SECTION === */
+        /* 🎨 CUSTOMIZE: Change logo colors and typography here */
         .logo {
             text-align: center;
             margin-bottom: 30px;
@@ -44,6 +75,8 @@
             font-size: 16px;
         }
         
+        /* === CONTACT INFO CARDS === */
+        /* 🎨 CUSTOMIZE: Change contact method card styling here */
         .contact-info {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -52,7 +85,7 @@
         }
         
         .contact-method {
-            background: var(--primary-light);
+            background: var(--primary-light); /* Card background color */
             padding: 25px;
             border-radius: 15px;
             text-align: center;
@@ -67,7 +100,7 @@
         
         .contact-method i {
             font-size: 28px;
-            color: var(--primary-color);
+            color: var(--primary-color); /* Icon color */
             margin-bottom: 15px;
         }
         
@@ -83,6 +116,8 @@
             color: var(--gray-color);
         }
         
+        /* === FORM STYLING === */
+        /* 🎨 CUSTOMIZE: Change form group spacing and labels here */
         .form-group {
             margin-bottom: 25px;
         }
@@ -95,14 +130,15 @@
             font-weight: 600;
         }
         
+        /* 🎨 CUSTOMIZE: Change form input styling, borders, focus colors here */
         .form-control {
             width: 100%;
             padding: 15px 20px;
-            border: 2px solid var(--light-color);
+            border: 2px solid var(--light-color); /* Input border color */
             border-radius: 10px;
             font-size: 14px;
             transition: var(--transition);
-            background: var(--white-color);
+            background: var(--white-color); /* Input background */
         }
         
         textarea.form-control {
@@ -112,10 +148,12 @@
         
         .form-control:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            border-color: var(--primary-color); /* Focus border color */
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1); /* Focus shadow */
         }
         
+        /* === BUTTON STYLING === */
+        /* 🔘 CUSTOMIZE: Change button size and general styling here */
         .btn {
             width: 100%;
             padding: 15px;
@@ -127,34 +165,40 @@
             transition: var(--transition);
         }
         
+        /* 🔘 CUSTOMIZE: Change primary button colors and gradient here */
         .btn-primary {
-            background: var(--primary-gradient);
-            color: var(--white-color);
+            background: var(--primary-gradient); /* Button background */
+            color: var(--white-color); /* Button text color */
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: var(--button-shadow);
+            box-shadow: var(--button-shadow); /* Hover shadow effect */
         }
         
+        /* === MESSAGE STYLING === */
+        /* 🎨 CUSTOMIZE: Change error message colors here */
         .error-message {
-            color: #f44336;
+            color: #f44336; /* Error text color */
             font-size: 13px;
             margin-top: 5px;
             display: none;
         }
         
+        /* 🎨 CUSTOMIZE: Change success message colors and background here */
         .success-message {
-            color: var(--primary-color);
+            color: var(--primary-color); /* Success text color */
             font-size: 16px;
             text-align: center;
             margin-top: 20px;
             display: none;
             padding: 15px;
-            background: var(--primary-light);
+            background: var(--primary-light); /* Success background */
             border-radius: 10px;
         }
         
+        /* === BACK LINK BUTTON === */
+        /* 🔘 CUSTOMIZE: Change back link button styling here */
         .back-link {
             text-align: center;
             margin-top: 25px;
@@ -162,7 +206,7 @@
         }
         
         .back-link a {
-            color: var(--primary-color);
+            color: var(--primary-color); /* Link text color */
             text-decoration: none;
             font-weight: 600;
             display: inline-flex;
@@ -170,13 +214,13 @@
             gap: 8px;
             padding: 10px 20px;
             border-radius: 25px;
-            background: var(--primary-light);
+            background: var(--primary-light); /* Link background */
             transition: var(--transition);
         }
         
         .back-link a:hover {
-            background: var(--primary-color);
-            color: var(--white-color);
+            background: var(--primary-color); /* Hover background */
+            color: var(--white-color); /* Hover text color */
             transform: translateY(-2px);
         }
     </style>

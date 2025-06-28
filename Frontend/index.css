@@ -1,57 +1,108 @@
+/* ================================
+   CHOPSMO DESIGN SYSTEM - QUICK REFERENCE GUIDE
+   ================================
+   
+   🎨 BUTTON CUSTOMIZATION AREAS:
+   - Button Colors: Lines 180-350 (.btn-primary, .btn-outline, etc.)
+   - Button Shapes: Line 180 (.btn border-radius)
+   - Button Sizes: Lines 280-320 (.btn-large, padding)
+   - Button Hover Effects: Lines 220-350 (:hover states)
+   
+   🌈 COLOR CUSTOMIZATION AREAS:
+   - Primary Colors: Lines 4-15 (--primary-50 to --primary-900)
+   - Background Colors: Lines 90-95 (--bg-gradient-*)
+   - Text Colors: Lines 60-70 (--dark-color, --gray-color)
+   - Status Colors: Lines 75-80 (success, warning, danger)
+   
+   📱 BACKGROUND CUSTOMIZATION AREAS:
+   - Page Backgrounds: Lines 140-145 (body background)
+   - Section Backgrounds: Lines 700+ (.hero, .features, etc.)
+   - Card Backgrounds: Lines 800+ (.feature-card, etc.)
+   
+   ⚡ QUICK EDIT ZONES:
+   - Change ALL button colors: Modify --primary-color (Line 25)
+   - Change ALL backgrounds: Modify --bg-gradient-primary (Line 90)
+   - Change button roundness: Modify --border-radius (Line 110)
+   ================================ */
+
 /* ChopSmo - Original Sharp Green Color System */
 :root {
-    /* Primary Green Palette - Thick & Sharp */
-    --primary-50: #F1F8E9;          /* Light green background */
-    --primary-100: #DCEDC8;         /* Green accents */
-    --primary-200: #C5E1A5;         /* Green highlights */
-    --primary-300: #AED581;         /* Medium green */
-    --primary-400: #9CCC65;         /* Balanced green */
-    --primary-500: #8BC34A;         /* Core brand green */
-    --primary-600: #7CB342;         /* Rich green */
-    --primary-700: #689F38;         /* Deep green */
-    --primary-800: #558B2F;         /* Dark green */
-    --primary-900: #33691E;         /* Deepest green */
+    /* 🎨 PRIMARY COLOR PALETTE - MAIN BRAND COLORS 
+       ===============================================
+       💡 EDIT THESE TO CHANGE THE ENTIRE SITE COLOR SCHEME
+       💡 These colors control buttons, links, highlights, and accents
+       =============================================== */
+    --primary-50: #F1F8E9;          /* 🌱 Lightest green - subtle backgrounds */
+    --primary-100: #DCEDC8;         /* 🌱 Light green - card hover states */
+    --primary-200: #C5E1A5;         /* 🌱 Soft green - accent backgrounds */
+    --primary-300: #AED581;         /* 🌱 Medium light green - secondary buttons */
+    --primary-400: #9CCC65;         /* 🌱 Balanced green - active states */
+    --primary-500: #8BC34A;         /* 🌱 Core brand green - main elements */
+    --primary-600: #7CB342;         /* 🌱 Rich green - primary buttons */
+    --primary-700: #689F38;         /* 🌱 Deep green - hover effects */
+    --primary-800: #558B2F;         /* 🌱 Dark green - pressed states */
+    --primary-900: #33691E;         /* 🌱 Deepest green - text on light backgrounds */
     
-    /* Sharp Black & Dark System */
-    --black: #000000;                /* Pure black */
-    --black-soft: #0D0D0D;          /* Soft black for text */
-    --black-light: #1A1A1A;         /* Light black for cards */
-    --black-medium: #333333;        /* Medium black for backgrounds */
-    --black-alpha-05: rgba(0, 0, 0, 0.05);   /* Subtle black overlay */
-    --black-alpha-10: rgba(0, 0, 0, 0.1);    /* Light black overlay */
-    --black-alpha-20: rgba(0, 0, 0, 0.2);    /* Medium black overlay */
-    --black-alpha-30: rgba(0, 0, 0, 0.3);    /* Strong black overlay */
-    --black-alpha-50: rgba(0, 0, 0, 0.5);    /* Heavy black overlay */
-    --black-alpha-70: rgba(0, 0, 0, 0.7);    /* Ultra-heavy black overlay */
+    /* 🖤 BLACK & DARK COLOR SYSTEM
+       ===============================================
+       💡 EDIT THESE TO CHANGE TEXT AND DARK ELEMENT COLORS
+       💡 These control text readability and contrast
+       =============================================== */
+    --black: #000000;                /* ⚫ Pure black - high contrast text */
+    --black-soft: #0D0D0D;          /* ⚫ Soft black - main text color */
+    --black-light: #1A1A1A;         /* ⚫ Light black - card backgrounds */
+    --black-medium: #333333;        /* ⚫ Medium black - secondary text */
+    --black-alpha-05: rgba(0, 0, 0, 0.05);   /* ⚫ Very subtle shadows */
+    --black-alpha-10: rgba(0, 0, 0, 0.1);    /* ⚫ Light shadows */
+    --black-alpha-20: rgba(0, 0, 0, 0.2);    /* ⚫ Medium shadows */
+    --black-alpha-30: rgba(0, 0, 0, 0.3);    /* ⚫ Strong shadows */
+    --black-alpha-50: rgba(0, 0, 0, 0.5);    /* ⚫ Heavy overlays */
+    --black-alpha-70: rgba(0, 0, 0, 0.7);    /* ⚫ Modal backgrounds */
     
-    /* Semantic Color Mapping - Sharp Green System */
-    --primary-color: #228B22;                    /* Thick, sharp forest green */
-    --primary-light: #32CD32;                    /* Bright lime green */
-    --primary-lighter: #90EE90;                  /* Light green highlights */
-    --primary-accent: #006400;                   /* Dark green accent */
-    --primary-dark: #013220;                     /* Very dark green */
+    /* 🎯 MAIN SEMANTIC COLORS - THESE CONTROL THE OVERALL LOOK
+       ===============================================
+       💡 CHANGE THESE FOR INSTANT SITE-WIDE COLOR UPDATES
+       💡 These are the most important colors to customize
+       =============================================== */
+    --primary-color: #228B22;                    /* 🔥 MAIN BUTTON COLOR - Primary buttons, links, highlights */
+    --primary-light: #32CD32;                    /* 🔥 BUTTON HOVER COLOR - Bright effects and accents */
+    --primary-lighter: #90EE90;                  /* 🔥 SUBTLE HIGHLIGHTS - Light backgrounds and borders */
+    --primary-accent: #006400;                   /* 🔥 DARK ACCENT COLOR - Button borders and text */
+    --primary-dark: #013220;                     /* 🔥 DEEP COLOR - Pressed states and dark text */
     
-    /* Cameroon Flag Colors */
-    --cameroon-green: #228B22;                   /* Forest green */
-    --cameroon-red: #DC143C;                     /* Crimson red */
-    --cameroon-yellow: #FFD700;                  /* Gold yellow */
+    /* 🇨🇲 CAMEROON FLAG COLORS - SPECIAL THEME COLORS
+       ===============================================
+       💡 EDIT THESE FOR CAMEROON-SPECIFIC BRANDING
+       💡 Used for special buttons and accent elements
+       =============================================== */
+    --cameroon-green: #228B22;                   /* 🇨🇲 Cameroon flag green */
+    --cameroon-red: #DC143C;                     /* 🇨🇲 Cameroon flag red - error/danger buttons */
+    --cameroon-yellow: #FFD700;                  /* 🇨🇲 Cameroon flag yellow - warning/accent buttons */
     
-    /* Sharp Accent Colors */
-    --accent-orange: #FF6B35;                    /* Bold orange */
-    --accent-green: #32CD32;                     /* Lime green */
-    --accent-purple: #8A2BE2;                    /* Blue violet */
+    /* 🌈 SHARP ACCENT COLORS - ALTERNATIVE BUTTON COLORS
+       ===============================================
+       💡 EDIT THESE FOR ALTERNATIVE BUTTON STYLES
+       💡 Use these for secondary actions and special buttons
+       =============================================== */
+    --accent-orange: #FF6B35;                    /* 🧡 Bold orange - CTA buttons and highlights */
+    --accent-green: #32CD32;                     /* 💚 Lime green - success buttons */
+    --accent-purple: #8A2BE2;                    /* 💜 Blue violet - special feature buttons */
     
-    /* Sharp Neutral Palette */
-    --gray-50: #FAFBFC;             /* Very light background */
-    --gray-100: #F5F7FA;            /* Light background */
-    --gray-200: #E4E7EB;            /* Soft border light */
-    --gray-300: #D1D5DB;            /* Border */
-    --gray-400: #9CA3AF;            /* Border dark */
-    --gray-500: #6B7280;            /* Text light */
-    --gray-600: #4B5563;            /* Text medium */
-    --gray-700: #374151;            /* Text */
-    --gray-800: #1F2937;            /* Text dark */
-    --gray-900: #111827;            /* Text darkest */
+    /* 📄 NEUTRAL GRAY PALETTE - BACKGROUNDS AND BORDERS
+       ===============================================
+       💡 EDIT THESE TO CHANGE PAGE BACKGROUNDS AND BORDERS
+       💡 These create the overall page structure and spacing
+       =============================================== */
+    --gray-50: #FAFBFC;             /* 📄 Very light background - page backgrounds */
+    --gray-100: #F5F7FA;            /* 📄 Light background - card backgrounds */
+    --gray-200: #E4E7EB;            /* 📄 Soft border light - subtle borders */
+    --gray-300: #D1D5DB;            /* 📄 Border - form borders and dividers */
+    --gray-400: #9CA3AF;            /* 📄 Border dark - strong borders */
+    --gray-500: #6B7280;            /* 📄 Text light - secondary text */
+    --gray-600: #4B5563;            /* 📄 Text medium - body text */
+    --gray-700: #374151;            /* 📄 Text - main text color */
+    --gray-800: #1F2937;            /* 📄 Text dark - headings */
+    --gray-900: #111827;            /* 📄 Text darkest - high contrast text */
     
     /* Semantic Neutral Mapping - Sharp & Bold */
     --dark-color: #1F2937;                      /* Sharp dark text */
@@ -62,11 +113,15 @@
     --light-color: var(--gray-50);              /* Light backgrounds */
     --white-color: #FFFFFF;                     /* Pure white */
     
-    /* Status Colors - Bold & Clear */
-    --success-color: #22C55E;                   /* Sharp green success */
-    --warning-color: #F59E0B;                   /* Bold amber warning */
-    --danger-color: #EF4444;                    /* Sharp red danger */
-    --info-color: var(--primary-color);         /* Green info */
+    /* 🎯 STATUS COLORS - FEEDBACK AND ALERTS
+       ===============================================
+       💡 EDIT THESE TO CHANGE SUCCESS/ERROR/WARNING COLORS
+       💡 Used for form validation, alerts, and status messages
+       =============================================== */
+    --success-color: #22C55E;                   /* ✅ Green success - success buttons and messages */
+    --warning-color: #F59E0B;                   /* ⚠️ Amber warning - warning buttons and alerts */
+    --danger-color: #EF4444;                    /* ❌ Red danger - error buttons and messages */
+    --info-color: var(--primary-color);         /* ℹ️ Blue info - info buttons and notices */
     
     /* Sharp Green Color System - Uniform Colors */
     --gradient-primary: var(--primary-color);
@@ -94,19 +149,27 @@
     --bg-gradient-secondary: var(--white-color);
     --bg-gradient-accent: var(--primary-color);
     
-    /* Border Radius */
-    --radius-sm: 6px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
-    --radius-full: 50px;
+    /* 📐 BORDER RADIUS - BUTTON AND CARD ROUNDNESS
+       ===============================================
+       💡 EDIT THESE TO CHANGE HOW ROUND/SHARP ELEMENTS ARE
+       💡 Affects buttons, cards, forms, and all rounded corners
+       =============================================== */
+    --radius-sm: 6px;               /* 📐 Small radius - small buttons and tags */
+    --radius-md: 12px;              /* 📐 Medium radius - DEFAULT for buttons and cards */
+    --radius-lg: 16px;              /* 📐 Large radius - big cards and sections */
+    --radius-xl: 24px;              /* 📐 Extra large radius - hero sections */
+    --radius-full: 50px;            /* 📐 Full radius - circular buttons and avatars */
     
-    /* Transitions */
-    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --border-radius: 12px;
+    /* ⚡ TRANSITIONS - ANIMATION SPEED
+       ===============================================
+       💡 EDIT THESE TO CHANGE HOW FAST ANIMATIONS ARE
+       💡 Affects button hovers, page transitions, and all animations
+       =============================================== */
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);     /* ⚡ Fast - quick button responses */
+    --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);    /* ⚡ Normal - DEFAULT transition speed */
+    --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);      /* ⚡ Slow - smooth page changes */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);           /* ⚡ Main transition - used everywhere */
+    --border-radius: 12px;          /* 📐 DEFAULT BORDER RADIUS - change this to affect most elements */
     
     /* Typography */
     --font-family-primary: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -146,11 +209,16 @@
     box-sizing: border-box;
 }
 
+/* 🌐 GLOBAL PAGE BACKGROUND SETUP
+   ===============================================
+   💡 EDIT 'background' PROPERTY TO CHANGE ENTIRE SITE BACKGROUND
+   💡 Current: Light green gradient background
+   =============================================== */
 body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--dark-color);
-    background: var(--bg-gradient-primary);
+    background: var(--bg-gradient-primary);      /* 🌐 MAIN SITE BACKGROUND COLOR */
     font-weight: 400;
     letter-spacing: 0.01em;
 }
@@ -176,25 +244,30 @@ img {
     padding: 0 20px;
 }
 
+/* 🔘 MAIN BUTTON STYLES - CORE BUTTON DESIGN
+   ===============================================
+   💡 EDIT THESE PROPERTIES TO CHANGE ALL BUTTON APPEARANCE
+   💡 This affects every button on the site
+   =============================================== */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px 24px;
+    padding: 12px 24px;                          /* 🔘 BUTTON SIZE - increase for bigger buttons */
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius);         /* 🔘 BUTTON ROUNDNESS - controlled by --border-radius */
     cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 15px;                             /* 🔘 BUTTON TEXT SIZE */
+    font-weight: 600;                            /* 🔘 BUTTON TEXT WEIGHT - 400=normal, 600=semi-bold, 700=bold */
     font-family: inherit;
-    transition: var(--transition);
-    text-transform: none;
-    letter-spacing: 0.025em;
+    transition: var(--transition);               /* 🔘 BUTTON ANIMATION SPEED */
+    text-transform: none;                        /* 🔘 TEXT CASE - change to 'uppercase' for ALL CAPS */
+    letter-spacing: 0.025em;                     /* 🔘 LETTER SPACING */
     position: relative;
     overflow: hidden;
     text-decoration: none;
-    min-height: 44px;
+    min-height: 44px;                            /* 🔘 MINIMUM BUTTON HEIGHT - touch-friendly */
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     white-space: nowrap;
@@ -215,12 +288,17 @@ img {
     left: 100%;
 }
 
+/* 🔥 PRIMARY BUTTON - MAIN ACTION BUTTONS
+   ===============================================
+   💡 EDIT THESE TO CHANGE THE MAIN BUTTON APPEARANCE
+   💡 These are the most important buttons (Submit, Save, etc.)
+   =============================================== */
 .btn-primary {
-    background: var(--primary-color);
-    color: var(--white-color);
-    box-shadow: var(--box-shadow-hover);
-    border: 1px solid var(--primary-dark);
-    font-weight: 600;
+    background: var(--primary-color);           /* 🔥 BUTTON BACKGROUND COLOR */
+    color: var(--white-color);                  /* 🔥 BUTTON TEXT COLOR */
+    box-shadow: var(--box-shadow-hover);        /* 🔥 BUTTON SHADOW */
+    border: 1px solid var(--primary-dark);     /* 🔥 BUTTON BORDER COLOR */
+    font-weight: 600;                           /* 🔥 BUTTON TEXT BOLDNESS */
     position: relative;
     overflow: hidden;
 }
@@ -260,42 +338,51 @@ img {
 }
 
 .btn-primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-primary-xl);
-    border-color: var(--primary-accent);
+    background: var(--primary-dark);            /* 🔥 BUTTON HOVER BACKGROUND COLOR */
+    transform: translateY(-2px);                /* 🔥 BUTTON HOVER LIFT EFFECT - increase for more lift */
+    box-shadow: var(--shadow-primary-xl);       /* 🔥 BUTTON HOVER SHADOW */
+    border-color: var(--primary-accent);        /* 🔥 BUTTON HOVER BORDER COLOR */
 }
 
+/* 🔲 OUTLINE BUTTON - SECONDARY ACTION BUTTONS
+   ===============================================
+   💡 EDIT THESE TO CHANGE OUTLINE/GHOST BUTTON APPEARANCE
+   💡 These are secondary buttons (Cancel, Back, etc.)
+   =============================================== */
 .btn-outline {
-    background-color: transparent;
-    border: 2px solid var(--primary-color);
-    color: var(--primary-color);
-    box-shadow: var(--shadow-sm);
-    font-weight: 500;
+    background-color: transparent;               /* 🔲 OUTLINE BUTTON BACKGROUND - transparent by default */
+    border: 2px solid var(--primary-color);     /* 🔲 OUTLINE BUTTON BORDER COLOR AND THICKNESS */
+    color: var(--primary-color);                /* 🔲 OUTLINE BUTTON TEXT COLOR */
+    box-shadow: var(--shadow-sm);               /* 🔲 OUTLINE BUTTON SHADOW */
+    font-weight: 500;                           /* 🔲 OUTLINE BUTTON TEXT WEIGHT */
 }
 
 .btn-outline:hover {
-    background: var(--primary-color);
-    color: var(--white-color);
-    transform: translateY(-2px);
-    box-shadow: var(--box-shadow-hover);
-    border-color: var(--primary-accent);
+    background: var(--primary-color);           /* 🔲 OUTLINE BUTTON HOVER BACKGROUND */
+    color: var(--white-color);                  /* 🔲 OUTLINE BUTTON HOVER TEXT COLOR */
+    transform: translateY(-2px);                /* 🔲 OUTLINE BUTTON HOVER LIFT EFFECT */
+    box-shadow: var(--box-shadow-hover);        /* 🔲 OUTLINE BUTTON HOVER SHADOW */
+    border-color: var(--primary-accent);        /* 🔲 OUTLINE BUTTON HOVER BORDER COLOR */
 }
 
-/* Enhanced Black Accent Button */
+/* ⚫ BLACK ACCENT BUTTON - DARK THEME BUTTONS
+   ===============================================
+   💡 EDIT THESE FOR DARK/BLACK THEMED BUTTONS
+   💡 Use for premium or special actions
+   =============================================== */
 .btn-black {
-    background: var(--black);
-    color: var(--white-color);
-    box-shadow: var(--box-shadow-black);
-    border: 2px solid var(--black-alpha-20);
-    font-weight: 700;
+    background: var(--black);                   /* ⚫ BLACK BUTTON BACKGROUND */
+    color: var(--white-color);                  /* ⚫ BLACK BUTTON TEXT COLOR */
+    box-shadow: var(--box-shadow-black);        /* ⚫ BLACK BUTTON SHADOW */
+    border: 2px solid var(--black-alpha-20);   /* ⚫ BLACK BUTTON BORDER */
+    font-weight: 700;                           /* ⚫ BLACK BUTTON TEXT WEIGHT */
 }
 
 .btn-black:hover {
-    background: var(--black-light);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-black-heavy);
-    border-color: var(--black);
+    background: var(--black-light);             /* ⚫ BLACK BUTTON HOVER BACKGROUND */
+    transform: translateY(-4px);                /* ⚫ BLACK BUTTON HOVER LIFT - more dramatic */
+    box-shadow: var(--shadow-black-heavy);      /* ⚫ BLACK BUTTON HOVER SHADOW */
+    border-color: var(--black);                 /* ⚫ BLACK BUTTON HOVER BORDER */
 }
 
 /* Enhanced Outline with Bold Black */
@@ -315,42 +402,55 @@ img {
     border-color: var(--black);
 }
 
-/* Bright Accent Button - Single Color */
+/* 🟡 ACCENT BUTTON - SPECIAL HIGHLIGHT BUTTONS
+   ===============================================
+   💡 EDIT THESE FOR SPECIAL CALL-TO-ACTION BUTTONS
+   💡 Use for premium features or important actions
+   =============================================== */
 .btn-accent {
-    background: var(--cameroon-yellow);
-    color: var(--black-soft);
-    box-shadow: var(--shadow-primary-lg);
-    border: 2px solid var(--black-alpha-10);
-    font-weight: 700;
+    background: var(--cameroon-yellow);         /* 🟡 ACCENT BUTTON BACKGROUND - bright yellow */
+    color: var(--black-soft);                   /* 🟡 ACCENT BUTTON TEXT COLOR - dark text */
+    box-shadow: var(--shadow-primary-lg);       /* 🟡 ACCENT BUTTON SHADOW */
+    border: 2px solid var(--black-alpha-10);   /* 🟡 ACCENT BUTTON BORDER */
+    font-weight: 700;                           /* 🟡 ACCENT BUTTON TEXT WEIGHT */
 }
 
 .btn-accent:hover {
-    background: var(--primary-accent);
-    color: var(--white-color);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-primary-xl);
-    border-color: var(--black-alpha-20);
+    background: var(--primary-accent);          /* 🟡 ACCENT BUTTON HOVER BACKGROUND */
+    color: var(--white-color);                  /* 🟡 ACCENT BUTTON HOVER TEXT COLOR */
+    transform: translateY(-4px);                /* 🟡 ACCENT BUTTON HOVER LIFT */
+    box-shadow: var(--shadow-primary-xl);       /* 🟡 ACCENT BUTTON HOVER SHADOW */
+    border-color: var(--black-alpha-20);        /* 🟡 ACCENT BUTTON HOVER BORDER */
 }
 
+/* 📏 LARGE BUTTON SIZE VARIANT
+   ===============================================
+   💡 EDIT THESE FOR BIGGER BUTTONS
+   💡 Use for hero sections and important CTAs
+   =============================================== */
 .btn-large {
-    padding: 16px 32px;
-    font-size: 16px;
-    border-radius: var(--border-radius-lg);
+    padding: 16px 32px;                         /* 📏 LARGE BUTTON SIZE - bigger padding */
+    font-size: 16px;                            /* 📏 LARGE BUTTON TEXT SIZE */
+    border-radius: var(--border-radius-lg);     /* 📏 LARGE BUTTON ROUNDNESS */
 }
 
-/* Enhanced Header Styles - Sharp Green Design */
+/* 🏠 SITE HEADER/NAVIGATION BAR STYLING
+   ===============================================
+   💡 EDIT THESE TO CHANGE THE TOP NAVIGATION APPEARANCE
+   💡 Controls header background, borders, and positioning
+   =============================================== */
 header {
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.98);      /* 🏠 HEADER BACKGROUND COLOR - semi-transparent white */
+    backdrop-filter: blur(20px);                /* 🏠 HEADER BLUR EFFECT - glassmorphism */
     box-shadow: 
-        0 4px 20px var(--black-alpha-10),
-        0 0 0 1px rgba(34, 139, 34, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        0 4px 20px var(--black-alpha-10),       /* 🏠 HEADER SHADOW */
+        0 0 0 1px rgba(34, 139, 34, 0.1),       /* 🏠 HEADER SUBTLE BORDER */
+        inset 0 1px 0 rgba(255, 255, 255, 0.8); /* 🏠 HEADER INNER HIGHLIGHT */
     position: fixed;
     width: 100%;
     top: 0;
     z-index: 1000;
-    border-bottom: 4px solid var(--primary-color);
+    border-bottom: 4px solid var(--primary-color); /* 🏠 HEADER BOTTOM ACCENT BORDER */
 }
 
 nav {
@@ -860,10 +960,14 @@ nav {
     }
 }
 
-/* Hero Section */
+/* 🦸 HERO SECTION - MAIN LANDING AREA
+   ===============================================
+   💡 EDIT THESE TO CHANGE THE MAIN LANDING SECTION APPEARANCE
+   💡 This is the first thing visitors see
+   =============================================== */
 .hero {
-    padding: 160px 0 90px;
-    background: var(--primary-50);
+    padding: 160px 0 90px;                      /* 🦸 HERO SECTION SPACING - top/bottom padding */
+    background: var(--primary-50);              /* 🦸 HERO BACKGROUND COLOR - light green */
     position: relative;
     overflow: hidden;
 }
@@ -949,9 +1053,13 @@ nav {
     margin-right: 15px;
 }
 
-/* Features Section */
+/* ⭐ FEATURES SECTION - FEATURE CARDS AREA
+   ===============================================
+   💡 EDIT THESE TO CHANGE FEATURE CARDS SECTION
+   💡 Controls the "Why Choose Us" section styling
+   =============================================== */
 .features {
-    padding: 80px 0;
+    padding: 80px 0;                            /* ⭐ FEATURES SECTION SPACING */
 }
 
 .features h2 {
@@ -968,16 +1076,21 @@ nav {
     gap: 30px;
 }
 
+/* 🃏 FEATURE CARD STYLING - INDIVIDUAL FEATURE CARDS
+   ===============================================
+   💡 EDIT THESE TO CHANGE HOW FEATURE CARDS LOOK
+   💡 Controls background, shadows, borders, and hover effects
+   =============================================== */
 .feature-card {
-    background: var(--white-color);
-    padding: 40px 35px;
-    border-radius: var(--radius-lg);
+    background: var(--white-color);             /* 🃏 CARD BACKGROUND COLOR */
+    padding: 40px 35px;                         /* 🃏 CARD INNER SPACING */
+    border-radius: var(--radius-lg);            /* 🃏 CARD CORNER ROUNDNESS */
     text-align: center;
     box-shadow: 
-        var(--shadow-lg),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    transition: var(--transition-normal);
-    border: 3px solid transparent;
+        var(--shadow-lg),                       /* 🃏 CARD SHADOW */
+        inset 0 1px 0 rgba(255, 255, 255, 0.8); /* 🃏 CARD INNER HIGHLIGHT */
+    transition: var(--transition-normal);       /* 🃏 CARD ANIMATION SPEED */
+    border: 3px solid transparent;              /* 🃏 CARD BORDER - invisible by default */
     position: relative;
     overflow: hidden;
     background-clip: padding-box;
@@ -989,8 +1102,8 @@ nav {
     top: 0;
     left: 0;
     right: 0;
-    height: 6px;
-    background: var(--primary-color);
+    height: 6px;                                /* 🃏 CARD TOP ACCENT BAR HEIGHT */
+    background: var(--primary-color);           /* 🃏 CARD TOP ACCENT BAR COLOR */
 }
 
 .feature-card::after {
@@ -1012,12 +1125,12 @@ nav {
 }
 
 .feature-card:hover {
-    transform: translateY(-15px) scale(1.03);
+    transform: translateY(-15px) scale(1.03);   /* 🃏 CARD HOVER LIFT AND SCALE EFFECT */
     box-shadow: 
-        var(--shadow-xl),
-        0 25px 50px rgba(34, 139, 34, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    background: var(--primary-50);
+        var(--shadow-xl),                       /* 🃏 CARD HOVER SHADOW */
+        0 25px 50px rgba(34, 139, 34, 0.2),     /* 🃏 CARD HOVER COLORED SHADOW */
+        inset 0 1px 0 rgba(255, 255, 255, 0.9); /* 🃏 CARD HOVER INNER HIGHLIGHT */
+    background: var(--primary-50);              /* 🃏 CARD HOVER BACKGROUND COLOR */
 }
 
 .feature-icon {
@@ -1182,7 +1295,7 @@ nav {
     font-size: 18px;
 }
 
-.slider-controls {
+slider-controls {
     position: absolute;
     top: 50%;
     width: 100%;
@@ -1251,11 +1364,15 @@ nav {
     margin-right: auto;
 }
 
-/* Footer Styles */
+/* 🔽 FOOTER SECTION - BOTTOM SITE AREA
+   ===============================================
+   💡 EDIT THESE TO CHANGE FOOTER APPEARANCE
+   💡 Controls bottom section with links and info
+   =============================================== */
 footer {
-    background-color: var(--dark-color);
-    color: var(--white-color);
-    padding: 60px 0 20px;
+    background-color: var(--dark-color);        /* 🔽 FOOTER BACKGROUND COLOR - dark gray */
+    color: var(--white-color);                  /* 🔽 FOOTER TEXT COLOR - white */
+    padding: 60px 0 20px;                       /* 🔽 FOOTER SPACING */
 }
 
 .footer-content {

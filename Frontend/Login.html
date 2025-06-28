@@ -7,22 +7,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* ================================
+           LOGIN PAGE COLOR CUSTOMIZATION GUIDE
+           ================================
+           
+           🎨 LOGIN FORM COLORS:
+           - Form Background: Line 85+ (.login-container background)
+           - Button Colors: Line 180+ (.login-btn background)
+           - Input Field Colors: Line 120+ (.form-group input)
+           - Error Message Colors: Line 350+ (.error-message)
+           
+           🌈 LOGIN PAGE BACKGROUND:
+           - Page Background: Line 30+ (body background)
+           - Form Card Background: Line 85+ (.login-container)
+           - Overlay Effects: Line 40+ (body::before)
+           
+           📱 LOGIN BUTTON CUSTOMIZATION:
+           - Button Color: --primary variable (Line 10)
+           - Button Shape: Line 180+ (border-radius)
+           - Button Size: Line 180+ (padding)
+           - Hover Effects: Line 200+ (:hover states)
+           ================================ */
+        
         :root {
-            --primary: #228B22;
-            --primary-light: #32CD32;
-            --primary-accent: #006400;
-            --primary-dark: #013220;
-            --black: #000000;
-            --black-soft: #0D0D0D;
-            --black-light: #1A1A1A;
-            --error: #DC143C;
-            --success: #228B22;
-            --background: #F7FAFC;
-            --white: #FFFFFF;
-            --border: #E2E8F0;
-            --text: #0D0D0D;
-            --text-light: #333333;
-            --font-family: 'Poppins', sans-serif;
+            /* 🎨 LOGIN PAGE COLOR SCHEME - EDIT THESE FOR INSTANT COLOR CHANGES */
+            --primary: #228B22;             /* 🔥 MAIN LOGIN BUTTON COLOR */
+            --primary-light: #32CD32;       /* 🔥 BUTTON HOVER COLOR */
+            --primary-accent: #006400;      /* 🔥 ACCENT COLOR FOR BORDERS */
+            --primary-dark: #013220;        /* 🔥 DARK ACCENT COLOR */
+            --black: #000000;               /* ⚫ TEXT COLOR - DARK */
+            --black-soft: #0D0D0D;          /* ⚫ TEXT COLOR - SOFTER */
+            --black-light: #1A1A1A;         /* ⚫ CARD BACKGROUNDS */
+            --error: #DC143C;               /* ❌ ERROR MESSAGE COLOR */
+            --success: #228B22;             /* ✅ SUCCESS MESSAGE COLOR */
+            --background: #F7FAFC;          /* 🌐 PAGE BACKGROUND COLOR */
+            --white: #FFFFFF;               /* ⚪ FORM BACKGROUND COLOR */
+            --border: #E2E8F0;              /* 📏 INPUT BORDER COLOR */
+            --text: #0D0D0D;                /* 📝 MAIN TEXT COLOR */
+            --text-light: #333333;          /* 📝 SECONDARY TEXT COLOR */
+            --font-family: 'Poppins', sans-serif; /* 🔤 FONT FAMILY */
         }        body {
             font-family: var(--font-family);
             background: var(--primary-color);

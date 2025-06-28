@@ -8,10 +8,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="index.css">
     <style>
-        /* FAQ Page Styles */
+        /*
+        ==========================================
+        CHOPSMO FAQ PAGE - DESIGN CUSTOMIZATION GUIDE
+        ==========================================
+        
+        🎨 COLOR & BACKGROUND CUSTOMIZATION:
+        - Page background gradient: See .faq-page {} - modify var(--primary-light) and var(--white-color)
+        - FAQ header section: See .faq-header {} - modify var(--white-color)
+        - FAQ categories: See .faq-category {} - modify background colors
+        - FAQ questions/answers: See .faq-question {}, .faq-answer {} - modify backgrounds
+        - All color variables defined in index.css
+        
+        🔘 BUTTON CUSTOMIZATION:
+        - Search button: See .search-faq button {} - modify background and colors
+        - Help section buttons: See .help-buttons {} and related button classes
+        - FAQ question buttons: See .faq-question {} - modify hover and active states
+        
+        📋 FAQ COMPONENTS:
+        - Search bar: See .search-faq {} - modify input and button styling
+        - Question cards: See .faq-question {} - modify background, border, shadow
+        - Answer sections: See .faq-answer {} - modify background and text colors
+        - Categories: See .faq-category {} - modify card styling
+        
+        💡 All CSS variables (colors, gradients, shadows) are defined in index.css
+        ==========================================
+        */
+        
+        /* === MAIN FAQ PAGE LAYOUT === */
+        /* 🎨 CUSTOMIZE: Change main page background gradient here */
         .faq-page {
             padding: 100px 0;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--white-color) 100%);
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--white-color) 100%); /* Page background */
             min-height: 100vh;
         }
 
