@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Search Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        input, button { margin: 5px; padding: 8px; }
+        .recipe-item { border: 1px solid #ddd; margin: 5px 0; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Recipe Search Debug Tool</h1>
+    
+    <div class="test-section">
+        <h3>Search Test</h3>
+        <input type="text" id="searchInput" placeholder="Enter search term (e.g., chicken, pasta, curry)" value="chicken">
+        <button onclick="testAPISearch()">Test API Search</button>
+        <button onclick="testDirectSearch()">Test Direct API</button>
+        <button onclick="getAllRecipes()">Get All Recipes</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Search Results</h3>
+        <div id="searchResults"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>API Response Details</h3>
+        <div id="apiDetails"></div>
+    </div>
+
+    <script src="enhanced-recipe-api.js"></script>
+    <script>
+        function getHeaders() {
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = token.startsWith('Token ') ? token : `Token ${token}`;
+            }
+            return headers;
+        }
+
+        async function testAPISearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            const detailsDiv = document.getElementById('apiDetails');
+            
+            if (!searchTerm) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a search term</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="info">Searching via Enhanced API...</div>';
+            detailsDiv.innerHTML = '';
+            
+            try {
+                if (window.enhancedRecipeAPI) {
+                    const results = await window.enhancedRecipeAPI.searchRecipes(searchTerm, {
+                        includeIngredients: true,
+                        limit: 20
+                    });
+                    
+                    detailsDiv.innerHTML = `<div class="success">✅ Enhanced API Available</div><pre>${JSON.stringify(results, null, 2)}</pre>`;
+                    displayResults(results, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Enhanced API not available</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">API Error: ${error.message}</div>`;
+                detailsDiv.innerHTML = `<div class="error">Error details: ${error.stack}</div>`;
+            }
+        }
+        
+        async function testDirectSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            const detailsDiv = document.getElementById('apiDetails');
+            
+            if (!searchTerm) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a search term</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="info">Searching via Direct API...</div>';
+            
+            try {
+                const params = new URLSearchParams({
+                    search: searchTerm,
+                    limit: '20'
+                });
+                
+                const response = await fetch(`https://njoya.pythonanywhere.com/api/recipes/?${params}`, {
+                    headers: getHeaders()
+                });
+                
+                const responseText = await response.text();
+                detailsDiv.innerHTML = `<div class="info">Response Status: ${response.status}</div><pre>${responseText}</pre>`;
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = JSON.parse(responseText);
+                const results = data.results || data;
+                
+                displayResults(results, resultsDiv);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Direct API Error: ${error.message}</div>`;
+                console.error('Direct search error:', error);
+            }
+        }
+        
+        async function getAllRecipes() {
+            const resultsDiv = document.getElementById('searchResults');
+            const detailsDiv = document.getElementById('apiDetails');
+            
+            resultsDiv.innerHTML = '<div class="info">Getting all recipes...</div>';
+            
+            try {
+                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                    headers: getHeaders()
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const results = data.results || data;
+                
+                detailsDiv.innerHTML = `<div class="success">Total recipes: ${results.length}</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                displayResults(results, resultsDiv);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error getting recipes: ${error.message}</div>`;
+            }
+        }
+        
+        function displayResults(results, container) {
+            if (!results || !Array.isArray(results)) {
+                container.innerHTML = '<div class="error">Invalid results format</div>';
+                return;
+            }
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div class="info">No recipes found</div>';
+                return;
+            }
+            
+            let html = `<div class="success">Found ${results.length} recipes:</div>`;
+            
+            results.forEach((recipe, index) => {
+                html += `
+                    <div class="recipe-item">
+                        <h4>${recipe.title || recipe.name || 'Untitled Recipe'}</h4>
+                        <p><strong>ID:</strong> ${recipe.id}</p>
+                        <p><strong>Description:</strong> ${recipe.description || 'No description'}</p>
+                        <p><strong>Cuisine:</strong> ${recipe.cuisine || 'Not specified'}</p>
+                        <p><strong>Created by:</strong> ${recipe.contributor?.username || recipe.author?.username || 'Unknown'}</p>
+                        ${recipe.ingredients ? `<p><strong>Ingredients:</strong> ${recipe.ingredients.length} items</p>` : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Test connection on load
+        window.addEventListener('load', () => {
+            document.getElementById('apiDetails').innerHTML = '<div class="info">Page loaded. Enhanced API available: ' + (!!window.enhancedRecipeAPI) + '</div>';
+        });
+    </script>
+</body>
+</html>

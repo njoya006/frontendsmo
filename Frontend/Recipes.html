@@ -1379,7 +1379,7 @@
                 <p>Browse our library of delicious, dietitian-approved recipes</p>
                   <div class="search-controls">
                     <div class="search-bar">
-                        <input type="text" id="recipeSearch" placeholder="Search recipes by name, ingredient, or cuisine...">
+                        <input type="text" id="recipeSearch" placeholder="Search recipes by name (e.g. 'Pasta', 'Chicken Curry')...">
                         <button id="clearSearch" class="btn btn-secondary" style="display:none;">
                             <i class="fas fa-times"></i>
                         </button>
@@ -1387,7 +1387,12 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
-                    <p class="search-note">The only ingredients we know you have at home are salt, pepper, and water</p>
+                    <div class="search-actions" style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
+                        <button id="showAllRecipes" class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;">
+                            <i class="fas fa-list"></i> Show All Recipes
+                        </button>
+                    </div>
+                    <p class="search-note">Search by recipe name, ingredients, or cuisine type</p>
                 </div>
                   <div class="filter-tags">
                     <span class="filter-tag active">

@@ -4,6 +4,63 @@ document.addEventListener('DOMContentLoaded', function() {
     let recipeData = [];
     let allRecipes = []; // Keep original data for reset
 
+    // ======= TOAST NOTIFICATION SYSTEM =======
+    
+    function showToast(message, backgroundColor = '#333') {
+        console.log('🔔 Toast:', message);
+        
+        // Remove any existing toast
+        const existingToast = document.querySelector('.toast-notification');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.textContent = message;
+        
+        // Style the toast
+        Object.assign(toast.style, {
+            position: 'fixed',
+            top: '100px',
+            right: '20px',
+            backgroundColor: backgroundColor,
+            color: 'white',
+            padding: '15px 20px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            zIndex: '10000',
+            fontSize: '16px',
+            fontWeight: '500',
+            maxWidth: '400px',
+            wordWrap: 'break-word',
+            transform: 'translateX(100%)',
+            transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+            opacity: '0'
+        });
+        
+        // Add toast to page
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+            toast.style.opacity = '1';
+        }, 100);
+        
+        // Remove after delay
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
     // ======= IMAGE HANDLING UTILITIES =======
     
     // Default fallback images - Multiple options for variety
@@ -499,12 +556,33 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('🔍 Recipe search initiated for:', searchTerm);
         
+        // Enhanced debugging for search
+        console.log('🔍 Search initiated:', {
+            searchTerm: searchTerm,
+            searchTermLength: searchTerm.length,
+            allRecipesLength: allRecipes.length,
+            recipeDataLength: recipeData.length,
+            searchInputValue: searchInput?.value,
+            timestamp: new Date().toLocaleTimeString()
+        });
+        
         if (!searchTerm) {
             console.log('📋 Empty search, showing all recipes');
             recipeData = [...allRecipes];
             displayRecipes(allRecipes);
             resetFilters();
+            clearSearchButton.style.display = 'none';
             return;
+        }
+        
+        // Show clear search button
+        clearSearchButton.style.display = 'inline-block';
+        
+        // Update search button to show searching state
+        const searchButton = document.getElementById('searchRecipes');
+        if (searchButton) {
+            searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            searchButton.disabled = true;
         }
         
         // Show loading state
@@ -513,70 +591,78 @@ document.addEventListener('DOMContentLoaded', function() {
             recipesGrid.innerHTML = '<div class="loading-search" style="grid-column: 1 / -1; text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 50px; color: #ff6b35; margin-bottom: 20px;"></i><h3>Searching recipes...</h3></div>';
         }
         
-        // Use enhanced API if available, otherwise fallback to local search
-        if (window.enhancedRecipeAPI) {
-            console.log('🚀 Using enhanced recipe API for search');
-            performAPISearch(searchTerm);
-        } else {
-            console.log('📋 Using local search fallback');
-            performLocalSearch(searchTerm);
-        }
+        // Try local search first (more reliable), then API search as enhancement 
+        performLocalSearch(searchTerm);
+        
+        // Reset search button after a delay
+        setTimeout(() => {
+            if (searchButton) {
+                searchButton.innerHTML = '<i class="fas fa-search"></i>';
+                searchButton.disabled = false;
+            }
+        }, 1000);
     }
     
-    async function performAPISearch(searchTerm) {
+    async function performSimpleAPISearch(searchTerm) {
         try {
-            const results = await window.enhancedRecipeAPI.searchRecipes(searchTerm, {
-                includeIngredients: true,
-                limit: 50,
-                filters: {}
+            console.log('🌐 Trying API search for additional results...');
+            
+            // Try different search parameter names that Django might use
+            const searchParams = new URLSearchParams();
+            searchParams.append('search', searchTerm);
+            
+            const searchUrl = `https://njoya.pythonanywhere.com/api/recipes/?${searchParams.toString()}`;
+            console.log('🔍 API search URL:', searchUrl);
+            
+            const response = await fetch(searchUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(localStorage.getItem('authToken') && {
+                        'Authorization': `Token ${localStorage.getItem('authToken')}`
+                    })
+                }
             });
             
-            console.log('✅ API search results:', results);
-            
-            if (results && results.length > 0) {
-                // Transform API results to match expected format
-                const formattedResults = results.map(recipe => ({
-                    ...recipe,
-                    // Ensure required fields exist
-                    title: recipe.title || recipe.name || 'Untitled Recipe',
-                    image: getRecipeImageUrl(recipe),
-                    contributor: recipe.contributor || recipe.author || {
-                        username: 'Unknown Chef',
-                        profile_photo: getRandomProfileImage()
-                    }
-                }));
-                
-                recipeData = formattedResults;
-                // Update allRecipes with new results (avoid duplicates)
-                formattedResults.forEach(newRecipe => {
-                    if (!allRecipes.find(existing => existing.id === newRecipe.id)) {
-                        allRecipes.push(newRecipe);
-                    }
-                });
-                
-                displayRecipes(formattedResults);
-                showToast(`Found ${formattedResults.length} recipe${formattedResults.length === 1 ? '' : 's'} for "${searchTerm}"`, '#4CAF50');
-            } else {
-                console.log('⚠️ No API results, falling back to local search');
-                performLocalSearch(searchTerm);
+            if (!response.ok) {
+                console.log(`⚠️ API search returned ${response.status}, skipping API enhancement`);
+                return [];
             }
             
+            const data = await response.json();
+            console.log('📝 API search response:', data);
+            
+            // Handle both paginated and direct results
+            const results = data.results || data;
+            
+            if (!Array.isArray(results)) {
+                console.log('⚠️ Unexpected API response format, skipping API enhancement');
+                return [];
+            }
+            
+            console.log(`✅ API search found ${results.length} additional results`);
+            return results;
+            
         } catch (error) {
-            console.error('❌ API search error:', error);
-            performLocalSearch(searchTerm); // Fallback to local search
+            console.log('⚠️ API search failed, local search only:', error.message);
+            return [];
         }
     }
     
     function performLocalSearch(searchTerm) {
         console.log('📋 Performing local search for:', searchTerm);
         
-        // Defensive: ensure allRecipes is available
+        // Ensure allRecipes is available
         if (!Array.isArray(allRecipes) || allRecipes.length === 0) {
             console.log('⚠️ No local recipes available, fetching from API...');
             fetchRecipes().then(recipes => {
-                allRecipes = recipes;
-                recipeData = recipes;
-                performLocalSearch(searchTerm);
+                if (recipes && recipes.length > 0) {
+                    allRecipes = recipes;
+                    recipeData = recipes;
+                    performLocalSearch(searchTerm);
+                } else {
+                    displaySearchError('Unable to load recipes for search');
+                }
             }).catch(error => {
                 console.error('❌ Error fetching recipes for search:', error);
                 displaySearchError('Unable to load recipes for search');
@@ -584,80 +670,83 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        const searchTermLower = searchTerm.toLowerCase();
+        
         const results = allRecipes.filter(recipe => {
-            // Enhanced search logic
-            const searchFields = [
-                recipe.title,
-                recipe.name,
-                recipe.description,
+            // Primary search: Recipe title/name (most important for recipe search)
+            const title = (recipe.title || recipe.name || '').toLowerCase();
+            if (title.includes(searchTermLower)) {
+                console.log(`✅ Title match found: "${recipe.title}" contains "${searchTerm}"`);
+                return true;
+            }
+            
+            // Secondary search: Description
+            const description = (recipe.description || '').toLowerCase();
+            if (description.includes(searchTermLower)) {
+                console.log(`✅ Description match found: "${recipe.title}"`);
+                return true;
+            }
+            
+            // Tertiary search: Basic ingredient search
+            if (recipe.ingredients && Array.isArray(recipe.ingredients)) {
+                const ingredientMatch = recipe.ingredients.some(ingredient => {
+                    // Handle string ingredients
+                    if (typeof ingredient === 'string') {
+                        return ingredient.toLowerCase().includes(searchTermLower);
+                    }
+                    // Handle object ingredients with various name fields
+                    if (typeof ingredient === 'object' && ingredient !== null) {
+                        const nameFields = [
+                            ingredient.ingredient_name,
+                            ingredient.ingredient,
+                            ingredient.name,
+                            ingredient.item
+                        ];
+                        
+                        return nameFields.some(field => 
+                            field && typeof field === 'string' && field.toLowerCase().includes(searchTermLower)
+                        );
+                    }
+                    return false;
+                });
+                
+                if (ingredientMatch) {
+                    console.log(`✅ Ingredient match found: "${recipe.title}"`);
+                    return true;
+                }
+            }
+            
+            // Additional searches: cuisine, meal type, contributor
+            const additionalFields = [
                 recipe.cuisine,
                 recipe.meal_type,
                 recipe.contributor?.username,
                 recipe.contributor?.first_name,
                 recipe.contributor?.last_name
-            ].filter(Boolean).join(' ').toLowerCase();
-            
-            // Search in basic fields
-            if (searchFields.includes(searchTerm)) {
-                return true;
-            }
-            
-            // Search in ingredients
-            if (recipe.ingredients && Array.isArray(recipe.ingredients)) {
-                const ingredientMatch = recipe.ingredients.some(ingredient => {
-                    if (typeof ingredient === 'string') {
-                        return ingredient.toLowerCase().includes(searchTerm);
-                    }
-                    if (typeof ingredient === 'object' && ingredient !== null) {
-                        const ingredientName = ingredient.ingredient?.name || 
-                                             ingredient.ingredient?.ingredient_name ||
-                                             ingredient.ingredient_name || 
-                                             ingredient.name || 
-                                             ingredient.item || '';
-                        return ingredientName.toLowerCase().includes(searchTerm);
-                    }
-                    return false;
-                });
-                
-                if (ingredientMatch) return true;
-            }
-            
-            // Search in categories/cuisines/tags
-            const arrayFields = [
-                recipe.categories,
-                recipe.cuisines, 
-                recipe.tags
             ];
             
-            for (const field of arrayFields) {
-                if (Array.isArray(field)) {
-                    const match = field.some(item => {
-                        if (typeof item === 'string') {
-                            return item.toLowerCase().includes(searchTerm);
-                        }
-                        if (typeof item === 'object' && item !== null) {
-                            return item.name && item.name.toLowerCase().includes(searchTerm);
-                        }
-                        return false;
-                    });
-                    
-                    if (match) return true;
-                }
+            const additionalMatch = additionalFields.some(field => 
+                field && typeof field === 'string' && field.toLowerCase().includes(searchTermLower)
+            );
+            
+            if (additionalMatch) {
+                console.log(`✅ Additional field match found: "${recipe.title}"`);
+                return true;
             }
             
             return false;
         });
         
-        console.log(`📊 Local search found ${results.length} results`);
+        console.log(`📊 Local search found ${results.length} results for "${searchTerm}"`);
         
         recipeData = results;
         displayRecipes(results);
         
-        // Show search results message
+        // Show appropriate message
         if (results.length === 0) {
             displaySearchError(`No recipes found for "${searchTerm}"`);
         } else {
-            showToast(`Found ${results.length} recipe${results.length === 1 ? '' : 's'} for "${searchTerm}"`, '#4CAF50');
+            showToast(`Found ${results.length} recipe${results.length === 1 ? '' : 's'} matching "${searchTerm}"`, '#4CAF50');
         }
     }
     
@@ -666,19 +755,44 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!recipesGrid) return;
         
         recipesGrid.innerHTML = `
-            <div class="search-error" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+            <div class="search-error" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                 <i class="fas fa-search" style="font-size: 50px; color: #ccc; margin-bottom: 20px;"></i>
-                <h3>${message}</h3>
-                <p>Try:</p>
-                <ul style="text-align: left; display: inline-block; margin-top: 15px;">
-                    <li>Different keywords or spelling</li>
-                    <li>Broader search terms</li>
-                    <li>Recipe ingredients like "chicken", "pasta", "tomato"</li>
-                    <li>Cuisine types like "Italian", "Mexican", "Asian"</li>
-                </ul>
-                <button onclick="clearSearch()" style="margin-top: 15px; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    Clear Search
-                </button>
+                <h3 style="color: #333; margin-bottom: 15px;">${message}</h3>
+                <p style="color: #666; margin-bottom: 20px;">Try searching for:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; text-align: left;">
+                    <div>
+                        <h4 style="color: #ff6b35; margin-bottom: 10px;">🍽️ Recipe Names</h4>
+                        <ul style="color: #666; padding-left: 20px;">
+                            <li>"Chicken Curry"</li>
+                            <li>"Pasta Bolognese"</li>
+                            <li>"Chocolate Cake"</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="color: #ff6b35; margin-bottom: 10px;">🥗 Ingredients</h4>
+                        <ul style="color: #666; padding-left: 20px;">
+                            <li>"Chicken"</li>
+                            <li>"Tomato"</li>
+                            <li>"Rice"</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="color: #ff6b35; margin-bottom: 10px;">🌍 Cuisines</h4>
+                        <ul style="color: #666; padding-left: 20px;">
+                            <li>"Italian"</li>
+                            <li>"Mexican"</li>
+                            <li>"Asian"</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button onclick="clearSearch()" style="margin-right: 10px; padding: 12px 24px; background: #ff6b35; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                        <i class="fas fa-times"></i> Clear Search
+                    </button>
+                    <button onclick="fetchRecipes().then(recipes => { allRecipes = recipes; recipeData = recipes; displayRecipes(recipes); })" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                        <i class="fas fa-refresh"></i> Reload All Recipes
+                    </button>
+                </div>
             </div>
         `;
     }
@@ -742,619 +856,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Reset filters to show all recipes
-    function resetFilters() {
-        // Reset active filter tag
-        filterTags.forEach(tag => {
-            tag.classList.remove('active');
-            if (tag.textContent.trim().includes('All')) {
-                tag.classList.add('active');
-            }
-        });
-        recipeData = [...allRecipes];
-    }
-    
     // Clear search function
     function clearSearch() {
+        console.log('🧹 Clearing search');
+        
+        // Clear search input
         if (searchInput) {
             searchInput.value = '';
         }
+        
+        // Hide clear button
+        if (clearSearchButton) {
+            clearSearchButton.style.display = 'none';
+        }
+        
+        // Reset to all recipes
         recipeData = [...allRecipes];
         displayRecipes(allRecipes);
         resetFilters();
-        showToast('Search cleared', '#4CAF50');
+        
+        // Show success message
+        showToast('Search cleared - showing all recipes', '#4CAF50');
     }
 
-    // ======= USER VERIFICATION CHECK AND CONDITIONAL BUTTON RENDERING =======
+    // Make clearSearch globally available for the error display
+    window.clearSearch = clearSearch;
+
+    // Event listeners
+    const showAllRecipesButton = document.getElementById('showAllRecipes');
     
-    // Function to check if user is verified and conditionally render Create Recipe button
-    async function initializeCreateRecipeButton() {
-        console.log('🔍 Checking user verification status...');
-        
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            console.log('❌ No auth token - user not logged in, Create Recipe button will not be rendered');
-            return; // Don't render button for non-logged in users
-        }
-
-        try {
-            console.log('🔄 Fetching user profile for verification check...');
-            // Fetch user profile to check verification status
-            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Token ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                console.log(`❌ Failed to fetch user profile: ${response.status} ${response.statusText}`);
-                console.log('ℹ️ Create Recipe button will not be rendered due to API error');
-                return; // Don't render button if can't verify user
-            }
-
-            const userProfile = await response.json();
-            console.log('✅ User profile loaded successfully:', userProfile);
-
-            // Check if user is verified contributor or staff
-            const isVerified = userProfile.is_verified_contributor || userProfile.is_staff;
-            console.log('🔍 User verification status:', { 
-                username: userProfile.username,
-                is_verified_contributor: userProfile.is_verified_contributor,
-                is_staff: userProfile.is_staff,
-                finalVerificationStatus: isVerified 
-            });
-
-            if (isVerified) {
-                console.log('✅ User is verified - rendering Create Recipe button');
-                renderCreateRecipeButton();
-            } else {
-                console.log('❌ User is not verified - Create Recipe button will not be rendered');
-                console.log('ℹ️ Only verified contributors can create recipes');
-            }
-
-        } catch (error) {
-            console.error('❌ Error checking user verification:', error);
-            console.log('ℹ️ Create Recipe button will not be rendered due to error');
-            // Don't render button if there's an error
-        }
-    }
-
-    // Function to render the Create Recipe button for verified users
-    function renderCreateRecipeButton() {
-        const container = document.getElementById('createRecipeButtonContainer');
-        if (!container) {
-            console.error('❌ Create Recipe button container not found');
-            return;
-        }
-
-        // Create the button element
-        const button = document.createElement('button');
-        button.id = 'openCreateRecipeModal';
-        button.className = 'btn btn-primary create-recipe-btn';
-        button.style.cssText = 'margin-bottom:30px;font-size:18px;padding:20px 50px;border-radius:50px;box-shadow:0 8px 32px rgba(34,139,34,0.6),inset 0 1px 0 rgba(255,255,255,0.2);font-weight:800;letter-spacing:0.5px;background:#228B22;border:3px solid #013220;color:#FFFFFF;cursor:pointer;transition:all 0.3s cubic-bezier(0.23, 1, 0.32, 1);position:relative;overflow:hidden;text-shadow:0 2px 4px rgba(0,0,0,0.3);';
-        button.innerHTML = '<i class="fas fa-plus-circle" style="margin-right:10px;font-size:20px;"></i> Create New Recipe';
-
-        // Add the button to the container
-        container.appendChild(button);
-
-        console.log('✅ Create Recipe button rendered successfully');
-
-        // Set up the event listener for the newly created button
-        setupCreateRecipeButtonListener();
-    }
-
-    // Function to set up event listener for the Create Recipe button
-    function setupCreateRecipeButtonListener() {
-        const openCreateRecipeModalBtn = document.getElementById('openCreateRecipeModal');
-        
-        if (openCreateRecipeModalBtn) {
-            console.log('✅ Setting up Create Recipe button event listener...');
-            openCreateRecipeModalBtn.addEventListener('click', function(event) {
-                console.log('🔵 Create Recipe button clicked');
-                event.preventDefault();
-                event.stopPropagation();
-                
-                // Since we only render the button for verified users, we can directly open the modal
-                const token = localStorage.getItem('authToken');
-                if (!token) {
-                    console.log('❌ No auth token - please log in');
-                    showToast('Please log in to create recipes.', '#f44336');
-                    return;
-                }
-                
-                console.log('✅ Opening modal for verified user...');
-                openModal();
-            });
-        } else {
-            console.error('❌ Create Recipe button not found after rendering!');
-        }
-    }
-
-    // ======= SIMPLIFIED MODAL LOGIC (MAIN IMPLEMENTATION) =======
-    
-    // Get modal elements (button will be dynamically created)
-    const createRecipeModal = document.getElementById('createRecipeModal');
-    const closeCreateRecipeModalBtn = document.getElementById('closeCreateRecipeModal');
-    const createRecipeForm = document.getElementById('createRecipeForm');
-
-    // Simple modal open function
-    function openModal() {
-        console.log('🔓 Opening modal...');
-        if (createRecipeModal) {
-            createRecipeModal.style.display = 'flex';
-            console.log('✅ Modal display set to flex');
-            // Initialize form components
-            initializeIngredientForm();
-            initializeDropdowns();
-        } else {
-            console.error('❌ Modal element not found');
-        }
-    }
-
-    // Simple modal close function
-    function closeModal() {
-        console.log('🔒 Closing modal...');
-        if (createRecipeModal) {
-            createRecipeModal.style.display = 'none';
-            console.log('✅ Modal closed');
-        }
-    }
-
-    // Close modal events
-    if (closeCreateRecipeModalBtn) {
-        closeCreateRecipeModalBtn.addEventListener('click', closeModal);
-    }
-
-    // Close modal when clicking outside
-    if (createRecipeModal) {
-        createRecipeModal.addEventListener('click', function(event) {
-            if (event.target === createRecipeModal) {
-                closeModal();
-            }
-        });
-    }
-
-    // ======= ADVANCED USER VERIFICATION (KEPT FOR FUTURE USE) =======
-
-    // Ingredient management functions
-    function createIngredientRow(name = '', quantity = '', unit = '', preparation = '') {
-        const row = document.createElement('div');
-        row.className = 'ingredient-row';
-        row.style = 'display:flex;gap:8px;margin-bottom:6px;align-items:center;';
-        row.innerHTML = `
-            <input type="text" class="ingredient-name" placeholder="Name" value="${name}" style="flex:2;padding:7px 8px;border-radius:4px;border:1px solid #ccc;" required>
-            <input type="text" class="ingredient-quantity" placeholder="Qty" value="${quantity}" style="width:60px;padding:7px 8px;border-radius:4px;border:1px solid #ccc;" required>
-            <input type="text" class="ingredient-unit" placeholder="Unit" value="${unit}" style="width:60px;padding:7px 8px;border-radius:4px;border:1px solid #ccc;" required>
-            <input type="text" class="ingredient-preparation" placeholder="Prep (optional)" value="${preparation}" style="flex:1;padding:7px 8px;border-radius:4px;border:1px solid #ccc;" title="e.g. diced, chopped, minced">
-            <button type="button" class="remove-ingredient-btn" style="background:#ffdddd;color:#c00;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:15px;">&times;</button>
-        `;
-        row.querySelector('.remove-ingredient-btn').onclick = () => {
-            row.remove();
-            // Ensure at least one ingredient row remains
-            const ingredientsList = document.getElementById('ingredientsList');
-            if (ingredientsList && ingredientsList.children.length === 0) {
-                addIngredientRow();
-            }
-        };
-        return row;
-    }
-
-    function addIngredientRow(name = '', quantity = '', unit = '', preparation = '') {
-        const ingredientsList = document.getElementById('ingredientsList');
-        if (ingredientsList) {
-            ingredientsList.appendChild(createIngredientRow(name, quantity, unit, preparation));
-        }
-    }
-
-    // Initialize ingredient functionality
-    function initializeIngredientForm() {
-        const addIngredientBtn = document.getElementById('addIngredientBtn');
-        const ingredientsList = document.getElementById('ingredientsList');
-        
-        if (addIngredientBtn && ingredientsList) {
-            addIngredientBtn.onclick = () => addIngredientRow();
-            
-            // Clear and add one default row
-            ingredientsList.innerHTML = '';
-            addIngredientRow();
-        }
-    }
-
-    // Professional modal for not verified contributors (simplified for now)
-    function showNotVerifiedModal() {
-        showToast('Recipe creation is temporarily disabled. Please try again later.', '#f44336');
-    }
-
-    // ======= FORM SUBMISSION AND API INTEGRATION =======
-
-    // --- Global Loading Spinner & Toasts ---
-    // Ensure these elements exist in your HTML (e.g., Recipes.html, Login.html)
-    // with the IDs 'loadingSpinner' and 'toastMessage' and appropriate base styles.
-    const spinner = document.getElementById('loadingSpinner');
-    const toast = document.getElementById('toastMessage');
-
-function showSpinner() { if(spinner) spinner.style.display = 'block'; }
-function hideSpinner() { if(spinner) spinner.style.display = 'none'; }
-function showToast(msg, color = null) {
-    if (!toast) return; // Guard clause if toast element isn't found
-    toast.textContent = msg;
-    toast.style.display = 'block';
-    if (color) toast.style.background = color;
-    else toast.style.background = 'var(--primary)';
-    setTimeout(() => { toast.style.display = 'none'; }, 3000);
-}
-
-// Patch all fetches to show/hide spinner and show toasts on error
-async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg = null) {
-    showSpinner();
-    try {
-        const response = await fetch(url, options);
-        const data = await response.json().catch(() => ({}));
-        hideSpinner();
-        if (!response.ok) {
-            showToast(errorMsg || (data.detail || 'An error occurred.'), '#f44336');
-            throw data;
-        }
-        if (successMsg) showToast(successMsg);
-        return data;
-    } catch (err) {
-        hideSpinner();
-        showToast(errorMsg || 'Network error.', '#f44336');
-        throw err;
-    }
-}
-
-    // Helper: Show error message under a field
-    function showFieldError(fieldId, message) {
-        let err = document.getElementById(fieldId + 'Error');
-        if (!err) {
-            err = document.createElement('div');
-            err.id = fieldId + 'Error';
-            err.className = 'error-message';
-            err.style = 'color:#f44336;font-size:13px;margin-top:4px;';
-            document.getElementById(fieldId).parentNode.appendChild(err);
-        }
-        err.textContent = message;
-        err.style.display = 'block';
-    }
-    function clearFieldError(fieldId) {
-        const err = document.getElementById(fieldId + 'Error');
-        if (err) err.style.display = 'none';
-    }
-
-    if (createRecipeForm) {
-        createRecipeForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            // Remove previous error messages
-            ['recipeTitle','recipeName','recipeDescription','recipeIngredients','recipeInstructions','recipeCategories','recipeCuisines','recipeTags'].forEach(clearFieldError);
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                showToast('You must be logged in to create a recipe.', '#f44336');
-                return;
-            }
-            const title = document.getElementById('recipeTitle')?.value.trim() || '';
-            const name = document.getElementById('recipeName')?.value.trim() || '';
-            const description = document.getElementById('recipeDescription')?.value.trim() || '';
-            const instructions = document.getElementById('recipeInstructions')?.value.trim() || '';
-            const imageInput = document.getElementById('recipeImage');
-            // Optional fields: get selected values from dropdowns
-            const categoriesSelect = document.getElementById('recipeCategories');
-            const cuisinesSelect = document.getElementById('recipeCuisines');
-            const tagsSelect = document.getElementById('recipeTags');
-            const categories = Array.from(categoriesSelect?.selectedOptions || []).map(opt => opt.value);
-            const cuisines = Array.from(cuisinesSelect?.selectedOptions || []).map(opt => opt.value);
-            const tags = Array.from(tagsSelect?.selectedOptions || []).map(opt => opt.value);            // --- Collect ingredients from dynamic rows ---
-            const ingredientRows = document.querySelectorAll('#ingredientsList .ingredient-row');
-            let ingredientsArr = [];
-            let ingredientError = '';
-            
-            ingredientRows.forEach((row, index) => {
-                const ingName = row.querySelector('.ingredient-name')?.value.trim();
-                const ingQty = row.querySelector('.ingredient-quantity')?.value.trim();
-                const ingUnit = row.querySelector('.ingredient-unit')?.value.trim();
-                const ingPrep = row.querySelector('.ingredient-preparation')?.value.trim() || '';
-                
-                if (!ingName || !ingQty || !ingUnit) {
-                    ingredientError = `Ingredient ${index + 1}: Name, quantity, and unit are required.`;
-                    return;
-                }
-                
-                // Validate quantity is a positive number
-                const parsedQty = parseFloat(ingQty);
-                if (isNaN(parsedQty) || parsedQty <= 0) {
-                    ingredientError = `Ingredient ${index + 1}: Quantity must be a positive number.`;
-                    return;
-                }
-                
-                // Validate name length
-                if (ingName.length < 2) {
-                    ingredientError = `Ingredient ${index + 1}: Name must be at least 2 characters.`;
-                    return;
-                }
-                
-                ingredientsArr.push({
-                    ingredient_name: ingName, 
-                    quantity: parsedQty, // Store as number
-                    unit: ingUnit,
-                    preparation: ingPrep
-                });
-            });
-            
-            if (ingredientRows.length === 0 || ingredientsArr.length === 0) {
-                ingredientError = 'At least one ingredient is required.';
-            }
-            
-            if (ingredientError) {
-                showFieldError('recipeIngredients', ingredientError);
-                return;
-            }
-
-            // Frontend validation
-            let isValid = true;
-            
-            // Title validation
-            if (!title || title.length < 3) { 
-                showFieldError('recipeTitle', 'Title must be at least 3 characters long.'); 
-                isValid = false; 
-            }
-            
-            // Name validation (if different from title)
-            if (!name || name.length < 3) { 
-                showFieldError('recipeName', 'Recipe name must be at least 3 characters long.'); 
-                isValid = false; 
-            }
-            
-            // Description validation
-            if (!description || description.length < 10) { 
-                showFieldError('recipeDescription', 'Description must be at least 10 characters long.'); 
-                isValid = false; 
-            }
-            
-            // Instructions validation
-            if (!instructions || instructions.length < 20) { 
-                showFieldError('recipeInstructions', 'Instructions must be at least 20 characters long and contain proper steps.'); 
-                isValid = false; 
-            }
-            
-            // Check if instructions contain actual steps
-            if (instructions && !instructions.includes('Step') && instructions.split('.').length < 3) {
-                showFieldError('recipeInstructions', 'Instructions should contain clear steps (use "Step 1:", "Step 2:" etc. or separate sentences).'); 
-                isValid = false; 
-            }
-            
-            if (!isValid) return;            // 🔧 Use FormData with CSRF token
-            
-            // Get CSRF token first
-            let csrfToken;
-            try {
-                console.log('🔒 Getting CSRF token from /api/csrf-token/...');
-                const csrfResponse = await fetch('https://njoya.pythonanywhere.com/api/csrf-token/', {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-                
-                console.log('🔒 CSRF response status:', csrfResponse.status);
-                
-                if (csrfResponse.ok) {
-                    const csrfData = await csrfResponse.json();
-                    csrfToken = csrfData.csrfToken;
-                    console.log('🔒 CSRF token obtained:', csrfToken ? csrfToken.substring(0, 20) + '...' : 'null');
-                } else {
-                    console.error('🔒 CSRF endpoint failed:', csrfResponse.status, csrfResponse.statusText);
-                    throw new Error(`Failed to get CSRF token: ${csrfResponse.status}`);
-                }
-            } catch (csrfError) {
-                console.error('❌ CSRF token error:', csrfError);
-                
-                // Fallback: Try to get CSRF token from cookie
-                console.log('🔒 Trying fallback: get CSRF from cookie...');
-                csrfToken = getCookieValue('csrftoken');
-                
-                if (!csrfToken) {
-                    // Alternative cookie names
-                    csrfToken = getCookieValue('csrf_token') || getCookieValue('_token');
-                }
-                
-                if (!csrfToken) {
-                    console.error('❌ No CSRF token found in cookies either');
-                    showToast('Failed to get security token. Please refresh the page and try again.', '#f44336');
-                    return;
-                } else {
-                    console.log('🔒 CSRF token from cookie:', csrfToken.substring(0, 20) + '...');
-                }
-            }
-
-            // Helper function to get cookie value
-            function getCookieValue(name) {
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    const [key, value] = cookie.trim().split('=');
-                    if (key === name) {
-                        return decodeURIComponent(value);
-                    }
-                }
-                return null;
-            }            // Build FormData
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('description', description);
-            formData.append('instructions', instructions);
-            
-            // Add CSRF token to FormData
-            formData.append('csrfmiddlewaretoken', csrfToken);
-            
-            // Add ingredients with preparation field - try multiple formats
-            console.log('🔍 Testing multiple ingredient formats...');
-            
-            // Format 1: Current format (JSON strings) - for compatibility
-            ingredientsArr.forEach(ing => {
-                const ingredientData = {
-                    ingredient_name: ing.ingredient_name,
-                    quantity: parseFloat(ing.quantity) || 1,
-                    unit: ing.unit,
-                    preparation: ing.preparation || ""
-                };
-                formData.append('ingredients', JSON.stringify(ingredientData));
-            });
-            
-            // Format 2: Try ingredients_data as single JSON (common Django pattern)
-            formData.append('ingredients_data', JSON.stringify(ingredientsArr.map(ing => ({
-                ingredient_name: ing.ingredient_name,
-                quantity: parseFloat(ing.quantity) || 1,
-                unit: ing.unit,
-                preparation: ing.preparation || ""
-            }))));
-            
-            // Format 3: Try recipe_ingredients field
-            formData.append('recipe_ingredients', JSON.stringify(ingredientsArr.map(ing => ({
-                ingredient: {
-                    name: ing.ingredient_name,
-                    ingredient_name: ing.ingredient_name
-                },
-                quantity: parseFloat(ing.quantity) || 1,
-                unit: ing.unit,
-                preparation: ing.preparation || ""
-            }))));
-            
-            // Add optional fields
-            categories.forEach(val => formData.append('category_names', val));
-            cuisines.forEach(val => formData.append('cuisine_names', val));
-            tags.forEach(val => formData.append('tag_names', val));
-            
-            // Add image if present - use image_upload field name for uploads
-            if (imageInput && imageInput.files[0]) {
-                formData.append('image_upload', imageInput.files[0]);
-            }            try {
-                console.log('📤 Sending FormData with CSRF token...');
-                console.log('🔒 Final CSRF token being sent:', csrfToken ? csrfToken.substring(0, 20) + '...' : 'null');
-                
-                // Get auth token for API request
-                const token = localStorage.getItem('authToken');
-                if (!token) {
-                    console.error('❌ No authentication token found');
-                    showToast('Please log in to create recipes', '#f44336');
-                    return;
-                }
-                
-                const requestHeaders = {
-                    'Authorization': `Token ${token}`,
-                    'X-CSRFToken': csrfToken,
-                };
-                
-                console.log('📤 Request headers:', requestHeaders);
-                console.log('📤 Request credentials: include');
-                console.log('📤 FormData entries count:', Array.from(formData.entries()).length);
-                
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
-                    method: 'POST',
-                    headers: requestHeaders,
-                    credentials: 'include',
-                    body: formData
-                });
-
-                let data;
-                try {
-                    data = await response.json();
-                } catch (jsonError) {
-                    console.error('❌ Failed to parse response JSON:', jsonError);
-                    if (response.status === 404) {
-                        showToast('API endpoint not found. Recipe creation is currently unavailable.', '#f44336');
-                        return;
-                    } else if (!response.ok) {
-                        showToast(`Server error (${response.status}). Please try again later.`, '#f44336');
-                        return;
-                    }
-                    // If response is ok but JSON parsing failed, try to get text
-                    try {
-                        const textResponse = await response.text();
-                        console.error('❌ Raw response:', textResponse.substring(0, 500));
-                        showToast('Server returned invalid response format', '#f44336');
-                        return;
-                    } catch (textError) {
-                        console.error('❌ Failed to get response text:', textError);
-                        showToast('Failed to process server response', '#f44336');
-                        return;
-                    }
-                }
-
-                if (!response.ok) {                    console.error('❌ Recipe creation failed:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        responseData: data,
-                        url: response.url
-                    });
-
-                    // Enhanced debugging for 400 errors
-                    if (response.status === 400) {
-                        console.error('🔍 400 Bad Request - Detailed Analysis:');
-                        console.error('📋 Full response data:', JSON.stringify(data, null, 2));
-                        
-                        // Check for common 400 error causes
-                        if (data && typeof data === 'object') {
-                            Object.keys(data).forEach(key => {
-                                console.error(`  ❌ Field '${key}':`, data[key]);
-                            });
-                        }
-                    }
-
-                    // Log the FormData that was sent for debugging
-                    console.log('📤 FormData sent:');
-                    for (let [key, value] of formData.entries()) {
-                        console.log(`${key}:`, typeof value === 'string' ? value.substring(0, 100) : value);
-                    }
-
-                    // Show field errors professionally
-                    if (typeof data === 'object' && data !== null) {
-                        let hasFieldErrors = false;
-                        for (const [field, errors] of Object.entries(data)) {
-                            let fieldId = null;
-                            if (field === 'name') fieldId = 'recipeName';
-                            else if (field === 'description') fieldId = 'recipeDescription';
-                            else if (field === 'ingredients') fieldId = 'recipeIngredients';
-                            else if (field === 'instructions') fieldId = 'recipeInstructions';
-                            else if (field === 'title') fieldId = 'recipeTitle';
-                            else if (field === 'categories') fieldId = 'recipeCategories';
-                            else if (field === 'cuisines') fieldId = 'recipeCuisines';
-                            else if (field === 'tags') fieldId = 'recipeTags';
-                            
-                            if (fieldId && document.getElementById(fieldId)) {
-                                showFieldError(fieldId, Array.isArray(errors) ? errors.join(' ') : errors);
-                                hasFieldErrors = true;
-                            } else {
-                                console.warn(`🔍 Unhandled field error: ${field}:`, errors);
-                            }
-                        }
-
-                        // Show general error if no field-specific errors were shown
-                        if (!hasFieldErrors) {
-                            let errorMsg = `Failed to create recipe (${response.status})`;
-                            if (data.detail) errorMsg = data.detail;
-                            else if (data.message) errorMsg = data.message;
-                            else if (data.non_field_errors) errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors.join(' ') : data.non_field_errors;
-                            else if (typeof data === 'string' && data.length < 200) errorMsg = data;
-                            
-                            showToast(errorMsg, '#f44336');
-                        }
-                    } else {
-                        showToast(`Failed to create recipe (${response.status}: ${response.statusText})`, '#f44336');
-                    }
-                    return;
-                }
-                showToast('Recipe created successfully!');
-                createRecipeModal.style.display = 'none';
-                fetchRecipes().then(newRecipes => { recipeData = newRecipes; displayRecipes(recipeData); });
-                createRecipeForm.reset();
-                // Reinitialize the form components
-                initializeIngredientForm();
-                initializeDropdowns();
-            } catch (error) {
-                alert('Network error. Please try again later.');
-                showToast('Network error. Please try again later.', '#f44336');
-            }
-        });
-    }    // Event listeners
     if (searchButton) {
         searchButton.addEventListener('click', searchRecipes);
     }
@@ -1363,24 +893,10 @@ async function fetchWithSpinnerToast(url, options, successMsg = null, errorMsg =
         clearSearchButton.addEventListener('click', clearSearch);
     }
     
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') searchRecipes();
-        });
-        
-        // Show/hide clear button based on input
-        searchInput.addEventListener('input', function() {
-            if (clearSearchButton) {
-                if (this.value.trim()) {
-                    clearSearchButton.style.display = 'block';
-                } else {
-                    clearSearchButton.style.display = 'none';
-                    // Auto-clear search when input is empty
-                    if (recipeData.length !== allRecipes.length) {
-                        clearSearch();
-                    }
-                }
-            }
+    if (showAllRecipesButton) {
+        showAllRecipesButton.addEventListener('click', function() {
+            console.log('🔄 Show All Recipes button clicked');
+            clearSearch();
         });
     }
     
