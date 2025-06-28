@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="verification.css">
 </head>
-<body>
+<body class="verification-page">
     <header>
         <div class="container">
             <nav>
@@ -35,8 +35,8 @@
         </div>
     </header>
 
-    <main style="padding: 140px 0 var(--space-16); min-height: 100vh;">
-        <div class="container">
+    <main style="padding: 140px 0 var(--space-16); min-height: calc(100vh - 140px); overflow-y: auto;">
+        <div class="container verification-page-container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
             <!-- Verification Status Panel -->
             <div id="verificationPanel" class="verification-status-panel">
                 <!-- Content will be dynamically loaded here -->

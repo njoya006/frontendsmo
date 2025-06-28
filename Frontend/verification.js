@@ -125,16 +125,31 @@ class VerificationSystem {
             if (profileResponse.ok) {
                 const profileData = await profileResponse.json();
                 
-                // Check if user is already verified through existing flags
-                if (profileData.is_verified || profileData.verified || profileData.is_staff || profileData.is_superuser) {
+                // Check if user is currently verified through existing flags
+                const isCurrentlyVerified = profileData.is_verified || profileData.verified || profileData.is_staff || profileData.is_superuser;
+                
+                if (isCurrentlyVerified) {
                     return { 
                         status: 'approved', 
                         is_verified: true,
                         application: {
-                            business_name: profileData.business_name || 'Verified User',
+                            business_name: profileData.business_name || profileData.first_name + ' ' + profileData.last_name || 'Verified User',
                             business_license: 'Legacy Verification',
                             created_at: profileData.date_joined || new Date().toISOString(),
                             description: 'Previously verified user'
+                        }
+                    };
+                }
+                
+                // Check if user was previously verified but no longer is (could be revoked)
+                if (profileData.was_verified || profileData.verification_revoked) {
+                    return {
+                        status: 'revoked',
+                        is_verified: false,
+                        application: {
+                            business_name: profileData.business_name || 'Previously Verified User',
+                            revocation_reason: profileData.revocation_reason || 'Verification was revoked by administrator',
+                            created_at: profileData.date_joined || new Date().toISOString()
                         }
                     };
                 }
@@ -278,26 +293,41 @@ class VerificationSystem {
                             <i class="fas fa-certificate verification-status-icon"></i>
                             <div>
                                 <h3 class="verification-status-title">Verified Contributor</h3>
-                                <p class="verification-status-subtitle">Congratulations! You are verified</p>
+                                <p class="verification-status-subtitle">🎉 You are already verified!</p>
                             </div>
                         </div>
                         <div class="verification-status-content">
-                            <p>🎉 Congratulations! You are now a verified contributor on ChopSmo. Your recipes will be featured prominently and you have access to all premium features.</p>
+                            <p>🎉 Congratulations! You are a verified contributor on ChopSmo. Your recipes will be featured prominently and you have access to all premium features.</p>
                             <div class="verification-perks">
-                                <h4>Your Benefits:</h4>
+                                <h4>Your Verification Benefits:</h4>
                                 <ul>
                                     <li><i class="fas fa-star"></i> Verified badge on all your content</li>
                                     <li><i class="fas fa-trophy"></i> Priority placement in search results</li>
                                     <li><i class="fas fa-crown"></i> Access to advanced analytics</li>
                                     <li><i class="fas fa-rocket"></i> Early access to new features</li>
+                                    <li><i class="fas fa-shield-alt"></i> Enhanced credibility and trust</li>
                                 </ul>
                             </div>
+                            ${application ? `
+                                <div class="verification-details">
+                                    <h4>Verification Details:</h4>
+                                    <p><strong>Business:</strong> ${application.business_name || 'Verified User'}</p>
+                                    <p><strong>Verified Since:</strong> ${new Date(application.created_at || new Date()).toLocaleDateString()}</p>
+                                </div>
+                            ` : ''}
                         </div>
                         <div class="verification-status-actions">
                             <a href="Recipes.html" class="btn btn-primary">
                                 <i class="fas fa-plus"></i>
                                 Create Recipe
                             </a>
+                            <a href="Profile.html" class="btn btn-secondary">
+                                <i class="fas fa-user"></i>
+                                View Profile
+                            </a>
+                        </div>
+                        <div class="verification-note">
+                            <p><small><i class="fas fa-info-circle"></i> If you believe your verification was removed in error, please contact support.</small></p>
                         </div>
                     </div>
                 `;
@@ -331,6 +361,41 @@ class VerificationSystem {
                         </div>
                     </div>
                 `;
+                break;
+
+            case 'revoked':
+                panelHTML = `
+                    <div class="verification-status-card revoked">
+                        <div class="verification-status-header">
+                            <i class="fas fa-exclamation-triangle verification-status-icon"></i>
+                            <div>
+                                <h3 class="verification-status-title">Verification Revoked</h3>
+                                <p class="verification-status-subtitle">Your verification has been removed</p>
+                            </div>
+                        </div>
+                        <div class="verification-status-content">
+                            <p>Your verification status has been revoked by an administrator.</p>
+                            ${application && application.revocation_reason ? `
+                                <div class="revocation-reason">
+                                    <h4>Reason:</h4>
+                                    <p>${application.revocation_reason}</p>
+                                </div>
+                            ` : ''}
+                            <p>If you believe this was done in error, please contact support. You may also reapply for verification after addressing any issues.</p>
+                        </div>
+                        <div class="verification-status-actions">
+                            <button id="reapplyForVerification" class="btn btn-primary">
+                                <i class="fas fa-redo"></i>
+                                Reapply for Verification
+                            </button>
+                            <a href="Contact.html" class="btn btn-secondary">
+                                <i class="fas fa-envelope"></i>
+                                Contact Support
+                            </a>
+                        </div>
+                    </div>
+                `;
+                break;
                 break;
 
             default:
@@ -571,7 +636,10 @@ class VerificationSystem {
 
         console.log('✅ Opening modal...');
         modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        modal.classList.add('active');
+        
+        // Don't hide body overflow, just add modal class for better control
+        document.body.classList.add('modal-open');
         
         this.showToast('Application form opened', 'success');
     }
@@ -582,7 +650,8 @@ class VerificationSystem {
         if (!modal) return;
 
         modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
+        modal.classList.remove('active');
+        document.body.classList.remove('modal-open');
         
         // Clear form
         const form = document.getElementById('verificationApplicationForm');
