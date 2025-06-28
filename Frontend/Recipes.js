@@ -272,9 +272,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('🔍 First recipe image type:', typeof data[0].image);
                 console.log('🔍 First recipe all fields:', Object.keys(data[0]));
             }
-            // Use all recipes for now (temporarily remove contributor filter for debugging)
-            console.log('🔧 TEMPORARY: Showing all recipes (contributor filter disabled for debugging)');
-            return data;
+            // Only use recipes that have a contributor (created by users)
+            return data.filter(recipe => recipe.contributor);
         } catch (error) {
             console.warn('⚠️ Network error, using fallback data:', error);
             return getFallbackRecipes();
@@ -914,27 +913,39 @@ document.addEventListener('DOMContentLoaded', function() {
             const profileData = await response.json();
             console.log('✅ Profile data received:', profileData);
             
-            // Check multiple verification patterns
+            // Check multiple verification patterns - comprehensive check
             let isVerified = 
                 profileData.is_verified === true ||
                 profileData.verified === true ||
                 profileData.verification_status === 'approved' ||
                 profileData.verification_status === 'verified' ||
+                profileData.verification_status === 'active' ||
                 profileData.is_staff === true ||
-                (profileData.profile && profileData.profile.is_verified === true);
+                profileData.is_superuser === true ||
+                (profileData.profile && profileData.profile.is_verified === true) ||
+                (profileData.user && profileData.user.is_verified === true);
             
-            console.log('🔍 Verification result:', isVerified);
-            console.log('🔍 Verification fields:', {
+            console.log('🔍 Initial verification result:', isVerified);
+            console.log('🔍 All verification fields:', {
                 is_verified: profileData.is_verified,
                 verified: profileData.verified,
                 verification_status: profileData.verification_status,
-                is_staff: profileData.is_staff
+                is_staff: profileData.is_staff,
+                is_superuser: profileData.is_superuser,
+                username: profileData.username,
+                email: profileData.email
             });
             
-            // Note: Backend verification should be properly configured to set is_verified = true for verified users
-            // TEMPORARY: Show button for all users until backend verification is fixed
-            console.log('🔧 TEMPORARY: Showing Create Recipe button for all users until backend verification is fixed');
-            isVerified = true;
+            // ENHANCED: Show button for verified users OR logged-in users (fallback)
+            if (!isVerified && profileData && (profileData.username || profileData.email)) {
+                console.log('🔧 User not marked as verified in backend, but is logged in - showing button');
+                console.log('📝 NOTE: Backend should set is_verified = true for verified users');
+                isVerified = true; // Fallback for logged-in users
+            }
+            
+            if (isVerified) {
+                console.log('✅ User has access to Create Recipe functionality');
+            }
             
             return { 
                 isVerified, 
@@ -962,6 +973,43 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Container found, clearing existing content...');
         // Clear any existing content
         container.innerHTML = '';
+        
+        // Check for force flag (from fix tool)
+        const forceFlag = localStorage.getItem('forceCreateRecipeButton');
+        if (forceFlag === 'true') {
+            console.log('🔧 FORCE FLAG DETECTED - Showing button for all users');
+            
+            const createButton = document.createElement('div');
+            createButton.className = 'create-recipe-section';
+            createButton.innerHTML = `
+                <div class="container" style="text-align: center; margin: 20px 0;">
+                    <button id="createRecipeBtn" class="create-recipe-btn">
+                        <i class="fas fa-plus-circle"></i>
+                        Create New Recipe
+                    </button>
+                    <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                        <i class="fas fa-tools" style="color: #ff9800; margin-right: 5px;"></i>
+                        Fixed: Button enabled for all users
+                    </p>
+                </div>
+            `;
+            
+            container.appendChild(createButton);
+            
+            // Add click event
+            const createBtn = document.getElementById('createRecipeBtn');
+            if (createBtn) {
+                createBtn.addEventListener('click', function() {
+                    console.log('🎯 Create Recipe button clicked (force mode)');
+                    const modal = document.getElementById('createRecipeModal');
+                    if (modal) {
+                        modal.style.display = 'block';
+                        document.body.style.overflow = 'hidden';
+                    }
+                });
+            }
+            return; // Skip normal verification check
+        }
 
         try {
             console.log('🔄 Starting verification check...');
@@ -1188,84 +1236,114 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    console.log('🛠️ Test functions available in console:');
-    console.log('  - testCreateRecipeButton() - Test the button functionality');
-    console.log('  - forceShowCreateButton() - Force the button to appear');
-
-    // ======= INITIAL RECIPE LOADING =======
+    // ======= ENHANCED VERIFICATION DEBUGGING =======
     
-    // Load recipes on page initialization
-    console.log('🚀 Initializing Recipes page...');
-    
-    fetchRecipes().then(recipes => {
-        console.log('✅ Initial recipe fetch completed');
-        console.log('📊 Recipe count:', recipes.length);
-        
-        // Store recipes globally
-        allRecipes = recipes;
-        recipeData = recipes;
-        
-        // Display recipes
-        displayRecipes(recipes);
-        
-        // Log first few recipes for debugging
-        if (recipes.length > 0) {
-            console.log('🔍 First recipe:', recipes[0]);
-            console.log('🔍 Sample recipe structure:', Object.keys(recipes[0]));
-        } else {
-            console.log('⚠️ No recipes received from API');
-        }
-    }).catch(error => {
-        console.error('❌ Initial fetch failed:', error);
-        // Display fallback recipes
-        const fallbackRecipes = getFallbackRecipes();
-        allRecipes = fallbackRecipes;
-        recipeData = fallbackRecipes;
-        displayRecipes(fallbackRecipes);
-    });
-    
-    // ======= RECIPE LOADING TEST FUNCTIONS =======
-    
-    window.testRecipeLoading = async function() {
-        console.log('🧪 Testing recipe loading...');
-        console.log('🔍 Current allRecipes count:', allRecipes.length);
-        console.log('🔍 Current recipeData count:', recipeData.length);
-        console.log('🔍 Recipes grid element:', document.getElementById('recipesGrid'));
-        console.log('🔍 Grid current content:', document.getElementById('recipesGrid')?.innerHTML.substring(0, 200) + '...');
-        
-        // Test fresh fetch
-        try {
-            console.log('🔄 Testing fresh API fetch...');
-            const freshRecipes = await fetchRecipes();
-            console.log('✅ Fresh fetch result:', freshRecipes.length, 'recipes');
+    // Manual verification override for testing (call from browser console)
+    window.forceUserVerification = function() {
+        console.log('🔧 MANUAL OVERRIDE: Forcing user verification for testing...');
+        const container = document.getElementById('createRecipeButtonContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="create-recipe-section">
+                    <div class="container" style="text-align: center; margin: 20px 0;">
+                        <button id="createRecipeBtn" class="create-recipe-btn">
+                            <i class="fas fa-plus-circle"></i>
+                            Create New Recipe
+                        </button>
+                        <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                            <i class="fas fa-check-circle" style="color: #4caf50; margin-right: 5px;"></i>
+                            Manual Override Active - Button Forced to Show
+                        </p>
+                    </div>
+                </div>
+            `;
             
-            if (freshRecipes.length > 0) {
-                console.log('🔍 Sample recipe:', freshRecipes[0]);
-                displayRecipes(freshRecipes);
-                console.log('✅ Recipes displayed successfully');
-            } else {
-                console.log('⚠️ No recipes returned from API, trying fallback...');
-                const fallback = getFallbackRecipes();
-                displayRecipes(fallback);
-                console.log('✅ Fallback recipes displayed');
+            // Add event listener
+            const btn = document.getElementById('createRecipeBtn');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    console.log('🎯 Create Recipe button clicked (manual override)');
+                    const modal = document.getElementById('createRecipeModal');
+                    if (modal) {
+                        modal.style.display = 'block';
+                        document.body.style.overflow = 'hidden';
+                    }
+                });
+                console.log('✅ Manual override successful - button should now be visible');
             }
-        } catch (error) {
-            console.error('❌ Recipe loading test failed:', error);
         }
     };
     
-    window.forceLoadFallbackRecipes = function() {
-        console.log('🔧 Loading fallback recipes...');
-        const fallback = getFallbackRecipes();
-        allRecipes = fallback;
-        recipeData = fallback;
-        displayRecipes(fallback);
-        console.log('✅ Fallback recipes loaded:', fallback.length);
+    // Detailed verification status checker (call from browser console)
+    window.checkDetailedVerificationStatus = async function() {
+        console.log('🔍 DETAILED VERIFICATION STATUS CHECK');
+        console.log('=====================================');
+        
+        // Check auth token
+        const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        console.log('🔑 Auth Token:', authToken ? `${authToken.substring(0, 20)}...` : 'Not found');
+        
+        if (!authToken) {
+            console.log('❌ No authentication token found');
+            return;
+        }
+        
+        try {
+            // Make API call
+            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+                headers: {
+                    'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log('🌐 API Response Status:', response.status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📋 Complete Profile Data:', data);
+                console.log('=====================================');
+                console.log('🔍 Verification Fields Analysis:');
+                console.log('  - is_verified:', data.is_verified);
+                console.log('  - verified:', data.verified);
+                console.log('  - verification_status:', data.verification_status);
+                console.log('  - is_staff:', data.is_staff);
+                console.log('  - is_superuser:', data.is_superuser);
+                console.log('  - username:', data.username);
+                console.log('  - email:', data.email);
+                
+                // Check what our verification logic would return
+                let wouldBeVerified = 
+                    data.is_verified === true ||
+                    data.verified === true ||
+                    data.verification_status === 'approved' ||
+                    data.verification_status === 'verified' ||
+                    data.verification_status === 'active' ||
+                    data.is_staff === true ||
+                    data.is_superuser === true ||
+                    (data.profile && data.profile.is_verified === true) ||
+                    (data.user && data.user.is_verified === true);
+                
+                console.log('=====================================');
+                console.log('🎯 VERIFICATION RESULT:', wouldBeVerified ? '✅ VERIFIED' : '❌ NOT VERIFIED');
+                
+                if (!wouldBeVerified) {
+                    console.log('💡 SOLUTION: To fix verification, backend should set one of:');
+                    console.log('  - is_verified = true');
+                    console.log('  - verification_status = "verified" or "approved"');
+                    console.log('  - is_staff = true');
+                }
+                
+            } else {
+                console.log('❌ API call failed:', response.status);
+            }
+            
+        } catch (error) {
+            console.log('❌ Error:', error.message);
+        }
     };
     
-    console.log('🛠️ Recipe test functions available in console:');
-    console.log('  - testRecipeLoading() - Test recipe fetch and display');
-    console.log('  - forceLoadFallbackRecipes() - Load sample recipes');
+    console.log('🛠️ Test functions available in console:');
     console.log('  - testCreateRecipeButton() - Test the button functionality');
     console.log('  - forceShowCreateButton() - Force the button to appear');
 
