@@ -913,39 +913,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const profileData = await response.json();
             console.log('✅ Profile data received:', profileData);
             
-            // Check multiple verification patterns - comprehensive check
+            // Check multiple verification patterns
             let isVerified = 
                 profileData.is_verified === true ||
                 profileData.verified === true ||
                 profileData.verification_status === 'approved' ||
                 profileData.verification_status === 'verified' ||
-                profileData.verification_status === 'active' ||
                 profileData.is_staff === true ||
-                profileData.is_superuser === true ||
-                (profileData.profile && profileData.profile.is_verified === true) ||
-                (profileData.user && profileData.user.is_verified === true);
+                (profileData.profile && profileData.profile.is_verified === true);
             
-            console.log('🔍 Initial verification result:', isVerified);
-            console.log('🔍 All verification fields:', {
+            console.log('🔍 Verification result:', isVerified);
+            console.log('🔍 Verification fields:', {
                 is_verified: profileData.is_verified,
                 verified: profileData.verified,
                 verification_status: profileData.verification_status,
-                is_staff: profileData.is_staff,
-                is_superuser: profileData.is_superuser,
-                username: profileData.username,
-                email: profileData.email
+                is_staff: profileData.is_staff
             });
             
-            // ENHANCED: Show button for verified users OR logged-in users (fallback)
-            if (!isVerified && profileData && (profileData.username || profileData.email)) {
-                console.log('🔧 User not marked as verified in backend, but is logged in - showing button');
-                console.log('📝 NOTE: Backend should set is_verified = true for verified users');
-                isVerified = true; // Fallback for logged-in users
-            }
-            
-            if (isVerified) {
-                console.log('✅ User has access to Create Recipe functionality');
-            }
+            // Note: Backend verification should be properly configured to set is_verified = true for verified users
+            // TEMPORARY: Show button for all users until backend verification is fixed
+            console.log('🔧 TEMPORARY: Showing Create Recipe button for all users until backend verification is fixed');
+            isVerified = true;
             
             return { 
                 isVerified, 
@@ -973,43 +961,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Container found, clearing existing content...');
         // Clear any existing content
         container.innerHTML = '';
-        
-        // Check for force flag (from fix tool)
-        const forceFlag = localStorage.getItem('forceCreateRecipeButton');
-        if (forceFlag === 'true') {
-            console.log('🔧 FORCE FLAG DETECTED - Showing button for all users');
-            
-            const createButton = document.createElement('div');
-            createButton.className = 'create-recipe-section';
-            createButton.innerHTML = `
-                <div class="container" style="text-align: center; margin: 20px 0;">
-                    <button id="createRecipeBtn" class="create-recipe-btn">
-                        <i class="fas fa-plus-circle"></i>
-                        Create New Recipe
-                    </button>
-                    <p style="margin-top: 10px; font-size: 14px; color: #666;">
-                        <i class="fas fa-tools" style="color: #ff9800; margin-right: 5px;"></i>
-                        Fixed: Button enabled for all users
-                    </p>
-                </div>
-            `;
-            
-            container.appendChild(createButton);
-            
-            // Add click event
-            const createBtn = document.getElementById('createRecipeBtn');
-            if (createBtn) {
-                createBtn.addEventListener('click', function() {
-                    console.log('🎯 Create Recipe button clicked (force mode)');
-                    const modal = document.getElementById('createRecipeModal');
-                    if (modal) {
-                        modal.style.display = 'block';
-                        document.body.style.overflow = 'hidden';
-                    }
-                });
-            }
-            return; // Skip normal verification check
-        }
 
         try {
             console.log('🔄 Starting verification check...');
@@ -1233,113 +1184,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 console.log('✅ Button forced to show and event listener added');
             }
-        }
-    };
-    
-    // ======= ENHANCED VERIFICATION DEBUGGING =======
-    
-    // Manual verification override for testing (call from browser console)
-    window.forceUserVerification = function() {
-        console.log('🔧 MANUAL OVERRIDE: Forcing user verification for testing...');
-        const container = document.getElementById('createRecipeButtonContainer');
-        if (container) {
-            container.innerHTML = `
-                <div class="create-recipe-section">
-                    <div class="container" style="text-align: center; margin: 20px 0;">
-                        <button id="createRecipeBtn" class="create-recipe-btn">
-                            <i class="fas fa-plus-circle"></i>
-                            Create New Recipe
-                        </button>
-                        <p style="margin-top: 10px; font-size: 14px; color: #666;">
-                            <i class="fas fa-check-circle" style="color: #4caf50; margin-right: 5px;"></i>
-                            Manual Override Active - Button Forced to Show
-                        </p>
-                    </div>
-                </div>
-            `;
-            
-            // Add event listener
-            const btn = document.getElementById('createRecipeBtn');
-            if (btn) {
-                btn.addEventListener('click', function() {
-                    console.log('🎯 Create Recipe button clicked (manual override)');
-                    const modal = document.getElementById('createRecipeModal');
-                    if (modal) {
-                        modal.style.display = 'block';
-                        document.body.style.overflow = 'hidden';
-                    }
-                });
-                console.log('✅ Manual override successful - button should now be visible');
-            }
-        }
-    };
-    
-    // Detailed verification status checker (call from browser console)
-    window.checkDetailedVerificationStatus = async function() {
-        console.log('🔍 DETAILED VERIFICATION STATUS CHECK');
-        console.log('=====================================');
-        
-        // Check auth token
-        const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        console.log('🔑 Auth Token:', authToken ? `${authToken.substring(0, 20)}...` : 'Not found');
-        
-        if (!authToken) {
-            console.log('❌ No authentication token found');
-            return;
-        }
-        
-        try {
-            // Make API call
-            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
-                headers: {
-                    'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            console.log('🌐 API Response Status:', response.status);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📋 Complete Profile Data:', data);
-                console.log('=====================================');
-                console.log('🔍 Verification Fields Analysis:');
-                console.log('  - is_verified:', data.is_verified);
-                console.log('  - verified:', data.verified);
-                console.log('  - verification_status:', data.verification_status);
-                console.log('  - is_staff:', data.is_staff);
-                console.log('  - is_superuser:', data.is_superuser);
-                console.log('  - username:', data.username);
-                console.log('  - email:', data.email);
-                
-                // Check what our verification logic would return
-                let wouldBeVerified = 
-                    data.is_verified === true ||
-                    data.verified === true ||
-                    data.verification_status === 'approved' ||
-                    data.verification_status === 'verified' ||
-                    data.verification_status === 'active' ||
-                    data.is_staff === true ||
-                    data.is_superuser === true ||
-                    (data.profile && data.profile.is_verified === true) ||
-                    (data.user && data.user.is_verified === true);
-                
-                console.log('=====================================');
-                console.log('🎯 VERIFICATION RESULT:', wouldBeVerified ? '✅ VERIFIED' : '❌ NOT VERIFIED');
-                
-                if (!wouldBeVerified) {
-                    console.log('💡 SOLUTION: To fix verification, backend should set one of:');
-                    console.log('  - is_verified = true');
-                    console.log('  - verification_status = "verified" or "approved"');
-                    console.log('  - is_staff = true');
-                }
-                
-            } else {
-                console.log('❌ API call failed:', response.status);
-            }
-            
-        } catch (error) {
-            console.log('❌ Error:', error.message);
         }
     };
     
