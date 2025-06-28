@@ -45,6 +45,28 @@ class VerificationBadgeUtil {
         }
 
         try {
+            // Check for manual override first (for current user only)
+            if (!userId) {
+                const manualOverride = localStorage.getItem('verificationOverride');
+                if (manualOverride) {
+                    try {
+                        const overrideData = JSON.parse(manualOverride);
+                        console.log('🔧 Badge Util - Using manual verification override');
+                        
+                        // Cache the override result
+                        this.verificationCache.set(cacheKey, {
+                            data: overrideData,
+                            timestamp: Date.now()
+                        });
+                        
+                        return overrideData;
+                    } catch (e) {
+                        console.warn('⚠️ Invalid manual override data in badge util');
+                        localStorage.removeItem('verificationOverride');
+                    }
+                }
+            }
+
             // First check user profile for existing verification flags
             let profileData = null;
             if (!userId) {

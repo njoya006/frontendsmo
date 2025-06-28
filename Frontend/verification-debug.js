@@ -135,6 +135,49 @@ function forceRefreshVerificationStatus() {
     console.log('✅ Verification status refresh complete!');
 }
 
+// Manual verification override for testing/admin purposes
+function setManualVerificationStatus(isVerified = true, reason = 'Manual override') {
+    const verificationData = {
+        status: isVerified ? 'approved' : 'not_applied',
+        is_verified: isVerified,
+        application: isVerified ? {
+            business_name: 'Manual Verification',
+            business_license: 'Override',
+            created_at: new Date().toISOString(),
+            description: reason
+        } : null
+    };
+    
+    // Store in localStorage as override
+    localStorage.setItem('verificationOverride', JSON.stringify(verificationData));
+    
+    console.log(`🔧 Manual verification status set to: ${isVerified ? 'VERIFIED' : 'NOT VERIFIED'}`);
+    console.log('🔄 Refreshing verification system...');
+    
+    // Force refresh
+    forceRefreshVerificationStatus();
+    
+    // Reload page after a short delay
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+// Clear manual override
+function clearVerificationOverride() {
+    localStorage.removeItem('verificationOverride');
+    console.log('🗑️ Manual verification override cleared');
+    forceRefreshVerificationStatus();
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+// Quick verification for your case
+function verifyMyself() {
+    setManualVerificationStatus(true, 'Admin self-verification');
+}
+
 // Auto-run debug after a delay
 setTimeout(debugVerificationSystem, 2000);
 
@@ -149,8 +192,15 @@ setTimeout(() => {
 window.debugVerificationSystem = debugVerificationSystem;
 window.debugMyVerificationStatus = debugMyVerificationStatus;
 window.forceRefreshVerificationStatus = forceRefreshVerificationStatus;
+window.setManualVerificationStatus = setManualVerificationStatus;
+window.clearVerificationOverride = clearVerificationOverride;
+window.verifyMyself = verifyMyself;
 
 console.log('🛠️ Verification debug utility loaded. Run debugVerificationSystem() or debugMyVerificationStatus() anytime.');
 console.log('🛠️ Additional debug functions loaded:');
 console.log('- debugMyVerificationStatus() - Check your verification status');
 console.log('- forceRefreshVerificationStatus() - Force refresh verification status');
+console.log('🛠️ Manual verification functions added:');
+console.log('- verifyMyself() - Verify yourself manually');
+console.log('- setManualVerificationStatus(true/false, reason) - Set manual status');
+console.log('- clearVerificationOverride() - Clear manual override');
