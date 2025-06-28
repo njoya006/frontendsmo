@@ -97,8 +97,8 @@ class IngredientParser {
     // Parse object-based ingredients
     parseIngredientObject(ingredient) {
         const possibleNameFields = [
-            'ingredient_name', 'name', 'title', 'item', 'display_name',
-            'ingredient', 'food', 'food_name', 'product', 'product_name'
+            'ingredient_name', 'ingredient', 'name', 'title', 'item', 'display_name',
+            'food', 'food_name', 'product', 'product_name'
         ];
 
         const possibleQuantityFields = [
@@ -107,6 +107,11 @@ class IngredientParser {
 
         const possibleUnitFields = [
             'unit', 'units', 'measurement', 'measure', 'uom', 'unit_of_measure'
+        ];
+
+        const possiblePreparationFields = [
+            'preparation', 'prep', 'method', 'prep_method', 'preparation_method',
+            'cooking_method', 'notes', 'instructions', 'prep_notes'
         ];
 
         // Extract name
@@ -150,25 +155,45 @@ class IngredientParser {
             }
         }
 
-        // Format the ingredient
-        return this.formatIngredientParts(name, quantity, unit);
+        // Extract preparation method
+        let preparation = '';
+        for (const field of possiblePreparationFields) {
+            if (ingredient[field]) {
+                preparation = ingredient[field];
+                break;
+            }
+        }
+
+        // Format the ingredient with all components
+        return this.formatIngredientParts(name, quantity, unit, preparation);
     }
 
     // Format individual ingredient parts
-    formatIngredientParts(name, quantity = '', unit = '') {
+    formatIngredientParts(name, quantity = '', unit = '', preparation = '') {
         if (!name) return 'Unknown ingredient';
 
         const cleanName = this.cleanIngredientName(name);
         const cleanQuantity = quantity ? quantity.toString().trim() : '';
         const cleanUnit = unit ? unit.toString().trim() : '';
+        const cleanPreparation = preparation ? preparation.toString().trim() : '';
 
+        let result = '';
+
+        // Build the ingredient string with proper formatting
         if (cleanQuantity && cleanUnit) {
-            return `${cleanQuantity} ${cleanUnit} ${cleanName}`;
+            result = `${cleanQuantity} ${cleanUnit} ${cleanName}`;
         } else if (cleanQuantity) {
-            return `${cleanQuantity} ${cleanName}`;
+            result = `${cleanQuantity} ${cleanName}`;
         } else {
-            return cleanName;
+            result = cleanName;
         }
+
+        // Add preparation method if available
+        if (cleanPreparation) {
+            result += ` (${cleanPreparation})`;
+        }
+
+        return result;
     }
 
     // Format a single ingredient string

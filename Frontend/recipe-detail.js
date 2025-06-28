@@ -137,38 +137,80 @@ class RecipeDetailManager {
     // Enhanced recipe ingredient processing
     async enhanceRecipeIngredients(recipe) {
         console.log('🔧 Enhancing recipe ingredients:', recipe.title);
+        console.log('📋 Raw recipe data fields:', Object.keys(recipe));
         
-        // Use the advanced ingredient parser
-        const ingredients = this.ingredientParser.parseIngredients(
-            recipe.ingredients, 
-            recipe.title || recipe.name
-        );
-        
-        if (ingredients && ingredients.length > 0) {
-            console.log('✅ Successfully parsed ingredients:', ingredients.length);
-            recipe.ingredients = ingredients;
-            return recipe;
+        // First, try to find ingredients in the most likely fields
+        const ingredientFields = [
+            'ingredients',           // Most common
+            'recipe_ingredients',    // Django relationship field
+            'ingredient_list',       // Alternative naming
+            'ingredients_data',      // Structured data field
+            'components',           // Alternative naming
+            'ingredient_set',       // Django reverse relation
+        ];
+
+        let foundIngredients = null;
+        let foundField = null;
+
+        for (const field of ingredientFields) {
+            if (recipe[field] && (Array.isArray(recipe[field]) || typeof recipe[field] === 'object')) {
+                foundIngredients = recipe[field];
+                foundField = field;
+                console.log(`✅ Found ingredients in field '${field}':`, foundIngredients);
+                break;
+            }
         }
 
-        // Try to get ingredients from separate API endpoint
-        try {
-            const ingredientsResponse = await fetch(`${this.baseUrl}/api/recipes/${recipe.id}/ingredients/`, {
-                headers: this.getHeaders()
-            });
+        // If we found ingredients, process them with the advanced parser
+        if (foundIngredients) {
+            const parsedIngredients = this.ingredientParser.parseIngredients(
+                foundIngredients, 
+                recipe.title || recipe.name
+            );
             
-            if (ingredientsResponse.ok) {
-                const apiIngredients = await ingredientsResponse.json();
-                console.log('🍯 Fetched ingredients from separate endpoint:', apiIngredients);
-                const parsedIngredients = this.ingredientParser.parseIngredients(apiIngredients, recipe.title);
+            if (parsedIngredients && parsedIngredients.length > 0) {
+                console.log(`✅ Successfully parsed ${parsedIngredients.length} ingredients from ${foundField}`);
                 recipe.ingredients = parsedIngredients;
                 return recipe;
             }
-        } catch (error) {
-            console.log('ℹ️ No separate ingredients endpoint available');
+        }
+
+        // Try to get ingredients from separate API endpoints
+        const ingredientEndpoints = [
+            `/api/recipes/${recipe.id}/ingredients/`,
+            `/api/recipe-ingredients/?recipe=${recipe.id}`,
+            `/api/ingredients/recipe/${recipe.id}/`,
+            `/api/recipes/${recipe.id}/components/`
+        ];
+
+        for (const endpoint of ingredientEndpoints) {
+            try {
+                console.log(`🔍 Trying ingredient endpoint: ${endpoint}`);
+                const ingredientsResponse = await fetch(`${this.baseUrl}${endpoint}`, {
+                    headers: this.getHeaders()
+                });
+                
+                if (ingredientsResponse.ok) {
+                    const apiIngredients = await ingredientsResponse.json();
+                    console.log('🍯 Fetched ingredients from separate endpoint:', apiIngredients);
+                    
+                    const parsedIngredients = this.ingredientParser.parseIngredients(
+                        apiIngredients, 
+                        recipe.title
+                    );
+                    
+                    if (parsedIngredients && parsedIngredients.length > 0) {
+                        recipe.ingredients = parsedIngredients;
+                        return recipe;
+                    }
+                }
+            } catch (error) {
+                console.log(`ℹ️ Endpoint ${endpoint} not available:`, error.message);
+            }
         }
 
         // Try to parse ingredients from text fields using the advanced parser
-        const textFields = ['description', 'instructions', 'method', 'summary'];
+        const textFields = ['description', 'instructions', 'method', 'summary', 'notes'];
         for (const field of textFields) {
             if (recipe[field]) {
                 const extractedIngredients = this.ingredientParser.extractIngredientsFromText(recipe[field]);
@@ -346,14 +388,36 @@ class RecipeDetailManager {
 
         const ingredientItems = ingredients.map((ingredient, index) => {
             let displayText = '';
+            let preparation = '';
             
             if (typeof ingredient === 'string') {
                 displayText = ingredient;
                 console.log(`String ingredient ${index + 1}: "${displayText}"`);
             } else if (typeof ingredient === 'object' && ingredient !== null) {
-                // Use the advanced parser to format complex ingredient objects
-                displayText = this.ingredientParser.parseIngredientObject(ingredient);
-                console.log(`Object ingredient ${index + 1}:`, { displayText, original: ingredient });
+                // Extract structured data for better display
+                const name = ingredient.ingredient_name || 
+                            ingredient.ingredient || 
+                            ingredient.name || 
+                            ingredient.title || 
+                            ingredient.item ||
+                            `Ingredient ${index + 1}`;
+                
+                const quantity = ingredient.quantity || ingredient.amount || ingredient.qty || '';
+                const unit = ingredient.unit || ingredient.units || ingredient.measurement || '';
+                preparation = ingredient.preparation || ingredient.prep || ingredient.method || '';
+                
+                // Format the main ingredient text
+                if (quantity && unit) {
+                    displayText = `${quantity} ${unit} ${name}`;
+                } else if (quantity) {
+                    displayText = `${quantity} ${name}`;
+                } else {
+                    displayText = name;
+                }
+                
+                console.log(`Object ingredient ${index + 1}:`, { 
+                    name, quantity, unit, preparation, displayText, original: ingredient 
+                });
             } else {
                 displayText = `Ingredient ${index + 1}`;
                 console.log(`Unknown ingredient type ${index + 1}:`, typeof ingredient);
@@ -365,26 +429,21 @@ class RecipeDetailManager {
                 displayText = `Ingredient ${index + 1}`;
             }
 
-            // Split quantity and name for better formatting
-            const parts = displayText.split(' ');
-            const hasQuantity = parts.length > 1 && (/\d/.test(parts[0]) || /\d/.test(parts[1]));
+            // Create ingredient item with preparation info if available
+            let ingredientHTML = `
+                <li class="ingredient-item">
+                    <span class="ingredient-name">${displayText}</span>
+            `;
             
-            if (hasQuantity && parts.length >= 3) {
-                const quantity = `${parts[0]} ${parts[1]}`;
-                const name = parts.slice(2).join(' ');
-                return `
-                    <li class="ingredient-item">
-                        <span class="ingredient-name">${name}</span>
-                        <span class="ingredient-quantity">${quantity}</span>
-                    </li>
-                `;
-            } else {
-                return `
-                    <li class="ingredient-item">
-                        <span class="ingredient-name">${displayText}</span>
-                    </li>
+            if (preparation) {
+                ingredientHTML += `
+                    <span class="ingredient-preparation">${preparation}</span>
                 `;
             }
+            
+            ingredientHTML += `</li>`;
+            
+            return ingredientHTML;
         }).join('');
 
         this.ingredientsList.innerHTML = ingredientItems;

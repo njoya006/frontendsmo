@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingredient Structure Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Ingredient Structure Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Structured Ingredient Objects (User Creation Format)</h3>
+        <div id="test1"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Mixed Format Ingredients</h3>
+        <div id="test2"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: String-based Ingredients</h3>
+        <div id="test3"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 4: Nested Ingredient Objects</h3>
+        <div id="test4"></div>
+    </div>
+
+    <script src="ingredient-parser.js"></script>
+    <script>
+        function runTests() {
+            const parser = new IngredientParser();
+            
+            // Test 1: Structured ingredient objects (what users would create)
+            const structuredIngredients = [
+                {
+                    ingredient: "Chicken breast",
+                    quantity: "500",
+                    unit: "g",
+                    preparation: "boneless, skinless"
+                },
+                {
+                    ingredient: "Coconut milk",
+                    quantity: "400",
+                    unit: "ml"
+                },
+                {
+                    ingredient: "Onion",
+                    quantity: "1",
+                    unit: "large",
+                    preparation: "diced"
+                },
+                {
+                    ingredient: "Garlic",
+                    quantity: "3",
+                    unit: "cloves",
+                    preparation: "minced"
+                },
+                {
+                    ingredient: "Curry powder",
+                    quantity: "2",
+                    unit: "tbsp"
+                }
+            ];
+            
+            const test1Results = parser.parseIngredients(structuredIngredients, "Chicken Curry");
+            document.getElementById('test1').innerHTML = `
+                <div class="test-result success">✅ Parsed ${test1Results.length} ingredients</div>
+                <pre>${JSON.stringify(structuredIngredients, null, 2)}</pre>
+                <h4>Parsed Results:</h4>
+                <ul>${test1Results.map(ing => `<li>${ing}</li>`).join('')}</ul>
+            `;
+            
+            // Test 2: Mixed format ingredients
+            const mixedIngredients = [
+                "2 cups rice",
+                {
+                    ingredient_name: "Salt",
+                    quantity: 1,
+                    unit: "tsp"
+                },
+                {
+                    ingredient: "Black pepper",
+                    preparation: "freshly ground"
+                },
+                "Oil for cooking"
+            ];
+            
+            const test2Results = parser.parseIngredients(mixedIngredients, "Rice Dish");
+            document.getElementById('test2').innerHTML = `
+                <div class="test-result success">✅ Parsed ${test2Results.length} ingredients</div>
+                <pre>${JSON.stringify(mixedIngredients, null, 2)}</pre>
+                <h4>Parsed Results:</h4>
+                <ul>${test2Results.map(ing => `<li>${ing}</li>`).join('')}</ul>
+            `;
+            
+            // Test 3: String-based ingredients
+            const stringIngredients = [
+                "2 lbs beef chuck roast",
+                "1 large onion, chopped",
+                "3 carrots, sliced",
+                "2 tbsp tomato paste",
+                "Salt and pepper to taste"
+            ];
+            
+            const test3Results = parser.parseIngredients(stringIngredients, "Beef Stew");
+            document.getElementById('test3').innerHTML = `
+                <div class="test-result success">✅ Parsed ${test3Results.length} ingredients</div>
+                <pre>${JSON.stringify(stringIngredients, null, 2)}</pre>
+                <h4>Parsed Results:</h4>
+                <ul>${test3Results.map(ing => `<li>${ing}</li>`).join('')}</ul>
+            `;
+            
+            // Test 4: Nested ingredient objects
+            const nestedIngredients = [
+                {
+                    ingredient: {
+                        name: "Flour",
+                        type: "all-purpose"
+                    },
+                    quantity: "2",
+                    unit: "cups"
+                },
+                {
+                    ingredient: {
+                        ingredient_name: "Eggs"
+                    },
+                    quantity: "3",
+                    unit: "large"
+                }
+            ];
+            
+            const test4Results = parser.parseIngredients(nestedIngredients, "Pancakes");
+            document.getElementById('test4').innerHTML = `
+                <div class="test-result success">✅ Parsed ${test4Results.length} ingredients</div>
+                <pre>${JSON.stringify(nestedIngredients, null, 2)}</pre>
+                <h4>Parsed Results:</h4>
+                <ul>${test4Results.map(ing => `<li>${ing}</li>`).join('')}</ul>
+            `;
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>

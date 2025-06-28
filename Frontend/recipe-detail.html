@@ -252,10 +252,12 @@
         .ingredient-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             padding: 12px 0;
             border-bottom: 1px solid var(--border-color);
             transition: all 0.3s ease;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .ingredient-item:hover {
@@ -267,6 +269,8 @@
         .ingredient-name {
             font-weight: 500;
             color: var(--dark-color);
+            flex: 1;
+            min-width: 200px;
         }
 
         .ingredient-quantity {
@@ -275,6 +279,18 @@
             background: var(--light-gray);
             padding: 4px 8px;
             border-radius: 8px;
+        }
+
+        .ingredient-preparation {
+            color: var(--secondary-color);
+            font-size: 0.85rem;
+            font-style: italic;
+            background: rgba(27, 94, 32, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(27, 94, 32, 0.2);
+            width: 100%;
+            margin-top: 4px;
         }
 
         /* Instructions Section */
