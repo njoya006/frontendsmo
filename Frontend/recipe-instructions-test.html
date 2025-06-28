@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Instructions Test - ChopSmo</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            background: #f8f9fa;
+        }
+        .test-container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .test-recipe { 
+            margin: 20px 0; 
+            padding: 20px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .instructions-list { 
+            list-style: none; 
+            padding: 0; 
+            margin: 15px 0;
+        }
+        .instruction-item { 
+            display: flex; 
+            margin: 10px 0; 
+            padding: 15px; 
+            background: white; 
+            border-radius: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .step-number { 
+            background: #ff6b35; 
+            color: white; 
+            width: 30px; 
+            height: 30px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .instruction-text { 
+            flex: 1; 
+            line-height: 1.5;
+        }
+        .test-btn { 
+            background: #ff6b35; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px;
+            margin: 5px;
+        }
+        .test-btn:hover { background: #e55a2b; }
+        .field-test { 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: #e8f4f8; 
+            border-radius: 4px;
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #cce5ff; color: #004085; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h2>🍳 Recipe Instructions Detection Test</h2>
+        <p>This tool tests the smart instruction extraction from different recipe data formats</p>
+        
+        <div class="test-recipe">
+            <h3>🧪 Test Different Data Formats</h3>
+            
+            <div class="field-test">
+                <strong>Test 1: Instructions in 'instructions' field</strong>
+                <button onclick="testInstructionsField()" class="test-btn">Test</button>
+            </div>
+            
+            <div class="field-test">
+                <strong>Test 2: Instructions in 'description' field</strong>
+                <button onclick="testDescriptionField()" class="test-btn">Test</button>
+            </div>
+            
+            <div class="field-test">
+                <strong>Test 3: Instructions in 'method' field</strong>
+                <button onclick="testMethodField()" class="test-btn">Test</button>
+            </div>
+            
+            <div class="field-test">
+                <strong>Test 4: Mixed content in description</strong>
+                <button onclick="testMixedContent()" class="test-btn">Test</button>
+            </div>
+            
+            <button onclick="clearResults()" class="test-btn" style="background: #6c757d;">Clear Results</button>
+        </div>
+        
+        <div id="status"></div>
+        <div id="results" style="display: none;">
+            <h3>📝 Extracted Instructions</h3>
+            <ol id="instructionsList" class="instructions-list"></ol>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced instruction extraction logic
+        function extractInstructions(recipe) {
+            console.log('🔍 Extracting instructions from recipe data...');
+            
+            const instructionFields = [
+                'instructions',
+                'method', 
+                'directions',
+                'preparation',
+                'steps',
+                'cooking_instructions',
+                'recipe_instructions'
+            ];
+            
+            // Try dedicated instruction fields first
+            for (const field of instructionFields) {
+                if (recipe[field] && typeof recipe[field] === 'string' && recipe[field].trim()) {
+                    console.log(`✅ Found instructions in '${field}' field`);
+                    return recipe[field];
+                }
+                if (recipe[field] && Array.isArray(recipe[field]) && recipe[field].length > 0) {
+                    console.log(`✅ Found instructions array in '${field}' field`);
+                    return recipe[field];
+                }
+            }
+            
+            // Check if description contains instructions
+            if (recipe.description && typeof recipe.description === 'string') {
+                const description = recipe.description.trim();
+                
+                if (looksLikeInstructions(description)) {
+                    console.log('✅ Found instructions in description field');
+                    return description;
+                }
+            }
+            
+            console.log('⚠️ No instructions found');
+            return '';
+        }
+        
+        function looksLikeInstructions(text) {
+            if (!text || typeof text !== 'string' || text.trim().length < 20) {
+                return false;
+            }
+            
+            const lowerText = text.toLowerCase();
+            
+            const instructionIndicators = [
+                /\b\d+\.\s/g,
+                /step\s+\d+/g,
+                /\b(heat|cook|add|mix|stir|boil|simmer|fry|bake|sauté|chop|dice|slice|season|serve|pour|combine|whisk|blend|marinate|grill|roast|steam)\b/g,
+                /\b\d+\s*(minutes?|mins?|hours?|hrs?)\b/g,
+                /\b\d+°?\s*(degrees?|f|c|fahrenheit|celsius)\b/g,
+                /until\s+(golden|tender|cooked|done|soft|crispy)/g,
+                /over\s+(medium|high|low)\s+heat/g,
+                /in\s+a\s+(pan|pot|bowl|skillet)/g
+            ];
+            
+            let indicatorCount = 0;
+            for (const pattern of instructionIndicators) {
+                const matches = text.match(pattern);
+                if (matches) {
+                    indicatorCount += matches.length;
+                }
+            }
+            
+            const hasMultipleSteps = (text.match(/\b\d+\.\s/g) || []).length >= 2;
+            const hasCookingVerbs = indicatorCount >= 3;
+            
+            return hasMultipleSteps || hasCookingVerbs;
+        }
+        
+        function extractStepsFromText(text) {
+            if (!text || typeof text !== 'string') return [];
+            
+            const numberedSteps = text.split(/\d+\.\s+/).filter(step => step.trim());
+            if (numberedSteps.length > 1) {
+                return numberedSteps.slice(1).map(step => step.trim());
+            }
+            
+            const lines = text.split(/\n+/).map(line => line.trim()).filter(line => line.length > 0);
+            
+            if (lines.length <= 3) {
+                return [text.trim()];
+            }
+            
+            const instructionLines = lines.filter(line => {
+                if (line.length < 10) return false;
+                if (line.endsWith(':') && line.length < 30) return false;
+                
+                const cookingPattern = /\b(heat|cook|add|mix|stir|boil|simmer|fry|bake|sauté|chop|dice|slice|season|serve|pour|combine|whisk|blend|marinate|grill|roast|steam|until|over|in a|then|next|after)\b/i;
+                return cookingPattern.test(line);
+            });
+            
+            return instructionLines.length > 0 ? instructionLines : lines;
+        }
+        
+        function renderInstructions(instructions) {
+            const instructionsList = document.getElementById('instructionsList');
+            
+            if (!instructions) {
+                instructionsList.innerHTML = '<li class="instruction-item"><span class="instruction-text">No instructions found</span></li>';
+                return;
+            }
+            
+            let steps = [];
+            
+            if (typeof instructions === 'string') {
+                steps = extractStepsFromText(instructions);
+            } else if (Array.isArray(instructions)) {
+                steps = instructions.filter(step => step && step.trim());
+            }
+            
+            if (steps.length === 0) {
+                instructionsList.innerHTML = '<li class="instruction-item"><span class="instruction-text">No valid steps found</span></li>';
+                return;
+            }
+            
+            const instructionItems = steps.map((step, index) => {
+                const cleanStep = step.trim().replace(/^\d+\.\s*/, '');
+                return `
+                    <li class="instruction-item">
+                        <span class="step-number">${index + 1}</span>
+                        <span class="instruction-text">${cleanStep}</span>
+                    </li>
+                `;
+            }).join('');
+            
+            instructionsList.innerHTML = instructionItems;
+        }
+        
+        function showStatus(message, type = 'info') {
+            document.getElementById('status').innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResults() {
+            document.getElementById('results').style.display = 'block';
+        }
+        
+        function clearResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('status').innerHTML = '';
+            document.getElementById('instructionsList').innerHTML = '';
+        }
+        
+        // Test functions
+        function testInstructionsField() {
+            showStatus('Testing instructions in dedicated field...', 'info');
+            
+            const testRecipe = {
+                instructions: "1. Heat oil in a large pan over medium heat. 2. Add onions and cook until soft. 3. Add garlic and spices, cook for 1 minute. 4. Add chicken and brown on all sides. 5. Pour in coconut milk and simmer for 20 minutes. 6. Season with salt and serve hot."
+            };
+            
+            const extracted = extractInstructions(testRecipe);
+            renderInstructions(extracted);
+            showResults();
+            showStatus('✅ Instructions extracted from dedicated field', 'success');
+        }
+        
+        function testDescriptionField() {
+            showStatus('Testing instructions in description field...', 'info');
+            
+            const testRecipe = {
+                description: "This delicious curry is easy to make. 1. Heat oil in a large pan over medium heat. 2. Add onions and cook until soft. 3. Add garlic and spices, cook for 1 minute. 4. Add chicken and brown on all sides. 5. Pour in coconut milk and simmer for 20 minutes. 6. Season with salt and serve hot."
+            };
+            
+            const extracted = extractInstructions(testRecipe);
+            renderInstructions(extracted);
+            showResults();
+            showStatus('✅ Instructions detected and extracted from description', 'success');
+        }
+        
+        function testMethodField() {
+            showStatus('Testing instructions in method field...', 'info');
+            
+            const testRecipe = {
+                method: "Heat oil in pan\nAdd onions until soft\nAdd garlic and spices\nBrown the chicken\nAdd coconut milk\nSimmer 20 minutes\nSeason and serve"
+            };
+            
+            const extracted = extractInstructions(testRecipe);
+            renderInstructions(extracted);
+            showResults();
+            showStatus('✅ Instructions extracted from method field', 'success');
+        }
+        
+        function testMixedContent() {
+            showStatus('Testing mixed content detection...', 'info');
+            
+            const testRecipe = {
+                description: "This is a traditional family recipe passed down through generations. It's perfect for dinner parties and special occasions. Just follow these simple steps and you'll have a delicious meal!"
+            };
+            
+            const extracted = extractInstructions(testRecipe);
+            renderInstructions(extracted);
+            showResults();
+            
+            if (extracted) {
+                showStatus('⚠️ Content detected as instructions (may be incorrect)', 'error');
+            } else {
+                showStatus('✅ Correctly identified as non-instruction content', 'success');
+            }
+        }
+        
+        console.log('🧪 Recipe Instructions Test Tool loaded');
+    </script>
+</body>
+</html>
