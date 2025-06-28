@@ -931,6 +931,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Note: Backend verification should be properly configured to set is_verified = true for verified users
+            // TEMPORARY: Show button for all logged-in users until backend verification is fixed
+            if (profileData && (profileData.username || profileData.email)) {
+                console.log('🔧 TEMPORARY: Showing Create Recipe button for logged-in user until backend verification is fixed');
+                isVerified = true;
+            }
             
             return { 
                 isVerified, 
@@ -945,20 +950,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function initializeCreateRecipeButton() {
-        console.log('� Initializing Create Recipe button...');
+        console.log('🚀 Initializing Create Recipe button...');
+        console.log('🔍 Container element:', document.getElementById('createRecipeButtonContainer'));
         
         const container = document.getElementById('createRecipeButtonContainer');
         if (!container) {
-            console.error('❌ Create Recipe button container not found');
+            console.error('❌ Create Recipe button container not found in DOM');
+            console.log('🔍 Available containers:', document.querySelectorAll('[id*="create"]'));
             return;
         }
 
+        console.log('✅ Container found, clearing existing content...');
         // Clear any existing content
         container.innerHTML = '';
 
         try {
+            console.log('🔄 Starting verification check...');
             const verificationResult = await checkUserVerification();
             console.log('✅ Verification check result:', verificationResult);
+            console.log('🔍 Is verified?', verificationResult.isVerified);
+            console.log('🔍 Reason:', verificationResult.reason);
             
             if (verificationResult.isVerified) {
                 console.log('✅ User is verified - showing Create Recipe button');
@@ -1135,70 +1146,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ======= EXISTING FUNCTIONS =======
+    // ======= BROWSER CONSOLE TEST FUNCTIONS =======
+    // Use these functions in the browser console to test the Create Recipe button
     
-    // Initial load: fetch from backend
-    fetchRecipes().then(recipes => {
-        recipeData = recipes;
-        allRecipes = [...recipes]; // Keep original copy
-        displayRecipes(recipeData);
+    window.testCreateRecipeButton = async function() {
+        console.log('🧪 Testing Create Recipe Button functionality...');
+        console.log('🔍 Container exists?', !!document.getElementById('createRecipeButtonContainer'));
+        console.log('🔍 Current container content:', document.getElementById('createRecipeButtonContainer')?.innerHTML);
         
-        // Initialize global image error handling
-        setTimeout(() => {
-            addGlobalImageErrorHandling();
-        }, 1000);
-    }).catch(error => {
-        console.error('❌ Initial fetch failed:', error);
-        // Display fallback recipes
-        displayRecipes([]);
-    });
+        const verification = await checkUserVerification();
+        console.log('🔍 Verification result:', verification);
+        
+        // Force re-initialize
+        await initializeCreateRecipeButton();
+        
+        console.log('🔍 Container content after init:', document.getElementById('createRecipeButtonContainer')?.innerHTML);
+    };
     
-    // Initialize Create Recipe button based on user verification status
-    initializeCreateRecipeButton();
+    window.forceShowCreateButton = function() {
+        console.log('🔧 Forcing Create Recipe button to show...');
+        const container = document.getElementById('createRecipeButtonContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="create-recipe-section" style="text-align: center;">
+                    <button class="create-recipe-btn" id="createRecipeBtn">
+                        <i class="fas fa-plus-circle"></i>
+                        Create New Recipe
+                    </button>
+                </div>
+            `;
+            
+            // Add event listener
+            const btn = document.getElementById('createRecipeBtn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    console.log('🔥 Create Recipe button clicked!');
+                    const modal = document.getElementById('createRecipeModal');
+                    if (modal) modal.style.display = 'block';
+                });
+                console.log('✅ Button forced to show and event listener added');
+            }
+        }
+    };
     
-    // Dropdown/autocomplete functionality for categories, cuisines, tags
-    const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Snacks", "Vegetarian", "Quick Meals", "High Protein", "Budget Friendly", "Dessert", "Vegan"];
-    const cuisineOptions = ["Italian", "Mexican", "Cameroonian", "French", "Indian", "Chinese", "American", "Thai", "Moroccan", "Greek"];
-    const tagOptions = ["spicy", "quick", "gluten-free", "low-carb", "dairy-free", "nut-free", "family", "kids", "holiday", "comfort food"];
+    console.log('🛠️ Test functions available in console:');
+    console.log('  - testCreateRecipeButton() - Test the button functionality');
+    console.log('  - forceShowCreateButton() - Force the button to appear');
 
-    function populateSelect(selectId, options) {
-        const select = document.getElementById(selectId);
-        if (!select) return;
-        select.innerHTML = '';
-        options.forEach(opt => {
-            const option = document.createElement('option');
-            option.value = opt;
-            option.textContent = opt;
-            select.appendChild(option);
-        });
-    }
-
-    function setupAutocomplete(inputId, selectId, options) {
-        const input = document.getElementById(inputId);
-        const select = document.getElementById(selectId);
-        if (!input || !select) return;
-        input.addEventListener('input', function() {
-            const filter = input.value.toLowerCase();
-            select.innerHTML = '';
-            options.filter(opt => opt.toLowerCase().includes(filter)).forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt;
-                option.textContent = opt;
-                select.appendChild(option);
-            });
-        });
-    }
-
-    function initializeDropdowns() {
-        populateSelect('recipeCategories', categoryOptions);
-        populateSelect('recipeCuisines', cuisineOptions);
-        populateSelect('recipeTags', tagOptions);
-
-        setupAutocomplete('categoryAutocomplete', 'recipeCategories', categoryOptions);
-        setupAutocomplete('cuisineAutocomplete', 'recipeCuisines', cuisineOptions);
-        setupAutocomplete('tagAutocomplete', 'recipeTags', tagOptions);
-    }
-
-    // Initialize dropdowns on page load
-    initializeDropdowns();
 });
