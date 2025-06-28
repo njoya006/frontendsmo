@@ -272,8 +272,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('🔍 First recipe image type:', typeof data[0].image);
                 console.log('🔍 First recipe all fields:', Object.keys(data[0]));
             }
-            // Only use recipes that have a contributor (created by users)
-            return data.filter(recipe => recipe.contributor);
+            // Use all recipes for now (temporarily remove contributor filter for debugging)
+            console.log('🔧 TEMPORARY: Showing all recipes (contributor filter disabled for debugging)');
+            return data;
         } catch (error) {
             console.warn('⚠️ Network error, using fallback data:', error);
             return getFallbackRecipes();
@@ -1188,6 +1189,83 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     console.log('🛠️ Test functions available in console:');
+    console.log('  - testCreateRecipeButton() - Test the button functionality');
+    console.log('  - forceShowCreateButton() - Force the button to appear');
+
+    // ======= INITIAL RECIPE LOADING =======
+    
+    // Load recipes on page initialization
+    console.log('🚀 Initializing Recipes page...');
+    
+    fetchRecipes().then(recipes => {
+        console.log('✅ Initial recipe fetch completed');
+        console.log('📊 Recipe count:', recipes.length);
+        
+        // Store recipes globally
+        allRecipes = recipes;
+        recipeData = recipes;
+        
+        // Display recipes
+        displayRecipes(recipes);
+        
+        // Log first few recipes for debugging
+        if (recipes.length > 0) {
+            console.log('🔍 First recipe:', recipes[0]);
+            console.log('🔍 Sample recipe structure:', Object.keys(recipes[0]));
+        } else {
+            console.log('⚠️ No recipes received from API');
+        }
+    }).catch(error => {
+        console.error('❌ Initial fetch failed:', error);
+        // Display fallback recipes
+        const fallbackRecipes = getFallbackRecipes();
+        allRecipes = fallbackRecipes;
+        recipeData = fallbackRecipes;
+        displayRecipes(fallbackRecipes);
+    });
+    
+    // ======= RECIPE LOADING TEST FUNCTIONS =======
+    
+    window.testRecipeLoading = async function() {
+        console.log('🧪 Testing recipe loading...');
+        console.log('🔍 Current allRecipes count:', allRecipes.length);
+        console.log('🔍 Current recipeData count:', recipeData.length);
+        console.log('🔍 Recipes grid element:', document.getElementById('recipesGrid'));
+        console.log('🔍 Grid current content:', document.getElementById('recipesGrid')?.innerHTML.substring(0, 200) + '...');
+        
+        // Test fresh fetch
+        try {
+            console.log('🔄 Testing fresh API fetch...');
+            const freshRecipes = await fetchRecipes();
+            console.log('✅ Fresh fetch result:', freshRecipes.length, 'recipes');
+            
+            if (freshRecipes.length > 0) {
+                console.log('🔍 Sample recipe:', freshRecipes[0]);
+                displayRecipes(freshRecipes);
+                console.log('✅ Recipes displayed successfully');
+            } else {
+                console.log('⚠️ No recipes returned from API, trying fallback...');
+                const fallback = getFallbackRecipes();
+                displayRecipes(fallback);
+                console.log('✅ Fallback recipes displayed');
+            }
+        } catch (error) {
+            console.error('❌ Recipe loading test failed:', error);
+        }
+    };
+    
+    window.forceLoadFallbackRecipes = function() {
+        console.log('🔧 Loading fallback recipes...');
+        const fallback = getFallbackRecipes();
+        allRecipes = fallback;
+        recipeData = fallback;
+        displayRecipes(fallback);
+        console.log('✅ Fallback recipes loaded:', fallback.length);
+    };
+    
+    console.log('🛠️ Recipe test functions available in console:');
+    console.log('  - testRecipeLoading() - Test recipe fetch and display');
+    console.log('  - forceLoadFallbackRecipes() - Load sample recipes');
     console.log('  - testCreateRecipeButton() - Test the button functionality');
     console.log('  - forceShowCreateButton() - Force the button to appear');
 
