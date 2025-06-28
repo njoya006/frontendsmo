@@ -256,23 +256,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         
                         xhr.onload = function() {
                             try {
-                                if (xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)) {
-                                    const data = JSON.parse(xhr.responseText || '{}');
-                                    resolve({
-                                        ok: true,
-                                        status: xhr.status,
-                                        json: () => Promise.resolve(data)
-                                    });
-                                } else {
-                                    const errorData = JSON.parse(xhr.responseText || '{}');
-                                    resolve({
-                                        ok: false,
-                                        status: xhr.status,
-                                        json: () => Promise.resolve(errorData)
-                                    });
-                                }
+                                const response = {
+                                    ok: xhr.status >= 200 && xhr.status < 300,
+                                    status: xhr.status,
+                                    headers: {
+                                        get: (name) => xhr.getResponseHeader(name)
+                                    },
+                                    text: () => Promise.resolve(xhr.responseText)
+                                };
+                                resolve(response);
                             } catch (e) {
-                                reject(new Error('Parse error: ' + e.message));
+                                reject(new Error('Response error: ' + e.message));
                             }
                         };
                         
@@ -309,7 +303,30 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log(`${strategy.name} - Response headers:`, [...response.headers.entries()]);
                 }
                 
-                data = await response.json();
+                // Check content type before parsing JSON
+                const contentType = response.headers ? response.headers.get('content-type') : 'unknown';
+                console.log(`${strategy.name} - Content-Type: ${contentType}`);
+                if (window.debugLog) window.debugLog(`Content-Type: ${contentType}`);
+                
+                // Get response text first to see what we're dealing with
+                const responseText = await response.text();
+                console.log(`${strategy.name} - Raw response:`, responseText.substring(0, 200) + '...');
+                if (window.debugLog) window.debugLog(`Raw response: ${responseText.substring(0, 100)}...`);
+                
+                // Try to parse as JSON only if it looks like JSON
+                if (contentType && contentType.includes('application/json') && responseText.trim().startsWith('{')) {
+                    data = JSON.parse(responseText);
+                } else if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+                    // Might be JSON without proper content-type
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (parseError) {
+                        throw new Error(`Server returned HTML instead of JSON. Response: ${responseText.substring(0, 100)}...`);
+                    }
+                } else {
+                    throw new Error(`Server error - received HTML instead of JSON. Status: ${response.status}`);
+                }
+                
                 console.log(`${strategy.name} - Success!`);
                 if (window.debugLog) window.debugLog(`${strategy.name} - Success!`, 'success');
                 break; // Success, exit the loop
@@ -330,7 +347,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.debugLog) window.debugLog(`${errorMsg}: ${lastError?.message}`, 'error');
             
             let errorMessage;
-            if (lastError?.name === 'TypeError' && lastError.message.includes('fetch')) {
+            if (lastError?.message.includes('HTML instead of JSON') || lastError?.message.includes('Server error')) {
+                errorMessage = 'The server is experiencing issues. Please try again in a few minutes or contact support.';
+            } else if (lastError?.name === 'TypeError' && lastError.message.includes('fetch')) {
                 errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
             } else if (lastError?.name === 'AbortError') {
                 errorMessage = 'Request timeout. Please try again.';
