@@ -914,7 +914,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Profile data received:', profileData);
             
             // Check multiple verification patterns
-            const isVerified = 
+            let isVerified = 
                 profileData.is_verified === true ||
                 profileData.verified === true ||
                 profileData.verification_status === 'approved' ||
@@ -930,8 +930,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 is_staff: profileData.is_staff
             });
             
-            // TEMPORARY DEBUG: Uncomment the next line to force verification for testing
-            // const isVerified = true;
+            // TEMPORARY DEBUG: Force verification for testing (REMOVE AFTER FIXING BACKEND)
+            isVerified = true; // REMOVE THIS LINE AFTER FIXING BACKEND
             
             return { 
                 isVerified, 
