@@ -931,11 +931,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Note: Backend verification should be properly configured to set is_verified = true for verified users
-            // TEMPORARY: Show button for all logged-in users until backend verification is fixed
-            if (profileData && (profileData.username || profileData.email)) {
-                console.log('🔧 TEMPORARY: Showing Create Recipe button for logged-in user until backend verification is fixed');
-                isVerified = true;
-            }
+            // TEMPORARY: Show button for all users until backend verification is fixed
+            console.log('🔧 TEMPORARY: Showing Create Recipe button for all users until backend verification is fixed');
+            isVerified = true;
             
             return { 
                 isVerified, 
