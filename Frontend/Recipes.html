@@ -2243,8 +2243,160 @@
 </style>
 </head>
 <body>
-    <!-- HTML content already exists above -->
-    
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <a href="index.html">
+                        <i class="fas fa-utensils"></i>
+                        <span>ChopSmo</span>
+                    </a>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="DashBoard.html">Dashboard</a></li>
+                    <li><a href="MealPlans.html">Meal Plans</a></li>
+                    <li><a href="MealSuggestion.html">Suggestions</a></li>
+                    <li><a href="Recipes.html">Recipes</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <button id="logoutBtn" class="btn btn-outline">Logout</button>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="recipes-page">
+        <div class="container">
+            <section class="recipes-header">
+                <h1>Recipe Collection</h1>
+                <p>Browse our library of delicious, dietitian-approved recipes</p>
+                <div class="search-controls">
+                    <div class="search-bar">
+                        <input type="text" id="recipeSearch" placeholder="Search recipes by name (e.g. 'Pasta', 'Chicken Curry')...">
+                        <button id="clearSearch" class="btn btn-secondary" style="display:none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button id="searchRecipes" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="search-actions" style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
+                        <button id="showAllRecipes" class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;">
+                            <i class="fas fa-list"></i> Show All Recipes
+                        </button>
+                    </div>
+                    <p class="search-note">Search by recipe name, ingredients, or cuisine type</p>
+                </div>
+                <div class="filter-tags">
+                    <span class="filter-tag active">
+                        <i class="fas fa-list"></i> All
+                    </span>
+                    <span class="filter-tag">
+                        <i class="fas fa-coffee"></i> Breakfast
+                    </span>
+                    <span class="filter-tag">
+                        <i class="fas fa-hamburger"></i> Lunch
+                    </span>
+                    <span class="filter-tag">
+                        <i class="fas fa-utensils"></i> Dinner
+                    </span>
+                    <span class="filter-tag">
+                        <i class="fas fa-cookie-bite"></i> Snacks
+                    </span>
+                    <span class="filter-tag">
+                        <i class="fas fa-leaf"></i> Vegetarian
+                    </span>
+                    <span class="filter-tag">
+                        <i class="fas fa-bolt"></i> Quick Meals
+                    </span>
+                </div>
+            </section>
+
+            <!-- Create New Recipe button will be dynamically inserted here for verified users only -->
+            <div id="createRecipeButtonContainer"></div>
+            
+            <div id="createRecipeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="createRecipeModalTitle">
+                <div class="modal-content">
+                    <button id="closeCreateRecipeModal" class="modal-close-btn" aria-label="Close create recipe modal">&times;</button>
+                    <h2 id="createRecipeModalTitle"><i class="fas fa-utensils" style="margin-right:10px;"></i>Create a New Recipe</h2>
+                    <form id="createRecipeForm" autocomplete="off">
+                        <div class="form-group">
+                            <label for="recipeTitle">Title</label>
+                            <input type="text" id="recipeTitle" name="title" required placeholder="e.g. Pasta Primavera">
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeName">Recipe Name <span>(if different from title)</span></label>
+                            <input type="text" id="recipeName" name="name" placeholder="e.g. Quick Pasta Primavera">
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeDescription">Description</label>
+                            <textarea id="recipeDescription" name="description" required placeholder="Describe your recipe..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Ingredients <span>(add each with name, quantity, unit)</span></label>
+                            <div id="ingredientsList"></div>
+                            <button type="button" id="addIngredientBtn">+ Add Ingredient</button>
+                            <div id="recipeIngredientsError" class="error-message" style="display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeInstructions">Instructions</label>
+                            <textarea id="recipeInstructions" name="instructions" required placeholder="Step-by-step instructions..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeCategories">Categories <span>(optional, select one or more)</span></label>
+                            <select id="recipeCategories" name="categories" multiple></select>
+                            <input type="text" id="categoryAutocomplete" placeholder="Type to filter categories...">
+                            <div id="recipeCategoriesError" class="error-message" style="display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeCuisines">Cuisines <span>(optional, select one or more)</span></label>
+                            <select id="recipeCuisines" name="cuisines" multiple></select>
+                            <input type="text" id="cuisineAutocomplete" placeholder="Type to filter cuisines...">
+                            <div id="recipeCuisinesError" class="error-message" style="display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeTags">Tags <span>(optional, select one or more)</span></label>
+                            <select id="recipeTags" name="tags" multiple></select>
+                            <input type="text" id="tagAutocomplete" placeholder="Type to filter tags...">
+                            <div id="recipeTagsError" class="error-message" style="display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeImage">Recipe Image <span>(optional)</span></label>
+                            <input type="file" id="recipeImage" name="image" accept="image/*">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus-circle"></i>
+                            Create Recipe
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <section class="recipes-grid" id="recipesGrid">
+                <!-- Recipe cards will be inserted here by Recipes.js -->
+            </section>
+
+            <section class="pagination">
+                <button class="btn-pagination" disabled>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <div class="page-numbers">
+                    <span class="page-number active">1</span>
+                    <span class="page-number">2</span>
+                    <span class="page-number">3</span>
+                    <span class="ellipsis">...</span>
+                    <span class="page-number">12</span>
+                </div>
+                <button class="btn-pagination">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </section>
+        </div>
+    </main>
+
     <!-- Script includes -->
     <script src="universal-verification.js"></script>
     <script src="Recipes.js"></script>
