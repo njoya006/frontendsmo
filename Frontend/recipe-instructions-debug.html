@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Instructions Debug Tool</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 900px; 
+            margin: 20px auto; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .debug-container { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .recipe-input { 
+            width: 100%; 
+            min-height: 150px; 
+            padding: 15px; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            font-family: monospace; 
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .btn { 
+            background: #ff6b35; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            margin: 5px;
+            font-size: 16px;
+        }
+        .btn:hover { background: #e55a2b; }
+        .result-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border-radius: 6px;
+        }
+        .success { background: #d4edda; border-left: 4px solid #28a745; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .error { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .info { background: #cce5ff; border-left: 4px solid #2196F3; }
+        .field-result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: #f8f9fa; 
+            border-radius: 4px;
+            border-left: 3px solid #6c757d;
+        }
+        .instruction-preview { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .step-item { 
+            margin: 8px 0; 
+            padding: 8px; 
+            background: #f8f9fa; 
+            border-radius: 4px;
+            border-left: 3px solid #ff6b35;
+        }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 4px; 
+            overflow-x: auto; 
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h2>🔍 Recipe Instructions Debug Tool</h2>
+        <p>This tool helps debug recipe instruction extraction and formatting issues.</p>
+        
+        <h3>Test Recipe Data (JSON)</h3>
+        <textarea id="recipeInput" class="recipe-input" placeholder="Paste recipe JSON data here...">
+{
+  "id": 1,
+  "title": "Sample Recipe",
+  "description": "This is a delicious and easy recipe that everyone will love. Perfect for dinner.",
+  "instructions": "This recipe is very tasty and nutritious. It contains healthy ingredients.",
+  "method": "Heat oil in pan. Add ingredients. Cook until done. Season and serve.",
+  "ingredients": ["chicken", "rice", "vegetables"]
+}
+        </textarea>
+        
+        <div>
+            <button onclick="testInstructionExtraction()" class="btn">🔍 Test Instruction Extraction</button>
+            <button onclick="loadSampleRecipe()" class="btn">📝 Load Sample Recipe</button>
+            <button onclick="clearResults()" class="btn" style="background: #6c757d;">🧹 Clear Results</button>
+        </div>
+        
+        <div id="results" style="display: none;">
+            <h3>📊 Analysis Results</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        function showResults(content) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('resultsContent').innerHTML = content;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('resultsContent').innerHTML = '';
+        }
+        
+        function loadSampleRecipe() {
+            const sampleRecipe = {
+                "id": 1,
+                "title": "Chicken Curry",
+                "description": "A delicious and aromatic chicken curry perfect for dinner",
+                "instructions": "This curry is very flavorful and contains authentic spices. It's a family favorite recipe.",
+                "method": "1. Heat oil in a large pan\n2. Add onions and cook until soft\n3. Add spices and cook for 1 minute\n4. Add chicken and brown\n5. Add coconut milk and simmer\n6. Cook for 20 minutes\n7. Garnish and serve",
+                "cooking_instructions": "Heat 2 tablespoons oil in large skillet over medium heat. Add diced onions and cook 5 minutes until softened. Add minced garlic, ginger, curry powder and cook 1 minute. Add chicken pieces and brown on all sides. Pour in coconut milk, bring to simmer. Cover and cook 20-25 minutes until chicken is cooked through. Season with salt and garnish with cilantro.",
+                "ingredients": ["2 lbs chicken", "1 can coconut milk", "2 onions", "3 cloves garlic", "2 tsp curry powder"]
+            };
+            
+            document.getElementById('recipeInput').value = JSON.stringify(sampleRecipe, null, 2);
+        }
+        
+        function testInstructionExtraction() {
+            const input = document.getElementById('recipeInput').value.trim();
+            
+            if (!input) {
+                showResults('<div class="error">❌ Please enter recipe JSON data</div>');
+                return;
+            }
+            
+            let recipe;
+            try {
+                recipe = JSON.parse(input);
+            } catch (error) {
+                showResults(`<div class="error">❌ Invalid JSON: ${error.message}</div>`);
+                return;
+            }
+            
+            // Test instruction extraction logic
+            const results = analyzeRecipeInstructions(recipe);
+            
+            let html = `
+                <div class="success">✅ Recipe analysis completed for: "${recipe.title || 'Untitled Recipe'}"</div>
+                
+                <h4>🔍 Available Fields Analysis:</h4>
+            `;
+            
+            const instructionFields = ['instructions', 'method', 'cooking_instructions', 'preparation_method', 'steps', 'directions', 'description'];
+            
+            for (const field of instructionFields) {
+                if (recipe[field]) {
+                    const content = recipe[field];
+                    const isLikeInstructions = looksLikeInstructions(content);
+                    const isDescriptionLike = isDescriptionLikeContent(content);
+                    
+                    html += `
+                        <div class="field-result">
+                            <strong>${field}:</strong> ${isLikeInstructions ? '✅ Looks like instructions' : '❌ Not instruction-like'} 
+                            ${isDescriptionLike ? '⚠️ Description-like' : ''}
+                            <pre>${content.toString().substring(0, 200)}${content.toString().length > 200 ? '...' : ''}</pre>
+                        </div>
+                    `;
+                }
+            }
+            
+            html += `
+                <h4>🎯 Extraction Result:</h4>
+                <div class="instruction-preview">
+                    <strong>Selected field:</strong> ${results.selectedField}<br>
+                    <strong>Confidence:</strong> ${results.confidence}<br>
+                    <strong>Processing type:</strong> ${results.processingType}
+                    <div style="margin-top: 15px;">
+                        <strong>Final instructions:</strong>
+                        ${results.steps.map((step, index) => `
+                            <div class="step-item">
+                                <strong>Step ${index + 1}:</strong> ${step}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            showResults(html);
+        }
+        
+        function analyzeRecipeInstructions(recipe) {
+            const instructionFields = ['instructions', 'method', 'cooking_instructions', 'preparation_method', 'steps', 'directions'];
+            
+            for (const field of instructionFields) {
+                if (recipe[field]) {
+                    const content = recipe[field];
+                    
+                    if (typeof content === 'string' && content.trim()) {
+                        if (looksLikeInstructions(content)) {
+                            return {
+                                selectedField: field,
+                                confidence: 'High',
+                                processingType: 'Direct use',
+                                steps: parseInstructionSteps(content)
+                            };
+                        }
+                    } else if (Array.isArray(content) && content.length > 0) {
+                        return {
+                            selectedField: field,
+                            confidence: 'High',
+                            processingType: 'Array format',
+                            steps: content
+                        };
+                    }
+                }
+            }
+            
+            // Check description as fallback
+            if (recipe.description && looksLikeInstructions(recipe.description)) {
+                return {
+                    selectedField: 'description',
+                    confidence: 'Medium',
+                    processingType: 'Fallback from description',
+                    steps: parseInstructionSteps(recipe.description)
+                };
+            }
+            
+            // Try to convert description-like instructions
+            const firstInstructionField = instructionFields.find(field => recipe[field]);
+            if (firstInstructionField && recipe[firstInstructionField]) {
+                return {
+                    selectedField: firstInstructionField,
+                    confidence: 'Low',
+                    processingType: 'Description converted to instructions',
+                    steps: convertDescriptionToInstructions(recipe[firstInstructionField])
+                };
+            }
+            
+            return {
+                selectedField: 'none',
+                confidence: 'None',
+                processingType: 'No instructions found',
+                steps: ['No instructions available']
+            };
+        }
+        
+        function parseInstructionSteps(instructions) {
+            if (!instructions) return [];
+            
+            let steps = instructions.split(/\n/).filter(step => step.trim());
+            
+            if (steps.length <= 1) {
+                steps = instructions.split(/\d+\.\s*/).filter(step => step.trim());
+            }
+            
+            return steps.map(step => step.trim().replace(/^\d+\.\s*/, ''));
+        }
+        
+        function looksLikeInstructions(text) {
+            if (!text || typeof text !== 'string') return false;
+            
+            const indicators = [
+                /\d+\./g.test(text),
+                /step \d+|first|second|third|then|next|finally/i.test(text),
+                /heat|add|mix|stir|cook|bake|fry|boil|simmer|saute|chop|dice|slice/i.test(text),
+                /heat.*oil|add.*ingredients|cook.*until|stir.*together/i.test(text),
+                text.split(/[.!?]/).filter(s => s.trim()).length > 2,
+                /\d+\s*(minutes?|mins?|hours?|hrs?)/i.test(text),
+                /degrees?|°|medium heat|low heat|high heat|until golden/i.test(text)
+            ];
+            
+            return indicators.filter(Boolean).length >= 3;
+        }
+        
+        function isDescriptionLikeContent(text) {
+            const indicators = [
+                !text.match(/\d+\./),
+                !text.match(/step \d+/i),
+                text.match(/delicious|tasty|perfect|wonderful|amazing/i),
+                text.match(/this recipe|this dish|recipe for/i),
+                text.length < 100,
+                !text.match(/add|mix|cook|heat|stir|bake|fry|boil|simmer/i)
+            ];
+            
+            return indicators.filter(Boolean).length >= 3;
+        }
+        
+        function convertDescriptionToInstructions(description) {
+            if (description.match(/cook|heat|add|mix|stir|bake|fry|boil/i)) {
+                return [
+                    'Prepare all ingredients as listed',
+                    'Follow the cooking method described: ' + description.trim(),
+                    'Adjust seasoning to taste',
+                    'Serve and enjoy'
+                ];
+            }
+            
+            return [
+                'Prepare all ingredients as listed in the ingredients section',
+                'Cook according to the recipe description: ' + description.trim(),
+                'Season and adjust flavors as needed',
+                'Serve hot and enjoy your meal'
+            ];
+        }
+        
+        console.log('🚀 Recipe Instructions Debug Tool loaded');
+    </script>
+</body>
+</html>

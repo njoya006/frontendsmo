@@ -280,6 +280,86 @@ class RecipeDetailManager {
         return ingredientPatterns.some(pattern => pattern.test(line));
     }
 
+    // Enhanced method to extract instructions from recipe data
+    extractInstructions(recipe) {
+        console.log('🔍 Extracting instructions from recipe:', Object.keys(recipe));
+        
+        // Priority order for instruction fields
+        const instructionFields = [
+            'instructions',
+            'method',
+            'cooking_instructions',
+            'preparation_method',
+            'steps',
+            'cooking_method',
+            'directions',
+            'procedure'
+        ];
+        
+        for (const field of instructionFields) {
+            if (recipe[field]) {
+                console.log(`📝 Found instructions in field: ${field}`);
+                console.log(`📄 Content preview: ${recipe[field].toString().substring(0, 150)}...`);
+                
+                // Check if this field contains actual instructions vs description
+                const content = recipe[field];
+                
+                if (typeof content === 'string' && content.trim()) {
+                    // If content looks like proper instructions, use it
+                    if (this.looksLikeInstructions(content)) {
+                        console.log(`✅ Using ${field} as instructions (looks like proper instructions)`);
+                        return content;
+                    }
+                } else if (Array.isArray(content) && content.length > 0) {
+                    console.log(`✅ Using ${field} as instructions (array format)`);
+                    return content;
+                }
+            }
+        }
+        
+        // If no proper instructions found, check if description contains cooking steps
+        if (recipe.description && this.looksLikeInstructions(recipe.description)) {
+            console.log('⚠️ Using description as instructions (contains cooking steps)');
+            return recipe.description;
+        }
+        
+        console.log('❌ No proper instructions found in recipe data');
+        return '';
+    }
+    
+    // Helper to determine if text looks like cooking instructions
+    looksLikeInstructions(text) {
+        if (!text || typeof text !== 'string') return false;
+        
+        const instructionIndicators = [
+            // Has numbered steps
+            /\d+\./g.test(text),
+            
+            // Has step words
+            /step \d+|first|second|third|then|next|finally|meanwhile|afterwards/i.test(text),
+            
+            // Has cooking action verbs
+            /heat|add|mix|stir|cook|bake|fry|boil|simmer|saute|chop|dice|slice|season|serve/i.test(text),
+            
+            // Has imperative cooking language
+            /heat.*oil|add.*ingredients|cook.*until|stir.*together|season.*with/i.test(text),
+            
+            // Multiple sentences suggesting steps
+            text.split(/[.!?]/).filter(s => s.trim()).length > 2,
+            
+            // Contains time indicators
+            /\d+\s*(minutes?|mins?|hours?|hrs?)/i.test(text),
+            
+            // Contains temperature or cooking terms
+            /degrees?|°|medium heat|low heat|high heat|until golden|until tender/i.test(text)
+        ];
+        
+        const score = instructionIndicators.filter(Boolean).length;
+        console.log(`📊 Instruction likelihood score: ${score}/7 for text: "${text.substring(0, 100)}..."`);
+        
+        return score >= 3; // Must meet at least 3 criteria to be considered instructions
+    }
+
     getHeaders() {
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const headers = {
@@ -331,6 +411,63 @@ class RecipeDetailManager {
         return mockRecipes[id] || null;
     }
 
+    // Helper function to detect if content looks more like a description than instructions
+    isDescriptionLikeContent(text) {
+        const descriptionIndicators = [
+            // No step indicators
+            !text.match(/\d+\./),
+            !text.match(/step \d+/i),
+            !text.match(/first|second|third|then|next|finally/i),
+            
+            // Contains descriptive language
+            text.match(/delicious|tasty|perfect|wonderful|amazing/i),
+            text.match(/this recipe|this dish|recipe for/i),
+            
+            // Very short (likely just a description)
+            text.length < 100,
+            
+            // No action verbs typical in cooking instructions
+            !text.match(/add|mix|cook|heat|stir|bake|fry|boil|simmer/i)
+        ];
+        
+        // If 3 or more indicators suggest it's a description, treat it as such
+        const descriptionScore = descriptionIndicators.filter(Boolean).length;
+        return descriptionScore >= 3;
+    }
+    
+    // Helper function to convert description-like content to basic instructions
+    convertDescriptionToInstructions(description) {
+        console.log('🔄 Converting description to instructions:', description.substring(0, 100) + '...');
+        
+        // Try to extract any cooking actions from the description
+        const cookingActions = [
+            'prepare ingredients',
+            'heat oil or pan',
+            'add ingredients as described',
+            'cook according to description',
+            'season to taste',
+            'serve as desired'
+        ];
+        
+        // If description has some cooking terms, try to create basic steps
+        if (description.match(/cook|heat|add|mix|stir|bake|fry|boil/i)) {
+            return [
+                'Prepare all ingredients as listed',
+                'Follow the cooking method described: ' + description.trim(),
+                'Adjust seasoning to taste',
+                'Serve and enjoy'
+            ];
+        }
+        
+        // For very generic descriptions, provide a basic template
+        return [
+            'Prepare all ingredients as listed in the ingredients section',
+            'Cook according to the recipe description: ' + description.trim(),
+            'Season and adjust flavors as needed',
+            'Serve hot and enjoy your meal'
+        ];
+    }
+
     renderRecipe(recipe) {
         console.log('🎨 Rendering recipe:', recipe.title || recipe.name);
         
@@ -357,8 +494,9 @@ class RecipeDetailManager {
         // Render ingredients
         this.renderIngredients(recipe.ingredients || []);
         
-        // Render instructions with smart field detection
-        this.renderInstructions(this.extractInstructions(recipe));
+        // Render instructions - try multiple field names and prioritize actual instructions
+        const instructionsData = this.extractInstructions(recipe);
+        this.renderInstructions(instructionsData);
         
         // Show content
         if (this.recipeContent) {
@@ -366,105 +504,6 @@ class RecipeDetailManager {
         }
         
         console.log('✅ Recipe rendered successfully');
-    }
-
-    // Smart instruction extraction from multiple possible fields
-    extractInstructions(recipe) {
-        console.log('🔍 Extracting instructions from recipe data...');
-        
-        // List of possible instruction fields in order of preference
-        const instructionFields = [
-            'instructions',
-            'method', 
-            'directions',
-            'preparation',
-            'steps',
-            'cooking_instructions',
-            'recipe_instructions'
-        ];
-        
-        // First, try the dedicated instruction fields
-        for (const field of instructionFields) {
-            if (recipe[field] && typeof recipe[field] === 'string' && recipe[field].trim()) {
-                console.log(`✅ Found instructions in '${field}' field`);
-                return recipe[field];
-            }
-            if (recipe[field] && Array.isArray(recipe[field]) && recipe[field].length > 0) {
-                console.log(`✅ Found instructions array in '${field}' field`);
-                return recipe[field];
-            }
-        }
-        
-        // If no dedicated instruction field, check if description contains instructions
-        if (recipe.description && typeof recipe.description === 'string') {
-            const description = recipe.description.trim();
-            
-            // Check if description looks like instructions (contains numbered steps or cooking verbs)
-            if (this.looksLikeInstructions(description)) {
-                console.log('✅ Found instructions in description field (detected as cooking instructions)');
-                return description;
-            }
-        }
-        
-        // Last resort: check for any field that might contain instructions
-        const otherPossibleFields = ['notes', 'details', 'recipe_method', 'cooking_method'];
-        for (const field of otherPossibleFields) {
-            if (recipe[field] && typeof recipe[field] === 'string' && recipe[field].trim()) {
-                if (this.looksLikeInstructions(recipe[field])) {
-                    console.log(`✅ Found instructions in '${field}' field`);
-                    return recipe[field];
-                }
-            }
-        }
-        
-        console.log('⚠️ No instructions found in any field');
-        return '';
-    }
-    
-    // Check if text looks like cooking instructions
-    looksLikeInstructions(text) {
-        if (!text || typeof text !== 'string' || text.trim().length < 20) {
-            return false;
-        }
-        
-        const lowerText = text.toLowerCase();
-        
-        // Check for instruction indicators
-        const instructionIndicators = [
-            // Numbered steps
-            /\b\d+\.\s/g,
-            /step\s+\d+/g,
-            
-            // Cooking action verbs
-            /\b(heat|cook|add|mix|stir|boil|simmer|fry|bake|sauté|chop|dice|slice|season|serve|pour|combine|whisk|blend|marinate|grill|roast|steam)\b/g,
-            
-            // Cooking time indicators
-            /\b\d+\s*(minutes?|mins?|hours?|hrs?)\b/g,
-            
-            // Temperature indicators
-            /\b\d+°?\s*(degrees?|f|c|fahrenheit|celsius)\b/g,
-            
-            // Common cooking phrases
-            /until\s+(golden|tender|cooked|done|soft|crispy)/g,
-            /over\s+(medium|high|low)\s+heat/g,
-            /in\s+a\s+(pan|pot|bowl|skillet)/g
-        ];
-        
-        let indicatorCount = 0;
-        for (const pattern of instructionIndicators) {
-            const matches = text.match(pattern);
-            if (matches) {
-                indicatorCount += matches.length;
-            }
-        }
-        
-        // If we find multiple instruction indicators, it's likely instructions
-        const hasMultipleSteps = (text.match(/\b\d+\.\s/g) || []).length >= 2;
-        const hasCookingVerbs = indicatorCount >= 3;
-        
-        console.log(`🔍 Text analysis: ${indicatorCount} indicators, hasMultipleSteps: ${hasMultipleSteps}, hasCookingVerbs: ${hasCookingVerbs}`);
-        
-        return hasMultipleSteps || hasCookingVerbs;
     }
 
     renderIngredients(ingredients) {
@@ -550,34 +589,54 @@ class RecipeDetailManager {
     }
 
     renderInstructions(instructions) {
-        console.log('📝 Rendering instructions:', instructions);
-        
         if (!this.instructionsList) {
             console.error('❌ Instructions list element not found');
             return;
         }
         
         if (!instructions) {
-            this.instructionsList.innerHTML = '<li class="instruction-item"><span class="instruction-text">No cooking instructions provided</span></li>';
+            this.instructionsList.innerHTML = '<li class="instruction-item"><span class="instruction-text">No instructions provided</span></li>';
             return;
         }
+
+        console.log('🔍 Raw instructions data:', instructions);
 
         let steps = [];
         
         if (typeof instructions === 'string') {
-            // Clean up the text and extract steps
-            steps = this.extractStepsFromText(instructions);
+            // Check if this looks more like a description than instructions
+            const isDescriptionLike = this.isDescriptionLikeContent(instructions);
+            
+            if (isDescriptionLike) {
+                console.log('⚠️ Instructions content appears to be description-like, converting...');
+                // Try to convert description to basic instructions
+                steps = this.convertDescriptionToInstructions(instructions);
+            } else {
+                // Split by newlines and filter empty steps
+                steps = instructions.split(/\n/).filter(step => step.trim());
+                
+                // If no newlines, try to split by numbered steps
+                if (steps.length <= 1) {
+                    steps = instructions.split(/\d+\.\s*/).filter(step => step.trim());
+                }
+                
+                // If still only one step and it's very long, it might be a description
+                if (steps.length === 1 && steps[0].length > 200) {
+                    console.log('⚠️ Single long instruction detected, might be description');
+                    steps = this.convertDescriptionToInstructions(instructions);
+                }
+            }
         } else if (Array.isArray(instructions)) {
-            steps = instructions.filter(step => step && step.trim());
+            steps = instructions;
         }
 
         if (steps.length === 0) {
-            this.instructionsList.innerHTML = '<li class="instruction-item"><span class="instruction-text">No cooking instructions provided</span></li>';
+            this.instructionsList.innerHTML = '<li class="instruction-item"><span class="instruction-text">No instructions provided</span></li>';
             return;
         }
 
         const instructionItems = steps.map((step, index) => {
-            const cleanStep = this.cleanInstructionStep(step, index);
+            const cleanStep = step.trim().replace(/^\d+\.\s*/, '');
             return `
                 <li class="instruction-item">
                     <span class="step-number">${index + 1}</span>
@@ -586,69 +645,21 @@ class RecipeDetailManager {
             `;
         }).join('');
 
-        this.instructionsList.innerHTML = instructionItems;
+        // Add a note if instructions were converted from description
+        let instructionNote = '';
+        if (typeof instructions === 'string' && this.isDescriptionLikeContent(instructions)) {
+            instructionNote = `
+                <div class="instruction-note" style="background: #fff3cd; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
+                    <i class="fas fa-info-circle" style="color: #856404; margin-right: 8px;"></i>
+                    <span style="color: #856404; font-size: 14px;">
+                        <strong>Note:</strong> The original instructions appeared to be description-like text. We've converted it into basic cooking steps for better clarity.
+                    </span>
+                </div>
+            `;
+        }
+
+        this.instructionsList.innerHTML = instructionNote + instructionItems;
         console.log(`✅ Rendered ${steps.length} instruction steps`);
-    }
-    
-    // Extract instruction steps from text with better parsing
-    extractStepsFromText(text) {
-        if (!text || typeof text !== 'string') return [];
-        
-        // First, try to split by numbered steps (1. 2. 3. etc.)
-        const numberedSteps = text.split(/\d+\.\s+/).filter(step => step.trim());
-        if (numberedSteps.length > 1) {
-            // Remove the first empty element that comes before "1."
-            return numberedSteps.slice(1).map(step => step.trim());
-        }
-        
-        // Try splitting by newlines and filtering for instruction-like content
-        const lines = text.split(/\n+/).map(line => line.trim()).filter(line => line.length > 0);
-        
-        if (lines.length <= 3) {
-            // If it's just a few lines, treat the whole text as one step
-            return [text.trim()];
-        }
-        
-        // Filter lines that look like instructions
-        const instructionLines = lines.filter(line => {
-            // Skip very short lines (likely not instructions)
-            if (line.length < 10) return false;
-            
-            // Skip lines that are likely titles or headers
-            if (line.endsWith(':') && line.length < 30) return false;
-            
-            // Include lines with cooking verbs or step indicators
-            const cookingPattern = /\b(heat|cook|add|mix|stir|boil|simmer|fry|bake|sauté|chop|dice|slice|season|serve|pour|combine|whisk|blend|marinate|grill|roast|steam|until|over|in a|then|next|after)\b/i;
-            return cookingPattern.test(line);
-        });
-        
-        // If we found instruction-like lines, use them; otherwise use all lines
-        return instructionLines.length > 0 ? instructionLines : lines;
-    }
-    
-    // Clean and format individual instruction steps
-    cleanInstructionStep(step, index) {
-        if (!step || typeof step !== 'string') return '';
-        
-        let cleanStep = step.trim();
-        
-        // Remove any existing numbering at the beginning
-        cleanStep = cleanStep.replace(/^\d+\.\s*/, '');
-        cleanStep = cleanStep.replace(/^step\s+\d+:?\s*/i, '');
-        cleanStep = cleanStep.replace(/^-\s*/, '');
-        cleanStep = cleanStep.replace(/^\*\s*/, '');
-        
-        // Ensure the step ends with proper punctuation
-        if (cleanStep && !cleanStep.match(/[.!?]$/)) {
-            cleanStep += '.';
-        }
-        
-        // Capitalize first letter
-        if (cleanStep.length > 0) {
-            cleanStep = cleanStep.charAt(0).toUpperCase() + cleanStep.slice(1);
-        }
-        
-        return cleanStep;
     }
 
     getImageUrl(imagePath) {
