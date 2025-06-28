@@ -13,12 +13,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Logout Functionality
     const logoutBtn = document.getElementById('logoutBtn');
     logoutBtn.addEventListener('click', function() {
-        // In a real app, you would:
-        // 1. Send a logout request to your server
-        // 2. Clear any client-side authentication tokens
-        // 3. Redirect to home page
+        // Clear authentication data
+        localStorage.removeItem('authToken');
+        sessionStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        sessionStorage.removeItem('userData');
+        localStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userEmail');
         
-        // For this demo, we'll just redirect
+        // Redirect to home page
         window.location.href = 'index.html';
     });
 

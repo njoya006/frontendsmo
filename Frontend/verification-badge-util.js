@@ -45,6 +45,44 @@ class VerificationBadgeUtil {
         }
 
         try {
+            // First check user profile for existing verification flags
+            let profileData = null;
+            if (!userId) {
+                // For current user, check their profile first
+                try {
+                    const profileResponse = await fetch(`${this.baseUrl}/api/users/profile/`, {
+                        headers: this.getHeaders()
+                    });
+                    if (profileResponse.ok) {
+                        profileData = await profileResponse.json();
+                        
+                        // Check if user is already verified through existing flags
+                        if (profileData.is_verified || profileData.verified || profileData.is_staff || profileData.is_superuser) {
+                            const verificationData = { 
+                                status: 'approved', 
+                                is_verified: true,
+                                application: {
+                                    business_name: profileData.business_name || 'Verified User',
+                                    business_license: 'Legacy Verification',
+                                    created_at: profileData.date_joined || new Date().toISOString()
+                                }
+                            };
+                            
+                            // Cache the result
+                            this.verificationCache.set(cacheKey, {
+                                data: verificationData,
+                                timestamp: Date.now()
+                            });
+                            
+                            return verificationData;
+                        }
+                    }
+                } catch (profileError) {
+                    console.warn('⚠️ Could not fetch profile data:', profileError);
+                }
+            }
+
+            // Then check verification endpoint
             let url = `${this.baseUrl}/api/verification/status/`;
             if (userId) {
                 url += `?user_id=${userId}`;
@@ -59,8 +97,19 @@ class VerificationBadgeUtil {
             if (response.ok) {
                 verificationData = await response.json();
             } else if (response.status === 404) {
-                // No verification application found
-                verificationData = { status: 'not_applied', is_verified: false };
+                // No verification application found, but user might still be verified in profile
+                if (profileData && (profileData.is_verified || profileData.verified)) {
+                    verificationData = { 
+                        status: 'approved', 
+                        is_verified: true,
+                        application: {
+                            business_name: 'Verified User',
+                            business_license: 'Legacy Verification'
+                        }
+                    };
+                } else {
+                    verificationData = { status: 'not_applied', is_verified: false };
+                }
             }
 
             // Cache the result
@@ -395,12 +444,29 @@ let verificationBadgeUtil;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    verificationBadgeUtil = new VerificationBadgeUtil();
-    
-    // Small delay to ensure other scripts have loaded
+    // Wait a bit longer to ensure other scripts have loaded
     setTimeout(() => {
-        verificationBadgeUtil.initializeOnCurrentPage();
+        if (!window.verificationBadgeUtil) {
+            verificationBadgeUtil = new VerificationBadgeUtil();
+            window.verificationBadgeUtil = verificationBadgeUtil;
+            
+            console.log('🔧 Verification badge utility initialized');
+            
+            // Initialize on current page after a delay to ensure DOM is ready
+            setTimeout(() => {
+                verificationBadgeUtil.initializeOnCurrentPage();
+            }, 1000);
+        }
     }, 500);
+});
+
+// Also try to initialize on window load as backup
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if (window.verificationBadgeUtil) {
+            window.verificationBadgeUtil.initializeOnCurrentPage();
+        }
+    }, 1000);
 });
 
 // Expose utility globally for other scripts

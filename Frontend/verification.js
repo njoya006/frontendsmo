@@ -37,19 +37,27 @@ class VerificationSystem {
         
         // Check if user is logged in
         if (!this.authToken) {
+            console.log('❌ No auth token found, redirecting to login');
             this.redirectToLogin();
             return;
         }
 
+        console.log('✅ Auth token found, continuing initialization');
+
         try {
             // Load current user data and check admin status
+            console.log('👤 Loading current user data...');
             await this.loadCurrentUser();
             
             // Initialize UI based on user status
+            console.log('🎨 Initializing UI...');
             this.initializeUI();
             
             // Set up event listeners
+            console.log('🎯 Setting up event listeners...');
             this.setupEventListeners();
+            
+            console.log('✅ Verification system initialized successfully!');
             
         } catch (error) {
             console.error('❌ Error initializing verification system:', error);
@@ -109,11 +117,50 @@ class VerificationSystem {
     // Check user's verification status
     async checkVerificationStatus() {
         try {
+            // First check if user has verification status in their profile
+            const profileResponse = await fetch(`${this.baseUrl}/api/users/profile/`, {
+                headers: this.getHeaders()
+            });
+
+            if (profileResponse.ok) {
+                const profileData = await profileResponse.json();
+                
+                // Check if user is already verified through existing flags
+                if (profileData.is_verified || profileData.verified || profileData.is_staff || profileData.is_superuser) {
+                    return { 
+                        status: 'approved', 
+                        is_verified: true,
+                        application: {
+                            business_name: profileData.business_name || 'Verified User',
+                            business_license: 'Legacy Verification',
+                            created_at: profileData.date_joined || new Date().toISOString(),
+                            description: 'Previously verified user'
+                        }
+                    };
+                }
+            }
+
+            // Then check for verification application
             const response = await fetch(`${this.baseUrl}/api/verification/status/`, {
                 headers: this.getHeaders()
             });
 
             if (!response.ok && response.status !== 404) {
+                // If verification endpoint doesn't exist yet, check profile flags
+                if (response.status === 404 && profileResponse.ok) {
+                    const profileData = await profileResponse.json();
+                    if (profileData.is_verified || profileData.verified) {
+                        return { 
+                            status: 'approved', 
+                            is_verified: true,
+                            application: {
+                                business_name: 'Verified User',
+                                business_license: 'Legacy Verification', 
+                                created_at: profileData.date_joined || new Date().toISOString()
+                            }
+                        };
+                    }
+                }
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
@@ -126,7 +173,32 @@ class VerificationSystem {
             return data;
             
         } catch (error) {
-            console.error('❌ Error checking verification status:', error);
+            console.warn('⚠️ Error checking verification status:', error);
+            
+            // Fallback: check if user profile indicates they're verified
+            try {
+                const profileResponse = await fetch(`${this.baseUrl}/api/users/profile/`, {
+                    headers: this.getHeaders()
+                });
+                
+                if (profileResponse.ok) {
+                    const profileData = await profileResponse.json();
+                    if (profileData.is_verified || profileData.verified || profileData.is_staff) {
+                        return { 
+                            status: 'approved', 
+                            is_verified: true,
+                            application: {
+                                business_name: 'Verified User',
+                                business_license: 'Legacy Verification',
+                                created_at: profileData.date_joined || new Date().toISOString()
+                            }
+                        };
+                    }
+                }
+            } catch (fallbackError) {
+                console.warn('⚠️ Fallback verification check failed:', fallbackError);
+            }
+            
             return { status: 'error', application: null };
         }
     }
@@ -430,13 +502,34 @@ class VerificationSystem {
             });
         }
 
-        // Dynamic event delegation for application buttons
+        // Dynamic event delegation for application buttons - improved
         document.addEventListener('click', (e) => {
-            if (e.target.id === 'applyForVerification' || e.target.closest('#applyForVerification')) {
+            // Check for apply/update/reapply buttons with better matching
+            const target = e.target.closest('button');
+            if (!target) return;
+            
+            const targetId = target.id || target.getAttribute('id');
+            const targetText = target.textContent?.trim() || '';
+            
+            console.log('🔘 Button clicked:', targetId, targetText); // Debug log
+            
+            if (targetId === 'applyForVerification' || 
+                targetText.includes('Apply for Verification') ||
+                target.closest('#applyForVerification')) {
+                e.preventDefault();
+                console.log('🚀 Opening application modal');
                 this.showApplicationModal();
-            } else if (e.target.id === 'updateApplication' || e.target.closest('#updateApplication')) {
+            } else if (targetId === 'updateApplication' || 
+                       targetText.includes('Update Application') ||
+                       target.closest('#updateApplication')) {
+                e.preventDefault();
+                console.log('🔄 Opening update modal');
                 this.showApplicationModal(true);
-            } else if (e.target.id === 'reapplyForVerification' || e.target.closest('#reapplyForVerification')) {
+            } else if (targetId === 'reapplyForVerification' || 
+                       targetText.includes('Reapply for Verification') ||
+                       target.closest('#reapplyForVerification')) {
+                e.preventDefault();
+                console.log('🔁 Opening reapply modal');
                 this.showApplicationModal();
             }
         });
@@ -454,12 +547,19 @@ class VerificationSystem {
 
     // Show application modal
     async showApplicationModal(isUpdate = false) {
+        console.log('📝 Showing application modal, isUpdate:', isUpdate);
+        
         const modal = document.getElementById('applicationModal');
-        if (!modal) return;
+        if (!modal) {
+            console.error('❌ Application modal not found!');
+            this.showToast('Application form is not available. Please refresh the page.', 'error');
+            return;
+        }
 
         // If updating, load existing data
         if (isUpdate) {
             try {
+                console.log('📋 Loading existing application data...');
                 const verificationData = await this.checkVerificationStatus();
                 if (verificationData.application) {
                     this.populateApplicationForm(verificationData.application);
@@ -469,8 +569,11 @@ class VerificationSystem {
             }
         }
 
+        console.log('✅ Opening modal...');
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        
+        this.showToast('Application form opened', 'success');
     }
 
     // Close application modal
@@ -508,12 +611,16 @@ class VerificationSystem {
     async handleApplicationSubmit(e) {
         e.preventDefault();
         
+        console.log('📝 Submitting verification application...');
+        
         const formData = new FormData(e.target);
         const applicationData = {
             business_name: formData.get('business_name'),
             business_license: formData.get('business_license'),
             description: formData.get('description')
         };
+
+        console.log('📋 Application data:', applicationData);
 
         // Basic validation
         if (!applicationData.business_name || !applicationData.business_license || !applicationData.description) {
@@ -529,6 +636,7 @@ class VerificationSystem {
         try {
             this.showSpinner();
             
+            // Try to submit to verification endpoint
             const response = await fetch(`${this.baseUrl}/api/verification/apply/`, {
                 method: 'POST',
                 headers: this.getHeaders(),
@@ -536,6 +644,14 @@ class VerificationSystem {
             });
 
             if (!response.ok) {
+                // If verification endpoint doesn't exist, show appropriate message
+                if (response.status === 404) {
+                    this.hideSpinner();
+                    this.showToast('Verification system is not yet available on the backend. Please contact support.', 'error');
+                    this.closeApplicationModal();
+                    return;
+                }
+                
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
             }
@@ -546,6 +662,8 @@ class VerificationSystem {
             this.closeApplicationModal();
             this.showToast('Application submitted successfully! We will review it within 3-5 business days.', 'success');
             
+            console.log('✅ Application submitted successfully:', result);
+            
             // Refresh the verification panel
             setTimeout(() => {
                 this.initializeUI();
@@ -554,7 +672,12 @@ class VerificationSystem {
         } catch (error) {
             this.hideSpinner();
             console.error('❌ Error submitting application:', error);
-            this.showToast(error.message || 'Failed to submit application. Please try again.', 'error');
+            
+            if (error.message.includes('404')) {
+                this.showToast('Verification system is not yet available. Please contact support.', 'error');
+            } else {
+                this.showToast(error.message || 'Failed to submit application. Please try again.', 'error');
+            }
         }
     }
 
