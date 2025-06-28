@@ -1,4 +1,68 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Debug information
+    console.log('ChopSmo Login Page Loaded');
+    console.log('Current URL:', window.location.href);
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Online status:', navigator.onLine);
+    
+    // Create inline debug console for production debugging
+    if (window.location.hostname.includes('vercel.app')) {
+        const debugConsole = document.createElement('div');
+        debugConsole.id = 'debug-console';
+        debugConsole.style.cssText = `
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            max-height: 200px;
+            background: rgba(0,0,0,0.9);
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-y: auto;
+            z-index: 10000;
+            display: none;
+        `;
+        document.body.appendChild(debugConsole);
+        
+        // Debug toggle button
+        const debugToggle = document.createElement('button');
+        debugToggle.textContent = '🐛';
+        debugToggle.style.cssText = `
+            position: fixed;
+            bottom: 10px;
+            right: 320px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10001;
+        `;
+        debugToggle.onclick = () => {
+            debugConsole.style.display = debugConsole.style.display === 'none' ? 'block' : 'none';
+        };
+        document.body.appendChild(debugToggle);
+        
+        // Custom console log function
+        window.debugLog = function(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? '#ff4444' : type === 'success' ? '#44ff44' : '#00ff00';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            debugConsole.appendChild(logEntry);
+            debugConsole.scrollTop = debugConsole.scrollHeight;
+            console.log(message);
+        };
+        
+        debugLog('Debug console initialized');
+        debugLog(`Domain: ${window.location.hostname}`);
+        debugLog(`Online: ${navigator.onLine}`);
+    }
+    
     const loginForm = document.getElementById('loginForm');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
@@ -136,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 500);
     }
 
-    // Enhanced form submission with better error handling
+    // Enhanced form submission with multiple fallback strategies
     loginForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         clearErrors();
@@ -155,17 +219,135 @@ document.addEventListener('DOMContentLoaded', function () {
 
         setLoading(true);
 
+        // Try multiple request strategies with specific focus on Vercel hosting
+        const strategies = [
+            {
+                name: 'Standard Fetch',
+                request: () => fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                })
+            },
+            {
+                name: 'CORS with Credentials',
+                request: () => fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+                    method: 'POST',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                })
+            },
+            {
+                name: 'No-CORS Mode',
+                request: async () => {
+                    // For no-cors mode, we can't read the response, so we use XMLHttpRequest
+                    return new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', 'https://njoya.pythonanywhere.com/api/users/login/', true);
+                        xhr.setRequestHeader('Content-Type', 'application/json');
+                        
+                        xhr.onload = function() {
+                            try {
+                                if (xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)) {
+                                    const data = JSON.parse(xhr.responseText || '{}');
+                                    resolve({
+                                        ok: true,
+                                        status: xhr.status,
+                                        json: () => Promise.resolve(data)
+                                    });
+                                } else {
+                                    const errorData = JSON.parse(xhr.responseText || '{}');
+                                    resolve({
+                                        ok: false,
+                                        status: xhr.status,
+                                        json: () => Promise.resolve(errorData)
+                                    });
+                                }
+                            } catch (e) {
+                                reject(new Error('Parse error: ' + e.message));
+                            }
+                        };
+                        
+                        xhr.onerror = () => reject(new Error('Network error'));
+                        xhr.ontimeout = () => reject(new Error('Timeout'));
+                        xhr.timeout = 15000;
+                        
+                        xhr.send(JSON.stringify({ email, password }));
+                    });
+                }
+            }
+        ];
+
+        let lastError = null;
+        let response = null;
+        let data = null;
+
+        // Try each strategy until one works
+        for (const strategy of strategies) {
+            try {
+                const logMsg = `Attempting ${strategy.name}...`;
+                console.log(logMsg);
+                if (window.debugLog) window.debugLog(logMsg);
+                
+                console.log('Request payload:', { email, password: '***' });
+                
+                response = await strategy.request();
+                
+                const statusMsg = `${strategy.name} - Status: ${response.status}`;
+                console.log(statusMsg);
+                if (window.debugLog) window.debugLog(statusMsg, response.status < 400 ? 'success' : 'error');
+                
+                if (response.headers && response.headers.entries) {
+                    console.log(`${strategy.name} - Response headers:`, [...response.headers.entries()]);
+                }
+                
+                data = await response.json();
+                console.log(`${strategy.name} - Success!`);
+                if (window.debugLog) window.debugLog(`${strategy.name} - Success!`, 'success');
+                break; // Success, exit the loop
+                
+            } catch (err) {
+                const errorMsg = `${strategy.name} failed: ${err.message}`;
+                console.error(errorMsg);
+                if (window.debugLog) window.debugLog(errorMsg, 'error');
+                lastError = err;
+                continue; // Try next strategy
+            }
+        }
+
+        // If all strategies failed
+        if (!response || !data) {
+            const errorMsg = 'All login strategies failed';
+            console.error(errorMsg, lastError);
+            if (window.debugLog) window.debugLog(`${errorMsg}: ${lastError?.message}`, 'error');
+            
+            let errorMessage;
+            if (lastError?.name === 'TypeError' && lastError.message.includes('fetch')) {
+                errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+            } else if (lastError?.name === 'AbortError') {
+                errorMessage = 'Request timeout. Please try again.';
+            } else if (lastError?.message.includes('CORS')) {
+                errorMessage = 'Connection blocked by browser security. Please try refreshing the page.';
+            } else {
+                errorMessage = `Network error: ${lastError?.message || 'Unknown error'}. Please try again.`;
+            }
+            
+            showToast(errorMessage, 'error');
+            shakeForm();
+            setLoading(false);
+            return;
+        }
+
+        // Process the response
         try {
-            const response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-            
-            const data = await response.json();
-            
             if (response.ok) {
                 // Store the authentication token
                 if (data.token) {
@@ -214,9 +396,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 showToast(errorMessage, 'error');
                 shakeForm();
             }
-        } catch (err) {
-            console.error('Login error:', err);
-            showToast('Network error. Please check your connection and try again.', 'error');
+        } catch (dataError) {
+            console.error('Error processing response data:', dataError);
+            showToast('Invalid response from server. Please try again.', 'error');
             shakeForm();
         } finally {
             setLoading(false);

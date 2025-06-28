@@ -1,13 +1,12 @@
-// Enhanced Recipe Detail JavaScript
+// Recipe Detail Page Manager
 class RecipeDetailManager {
     constructor() {
-        // Check if utils.js is loaded, use fallback if not
+        console.log('🚀 Initializing RecipeDetailManager...');
+        
+        // Initialize RecipeAPI if available
         if (typeof RecipeAPI !== 'undefined') {
-            // Use production URL only
-            this.baseUrl = 'https://njoya.pythonanywhere.com';
-            this.recipeAPI = new RecipeAPI(this.baseUrl);
+            this.recipeAPI = new RecipeAPI();
             this.useAPI = true;
-            
             console.log('RecipeAPI initialized with base URL:', this.recipeAPI.baseUrl);
         } else {
             console.warn('RecipeAPI not found. Using mock data for demonstration.');
@@ -89,7 +88,7 @@ class RecipeDetailManager {
 
             // Success - render the recipe
             this.currentRecipe = recipe;
-            this.isOwner = false;
+            this.isOwner = false; // For now, assume not owner
             this.renderRecipe(recipe);
             this.hideLoading();
             
@@ -98,25 +97,35 @@ class RecipeDetailManager {
         } catch (error) {
             console.error('❌ API Error loading recipe:', error);
             
-            // Try fallback to mock data
+            // Try fallback to mock data before showing error
             console.log('🔄 Trying fallback to mock data...');
             try {
                 const mockRecipe = this.getMockRecipe(this.recipeId);
                 if (mockRecipe) {
                     console.log('✅ Using mock data as fallback:', mockRecipe);
                     this.currentRecipe = mockRecipe;
-                    this.isOwner = false;
+                    this.isOwner = false; // Mock data is never owned
                     this.renderRecipe(mockRecipe);
                     this.hideLoading();
                     this.showToast('Using demo recipe data (API connection failed)', 'warning');
                     return;
+                } else {
+                    throw new Error(`No mock recipe found for ID ${this.recipeId}`);
                 }
             } catch (mockError) {
-                console.error('❌ Mock data fallback failed:', mockError);
+                console.error('❌ Mock data fallback also failed:', mockError);
             }
             
             this.hideLoading();
-            this.showError(`Failed to load recipe: ${error.message}`);
+            
+            // Show appropriate error message
+            if (error.message.includes('HTTP error! status: 404')) {
+                this.showError(`Recipe with ID ${this.recipeId} not found in the database.`);
+            } else if (error.message.includes('Failed to fetch')) {
+                this.showError('Cannot connect to the backend server. Please check if it\'s running.');
+            } else {
+                this.showError(`Failed to load recipe: ${error.message}`);
+            }
         }
     }
 
@@ -145,7 +154,7 @@ class RecipeDetailManager {
                     { ingredient_name: "Salt", quantity: "1", unit: "tsp" },
                     { ingredient_name: "Vegetable oil", quantity: "2", unit: "tbsp" }
                 ],
-                instructions: "1. Heat oil in a large pan over medium heat.\n2. Add chopped onions and cook until golden.\n3. Add minced garlic and ginger, cook for 1 minute.\n4. Add curry powder and turmeric, stir for 30 seconds.\n5. Add chicken pieces and brown on all sides.\n6. Pour in coconut milk and bring to a simmer.\n7. Season with salt and cook for 20-25 minutes until chicken is tender.\n8. Serve hot with rice or naan bread.",
+                instructions: "1. Heat oil in a large pan over medium heat.\\n2. Add chopped onions and cook until golden.\\n3. Add minced garlic and ginger, cook for 1 minute.\\n4. Add curry powder and turmeric, stir for 30 seconds.\\n5. Add chicken pieces and brown on all sides.\\n6. Pour in coconut milk and bring to a simmer.\\n7. Season with salt and cook for 20-25 minutes until chicken is tender.\\n8. Serve hot with rice or naan bread.",
                 contributor: {
                     username: "ChefMaster",
                     name: "Chef Master",
@@ -170,7 +179,7 @@ class RecipeDetailManager {
                     { ingredient_name: "Beef", quantity: "500", unit: "g" },
                     { ingredient_name: "Crayfish", quantity: "3", unit: "tbsp" }
                 ],
-                instructions: "Traditional Cameroonian cooking method with detailed steps...",
+                instructions: "Traditional Cameroonian cooking method...",
                 contributor: {
                     username: "CameroonChef",
                     name: "Traditional Chef",
@@ -179,11 +188,17 @@ class RecipeDetailManager {
             }
         };
         
-        return mockRecipes[id] || mockRecipes[1];
+        return mockRecipes[id] || mockRecipes[1]; // Default to recipe 1 if not found
     }
 
     renderRecipe(recipe) {
         console.log('🎨 Rendering recipe:', recipe.title || recipe.name);
+        
+        // Hide debug panel by default
+        const debugPanel = document.getElementById('debugPanel');
+        if (debugPanel) {
+            debugPanel.style.display = 'none';
+        }
         
         // Set hero image and title
         const imageUrl = this.getImageUrl(recipe.image);
@@ -205,7 +220,7 @@ class RecipeDetailManager {
             this.recipeDescription.textContent = recipe.description || recipe.summary || 'No description available';
         }
         
-        // Render ingredients
+        // Render ingredients - This is the key part!
         this.renderIngredients(recipe.ingredients || []);
         
         // Render instructions
@@ -294,7 +309,8 @@ class RecipeDetailManager {
         let steps = [];
         
         if (typeof instructions === 'string') {
-            steps = instructions.split(/\n/).filter(step => step.trim());
+            // Split by newlines and numbers
+            steps = instructions.split(/\\n|\n/).filter(step => step.trim());
         } else if (Array.isArray(instructions)) {
             steps = instructions;
         }
@@ -305,7 +321,7 @@ class RecipeDetailManager {
         }
 
         const instructionItems = steps.map((step, index) => {
-            const cleanStep = step.trim().replace(/^\d+\.\s*/, '');
+            const cleanStep = step.trim().replace(/^\\d+\.\s*/, ''); // Remove leading numbers
             return `
                 <li class="instruction-item">
                     <span class="step-number">${index + 1}</span>
@@ -320,14 +336,17 @@ class RecipeDetailManager {
     getImageUrl(imagePath) {
         if (!imagePath) return null;
         
+        // If it's already a full URL, return as-is
         if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
             return imagePath;
         }
         
+        // If it starts with a slash, it's a root path
         if (imagePath.startsWith('/')) {
             return imagePath;
         }
         
+        // Otherwise, treat as relative path
         return imagePath;
     }
 
@@ -363,6 +382,7 @@ class RecipeDetailManager {
 
     showToast(message, type = 'info') {
         console.log(`Toast (${type}): ${message}`);
+        // Simple console log for now - you can enhance with actual toast UI
     }
 }
 
