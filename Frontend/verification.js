@@ -125,24 +125,49 @@ class VerificationSystem {
             if (profileResponse.ok) {
                 const profileData = await profileResponse.json();
                 
-                // Check if user is currently verified through existing flags
-                const isCurrentlyVerified = profileData.is_verified || profileData.verified || profileData.is_staff || profileData.is_superuser;
+                // Debug: Log the full profile data to see what fields are available
+                console.log('🔍 Full profile data for verification check:', profileData);
+                console.log('🔍 Checking verification flags:');
+                console.log('  - is_verified:', profileData.is_verified);
+                console.log('  - verified:', profileData.verified);
+                console.log('  - is_staff:', profileData.is_staff);
+                console.log('  - is_superuser:', profileData.is_superuser);
+                console.log('  - verification_status:', profileData.verification_status);
+                console.log('  - verified_at:', profileData.verified_at);
+                console.log('  - verification_approved:', profileData.verification_approved);
+                
+                // Check if user is currently verified through any possible flags
+                const isCurrentlyVerified = 
+                    profileData.is_verified === true || 
+                    profileData.verified === true || 
+                    profileData.is_staff === true || 
+                    profileData.is_superuser === true ||
+                    profileData.verification_status === 'approved' ||
+                    profileData.verification_status === 'verified' ||
+                    profileData.verification_approved === true;
+                
+                console.log('🎯 Final verification status:', isCurrentlyVerified);
                 
                 if (isCurrentlyVerified) {
+                    console.log('✅ User is verified! Returning approved status');
                     return { 
                         status: 'approved', 
                         is_verified: true,
                         application: {
-                            business_name: profileData.business_name || profileData.first_name + ' ' + profileData.last_name || 'Verified User',
+                            business_name: profileData.business_name || 
+                                          (profileData.first_name && profileData.last_name ? 
+                                           `${profileData.first_name} ${profileData.last_name}` : 
+                                           profileData.username || 'Verified User'),
                             business_license: 'Legacy Verification',
-                            created_at: profileData.date_joined || new Date().toISOString(),
+                            created_at: profileData.verified_at || profileData.date_joined || new Date().toISOString(),
                             description: 'Previously verified user'
                         }
                     };
                 }
                 
                 // Check if user was previously verified but no longer is (could be revoked)
-                if (profileData.was_verified || profileData.verification_revoked) {
+                if (profileData.was_verified || profileData.verification_revoked || profileData.verification_status === 'revoked') {
+                    console.log('⚠️ User verification was revoked');
                     return {
                         status: 'revoked',
                         is_verified: false,
@@ -153,6 +178,8 @@ class VerificationSystem {
                         }
                     };
                 }
+                
+                console.log('ℹ️ User is not verified in profile, checking verification endpoint...');
             }
 
             // Then check for verification application

@@ -56,15 +56,36 @@ class VerificationBadgeUtil {
                     if (profileResponse.ok) {
                         profileData = await profileResponse.json();
                         
-                        // Check if user is already verified through existing flags
-                        if (profileData.is_verified || profileData.verified || profileData.is_staff || profileData.is_superuser) {
+                        // Debug log for verification badge utility
+                        console.log('🔍 Badge Util - Profile data:', profileData);
+                        console.log('🔍 Badge Util - Verification flags:');
+                        console.log('  - is_verified:', profileData.is_verified);
+                        console.log('  - verified:', profileData.verified);
+                        console.log('  - is_staff:', profileData.is_staff);
+                        console.log('  - verification_status:', profileData.verification_status);
+                        
+                        // Check if user is already verified through existing flags (improved detection)
+                        const isCurrentlyVerified = 
+                            profileData.is_verified === true || 
+                            profileData.verified === true || 
+                            profileData.is_staff === true || 
+                            profileData.is_superuser === true ||
+                            profileData.verification_status === 'approved' ||
+                            profileData.verification_status === 'verified' ||
+                            profileData.verification_approved === true;
+                        
+                        if (isCurrentlyVerified) {
+                            console.log('✅ Badge Util - User is verified!');
                             const verificationData = { 
                                 status: 'approved', 
                                 is_verified: true,
                                 application: {
-                                    business_name: profileData.business_name || 'Verified User',
+                                    business_name: profileData.business_name || 
+                                                  (profileData.first_name && profileData.last_name ? 
+                                                   `${profileData.first_name} ${profileData.last_name}` : 
+                                                   profileData.username || 'Verified User'),
                                     business_license: 'Legacy Verification',
-                                    created_at: profileData.date_joined || new Date().toISOString()
+                                    created_at: profileData.verified_at || profileData.date_joined || new Date().toISOString()
                                 }
                             };
                             
@@ -98,15 +119,26 @@ class VerificationBadgeUtil {
                 verificationData = await response.json();
             } else if (response.status === 404) {
                 // No verification application found, but user might still be verified in profile
-                if (profileData && (profileData.is_verified || profileData.verified)) {
-                    verificationData = { 
-                        status: 'approved', 
-                        is_verified: true,
-                        application: {
-                            business_name: 'Verified User',
-                            business_license: 'Legacy Verification'
-                        }
-                    };
+                if (profileData) {
+                    const isVerifiedInProfile = 
+                        profileData.is_verified === true || 
+                        profileData.verified === true || 
+                        profileData.verification_status === 'approved' ||
+                        profileData.verification_status === 'verified';
+                        
+                    if (isVerifiedInProfile) {
+                        console.log('✅ Badge Util - Found verification in profile despite 404');
+                        verificationData = { 
+                            status: 'approved', 
+                            is_verified: true,
+                            application: {
+                                business_name: 'Verified User',
+                                business_license: 'Legacy Verification'
+                            }
+                        };
+                    } else {
+                        verificationData = { status: 'not_applied', is_verified: false };
+                    }
                 } else {
                     verificationData = { status: 'not_applied', is_verified: false };
                 }
