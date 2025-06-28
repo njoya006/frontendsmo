@@ -1101,6 +1101,59 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize modal handlers
     setupModalHandlers();
+    
+    // ======= LOAD INITIAL RECIPES =======
+    console.log('🔄 Loading initial recipes...');
+    console.log('🔍 RecipesGrid element:', recipesGrid);
+    
+    if (!recipesGrid) {
+        console.error('❌ RecipesGrid element not found! Check HTML structure.');
+        console.log('🔍 Available recipe elements:', document.querySelectorAll('[id*="recipe"]'));
+    } else {
+        console.log('✅ RecipesGrid element found, proceeding with fetch...');
+    }
+    
+    // Check for force flags from diagnostic tool
+    const forceLoad = localStorage.getItem('forceLoadRecipes');
+    const loadFallback = localStorage.getItem('loadFallbackRecipes');
+    
+    if (forceLoad === 'true') {
+        console.log('🔧 Force load flag detected - forcing recipe load');
+        localStorage.removeItem('forceLoadRecipes'); // Clear flag
+    }
+    
+    if (loadFallback === 'true') {
+        console.log('🔧 Fallback flag detected - loading sample recipes');
+        localStorage.removeItem('loadFallbackRecipes'); // Clear flag
+        const fallbackRecipes = getFallbackRecipes();
+        allRecipes = fallbackRecipes;
+        recipeData = fallbackRecipes;
+        displayRecipes(fallbackRecipes);
+        console.log('✅ Sample recipes loaded via flag');
+    } else {
+        // Normal recipe loading
+        fetchRecipes().then(recipes => {
+            console.log('✅ Initial recipes loaded:', recipes.length);
+            console.log('🔍 First few recipes:', recipes.slice(0, 3));
+            allRecipes = recipes;
+            recipeData = recipes;
+            displayRecipes(recipes);
+            console.log('✅ Recipes displayed on page');
+        }).catch(error => {
+            console.error('❌ Initial fetch failed:', error);
+            console.log('🔄 Loading fallback recipes...');
+            // Display fallback recipes
+            const fallbackRecipes = getFallbackRecipes();
+            console.log('🔍 Fallback recipes:', fallbackRecipes.length);
+            allRecipes = fallbackRecipes;
+            recipeData = fallbackRecipes;
+            displayRecipes(fallbackRecipes);
+            console.log('✅ Fallback recipes displayed');
+        });
+    }
+    
+    // Initialize Create Recipe button based on user verification status
+    initializeCreateRecipeButton();
 
     // ======= QUICK DEBUG OVERRIDE =======
     
@@ -1187,8 +1240,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
+    // Force load recipes function for debugging
+    window.forceLoadRecipes = async function() {
+        console.log('🔧 FORCE LOADING RECIPES...');
+        console.log('🔍 RecipesGrid element:', document.getElementById('recipesGrid'));
+        
+        try {
+            const recipes = await fetchRecipes();
+            console.log('✅ Fetched recipes:', recipes.length);
+            
+            if (recipes.length > 0) {
+                allRecipes = recipes;
+                recipeData = recipes;
+                displayRecipes(recipes);
+                console.log('✅ Recipes displayed successfully');
+            } else {
+                console.log('⚠️ No recipes returned, loading fallback...');
+                const fallback = getFallbackRecipes();
+                allRecipes = fallback;
+                recipeData = fallback;
+                displayRecipes(fallback);
+                console.log('✅ Fallback recipes displayed');
+            }
+        } catch (error) {
+            console.error('❌ Force load failed:', error);
+            const fallback = getFallbackRecipes();
+            allRecipes = fallback;
+            recipeData = fallback;
+            displayRecipes(fallback);
+            console.log('✅ Emergency fallback recipes displayed');
+        }
+    };
+    
     console.log('🛠️ Test functions available in console:');
     console.log('  - testCreateRecipeButton() - Test the button functionality');
     console.log('  - forceShowCreateButton() - Force the button to appear');
+    console.log('  - forceLoadRecipes() - Force reload recipes from API or fallback');
 
 });
