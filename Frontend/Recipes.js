@@ -898,9 +898,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const verification = new UniversalVerification();
             const verificationStatus = await verification.getUniversalVerificationStatus();
             
-            console.log('✅ Verification status:', verificationStatus);
+            console.log('✅ Full verification status:', verificationStatus);
+            console.log('✅ Is verified?', verificationStatus.is_verified);
+            console.log('✅ Status:', verificationStatus.status);
+            console.log('✅ Source:', verificationStatus.source);
             
-            if (verificationStatus.is_verified) {
+            // Also check local storage for user data
+            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
+            console.log('🔑 Auth token exists?', !!authToken);
+            console.log('👤 User data:', userData ? JSON.parse(userData) : 'None');
+            
+            // Try multiple verification checks for debugging
+            const isVerifiedByFlag = verificationStatus.is_verified === true;
+            const isVerifiedByStatus = verificationStatus.status === 'approved' || verificationStatus.status === 'verified';
+            const hasVerificationSource = verificationStatus.source && verificationStatus.source !== 'none';
+            
+            console.log('🔍 Verification checks:');
+            console.log('  - By flag:', isVerifiedByFlag);
+            console.log('  - By status:', isVerifiedByStatus);
+            console.log('  - Has source:', hasVerificationSource);
+            
+            const isVerified = isVerifiedByFlag || isVerifiedByStatus || hasVerificationSource;
+            
+            if (isVerified) {
                 console.log('✅ User is verified - showing Create Recipe button');
                 
                 // Create the Create Recipe button
@@ -936,6 +957,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             } else {
                 console.log('❌ User is not verified - hiding Create Recipe button');
+                console.log('❌ Verification debug info:', {
+                    is_verified: verificationStatus.is_verified,
+                    status: verificationStatus.status,
+                    source: verificationStatus.source,
+                    data: verificationStatus
+                });
                 
                 // Show verification requirement message
                 const verificationNotice = document.createElement('div');
@@ -948,6 +975,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p style="margin: 8px 0 0 0; font-size: 14px;">
                                 Only verified users can create recipes. 
                                 <a href="verification.html" style="color: #1b5e20; text-decoration: underline;">Apply for verification</a>
+                            </p>
+                            <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">
+                                Debug: Status=${verificationStatus.status}, Flag=${verificationStatus.is_verified}, Source=${verificationStatus.source}
                             </p>
                         </div>
                     </div>
@@ -969,6 +999,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <strong>Login Required</strong>
                         <p style="margin: 8px 0 0 0; font-size: 14px;">
                             Please <a href="Login.html" style="color: #1b5e20; text-decoration: underline;">log in</a> to create recipes
+                        </p>
+                        <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">
+                            Error: ${error.message}
                         </p>
                     </div>
                 </div>
@@ -1015,7 +1048,70 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize modal handlers
     setupModalHandlers();
 
-    // ======= EXISTING FUNCTIONALITY =======
+    // ======= TEMPORARY DEBUG FUNCTIONS =======
+    
+    // Function to manually test verification status - for debugging only
+    window.testVerification = async function() {
+        try {
+            const verification = new UniversalVerification();
+            const status = await verification.getUniversalVerificationStatus();
+            console.log('🧪 Manual verification test result:', status);
+            
+            // Show in alert for easy viewing
+            alert(`Verification Status:
+            
+is_verified: ${status.is_verified}
+status: ${status.status}
+source: ${status.source}
+            
+Full data: ${JSON.stringify(status, null, 2)}`);
+            
+        } catch (error) {
+            console.error('🧪 Manual verification test error:', error);
+            alert('Error testing verification: ' + error.message);
+        }
+    };
+
+    // Function to force show create button - for testing only
+    window.forceShowCreateButton = function() {
+        console.log('🔧 Force showing Create Recipe button (debug)');
+        const container = document.getElementById('createRecipeButtonContainer');
+        if (container) {
+            container.innerHTML = '';  // Clear existing content
+            
+            const createButton = document.createElement('div');
+            createButton.className = 'create-recipe-section';
+            createButton.innerHTML = `
+                <div class="container" style="text-align: center; margin: 20px 0;">
+                    <button id="createRecipeBtn" class="create-recipe-btn">
+                        <i class="fas fa-plus-circle"></i>
+                        Create New Recipe
+                    </button>
+                    <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                        <i class="fas fa-wrench" style="color: #ff9800; margin-right: 5px;"></i>
+                        Debug mode: Button forced to show
+                    </p>
+                </div>
+            `;
+            
+            container.appendChild(createButton);
+            
+            // Add click event to open the modal
+            const createBtn = document.getElementById('createRecipeBtn');
+            if (createBtn) {
+                createBtn.addEventListener('click', function() {
+                    console.log('🎯 Create Recipe button clicked (debug mode)');
+                    const modal = document.getElementById('createRecipeModal');
+                    if (modal) {
+                        modal.style.display = 'block';
+                        document.body.style.overflow = 'hidden';
+                    }
+                });
+            }
+        }
+    };
+
+    // ======= EXISTING FUNCTIONS =======
     
     // Initial load: fetch from backend
     fetchRecipes().then(recipes => {
