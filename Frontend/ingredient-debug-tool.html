@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Ingredient Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .debug-output { background: #f5f5f5; padding: 10px; white-space: pre-wrap; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Recipe Ingredient Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>Recipe ID Test</h3>
+        <input type="number" id="recipeId" value="1" placeholder="Enter recipe ID">
+        <button onclick="testRecipeIngredients()">Test Recipe Ingredients</button>
+    </div>
+    
+    <div class="debug-section">
+        <h3>API Response</h3>
+        <div id="apiResponse" class="debug-output"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Parsed Ingredients</h3>
+        <div id="parsedIngredients" class="debug-output"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Ingredient Display</h3>
+        <ul id="ingredientsList"></ul>
+    </div>
+
+    <script src="enhanced-recipe-api.js"></script>
+    <script src="ingredient-parser.js"></script>
+    <script>
+        const API_BASE_URL = 'https://njoya.pythonanywhere.com';
+        
+        function getHeaders() {
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+
+            if (token) {
+                headers['Authorization'] = token.startsWith('Token ') ? token : `Token ${token}`;
+            }
+
+            return headers;
+        }
+        
+        async function testRecipeIngredients() {
+            const recipeId = document.getElementById('recipeId').value;
+            const apiResponse = document.getElementById('apiResponse');
+            const parsedIngredients = document.getElementById('parsedIngredients');
+            const ingredientsList = document.getElementById('ingredientsList');
+            
+            try {
+                apiResponse.innerHTML = '<div class="info">Loading...</div>';
+                parsedIngredients.innerHTML = '';
+                ingredientsList.innerHTML = '';
+                
+                // Fetch recipe data
+                const response = await fetch(`${API_BASE_URL}/api/recipes/${recipeId}/`, {
+                    headers: getHeaders()
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const recipe = await response.json();
+                
+                // Display raw API response
+                apiResponse.innerHTML = `<div class="success">Success!</div>\n${JSON.stringify(recipe, null, 2)}`;
+                
+                // Parse ingredients
+                let ingredients = [];
+                
+                // Check different possible ingredient fields
+                const ingredientFields = ['ingredients', 'ingredient_list', 'recipe_ingredients', 'ingredients_text'];
+                
+                for (const field of ingredientFields) {
+                    if (recipe[field]) {
+                        ingredients = recipe[field];
+                        parsedIngredients.innerHTML = `<div class="info">Found ingredients in field: ${field}</div>\n${JSON.stringify(ingredients, null, 2)}`;
+                        break;
+                    }
+                }
+                
+                // Parse ingredients with advanced parser
+                const parser = new IngredientParser();
+                let enhancedIngredients = parser.parseIngredients(ingredients, recipe.title || recipe.name);
+                
+                parsedIngredients.innerHTML += `\n\n<div class="success">Parsed with IngredientParser (${enhancedIngredients.length} ingredients):</div>\n${JSON.stringify(enhancedIngredients, null, 2)}`;
+                
+                // Display ingredients
+                const ingredientItems = enhancedIngredients.map((ingredient, index) => {
+                    return `<li><strong>${ingredient}</strong></li>`;
+                }).join('');
+                
+                ingredientsList.innerHTML = ingredientItems;
+                
+            } catch (error) {
+                apiResponse.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Auto-test with recipe ID 1 on page load
+        window.addEventListener('load', () => {
+            testRecipeIngredients();
+        });
+    </script>
+</body>
+</html>

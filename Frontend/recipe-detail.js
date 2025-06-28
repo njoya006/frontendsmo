@@ -1,6 +1,9 @@
 // Enhanced Recipe Detail JavaScript
 class RecipeDetailManager {
     constructor() {
+        // Initialize ingredient parser
+        this.ingredientParser = new IngredientParser();
+        
         // Check if utils.js is loaded, use fallback if not
         if (typeof RecipeAPI !== 'undefined') {
             // Use production URL only
@@ -12,6 +15,7 @@ class RecipeDetailManager {
         } else {
             console.warn('RecipeAPI not found. Using mock data for demonstration.');
             this.useAPI = false;
+            this.baseUrl = 'https://njoya.pythonanywhere.com';
         }
         
         this.currentRecipe = null;
@@ -69,17 +73,19 @@ class RecipeDetailManager {
         console.log('🔍 Loading recipe with ID:', this.recipeId);
 
         try {
-            // Use enhanced recipe API if available, otherwise fallback to regular API
             let recipe;
             
+            // Use enhanced recipe API if available, otherwise fallback to regular API
             if (window.enhancedRecipeAPI) {
-                console.log('� Using enhanced recipe API for better ingredient parsing');
+                console.log('🚀 Using enhanced recipe API for better ingredient parsing');
                 recipe = await window.enhancedRecipeAPI.getRecipe(this.recipeId);
             } else if (this.useAPI) {
                 console.log('📡 Using standard recipe API');
                 recipe = await this.recipeAPI.getRecipe(this.recipeId);
             } else {
-                throw new Error('No recipe API available');
+                // Fallback to direct API call with enhanced ingredient processing
+                console.log('📡 Using direct API call with enhanced processing');
+                recipe = await this.fetchAndProcessRecipe(this.recipeId);
             }
             
             console.log('✅ Recipe data received:', recipe);
@@ -91,6 +97,9 @@ class RecipeDetailManager {
             if (!recipe.id && !recipe.title && !recipe.name) {
                 throw new Error('Invalid recipe data structure');
             }
+
+            // Additional ingredient processing to ensure we have all ingredients
+            recipe = await this.enhanceRecipeIngredients(recipe);
 
             // Success - render the recipe
             this.currentRecipe = recipe;
@@ -125,6 +134,123 @@ class RecipeDetailManager {
         }
     }
 
+    // Enhanced recipe ingredient processing
+    async enhanceRecipeIngredients(recipe) {
+        console.log('🔧 Enhancing recipe ingredients:', recipe.title);
+        
+        // Use the advanced ingredient parser
+        const ingredients = this.ingredientParser.parseIngredients(
+            recipe.ingredients, 
+            recipe.title || recipe.name
+        );
+        
+        if (ingredients && ingredients.length > 0) {
+            console.log('✅ Successfully parsed ingredients:', ingredients.length);
+            recipe.ingredients = ingredients;
+            return recipe;
+        }
+
+        // Try to get ingredients from separate API endpoint
+        try {
+            const ingredientsResponse = await fetch(`${this.baseUrl}/api/recipes/${recipe.id}/ingredients/`, {
+                headers: this.getHeaders()
+            });
+            
+            if (ingredientsResponse.ok) {
+                const apiIngredients = await ingredientsResponse.json();
+                console.log('🍯 Fetched ingredients from separate endpoint:', apiIngredients);
+                const parsedIngredients = this.ingredientParser.parseIngredients(apiIngredients, recipe.title);
+                recipe.ingredients = parsedIngredients;
+                return recipe;
+            }
+        } catch (error) {
+            console.log('ℹ️ No separate ingredients endpoint available');
+        }
+
+        // Try to parse ingredients from text fields using the advanced parser
+        const textFields = ['description', 'instructions', 'method', 'summary'];
+        for (const field of textFields) {
+            if (recipe[field]) {
+                const extractedIngredients = this.ingredientParser.extractIngredientsFromText(recipe[field]);
+                if (extractedIngredients.length > 0) {
+                    console.log(`🔍 Extracted ${extractedIngredients.length} ingredients from ${field}`);
+                    recipe.ingredients = extractedIngredients;
+                    return recipe;
+                }
+            }
+        }
+
+        // Use the parser's fallback system
+        console.log('⚠️ Using advanced parser fallback');
+        recipe.ingredients = this.ingredientParser.createFallbackIngredients(recipe.title || recipe.name);
+        
+        return recipe;
+    }
+
+    // Fallback recipe fetching with enhanced processing
+    async fetchAndProcessRecipe(recipeId) {
+        const response = await fetch(`${this.baseUrl}/api/recipes/${recipeId}/`, {
+            headers: this.getHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const recipe = await response.json();
+        console.log('📝 Raw recipe data:', recipe);
+
+        return recipe;
+    }
+
+    // Extract ingredients from text using common patterns
+    extractIngredientsFromText(text) {
+        if (!text || typeof text !== 'string') return [];
+
+        const ingredients = [];
+        const lines = text.split('\n');
+        
+        for (const line of lines) {
+            const trimmed = line.trim();
+            
+            // Look for lines that might be ingredients
+            if (this.looksLikeIngredient(trimmed)) {
+                ingredients.push(trimmed);
+            }
+        }
+
+        return ingredients;
+    }
+
+    // Check if a line looks like an ingredient
+    looksLikeIngredient(line) {
+        if (!line || line.length < 3) return false;
+        
+        // Common ingredient patterns
+        const ingredientPatterns = [
+            /^\d+\s*(cup|cups|tbsp|tsp|oz|lb|g|kg|ml|l)/i, // Measurements
+            /^\d+\s*\w+\s+\w+/, // Number + unit + ingredient
+            /^(salt|pepper|oil|butter|flour|sugar|milk|egg|water|onion|garlic|tomato)/i, // Common ingredients
+            /^-\s*\w+/, // Bulleted lists
+            /^\*\s*\w+/, // Starred lists
+        ];
+
+        return ingredientPatterns.some(pattern => pattern.test(line));
+    }
+
+    getHeaders() {
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+
+        if (token) {
+            headers['Authorization'] = token.startsWith('Token ') ? token : `Token ${token}`;
+        }
+
+        return headers;
+    }
+
     getMockRecipe(id) {
         // Mock recipe data for testing
         const mockRecipes = {
@@ -148,55 +274,31 @@ class RecipeDetailManager {
                     { ingredient_name: "Curry powder", quantity: "2", unit: "tbsp" },
                     { ingredient_name: "Turmeric", quantity: "1", unit: "tsp" },
                     { ingredient_name: "Salt", quantity: "1", unit: "tsp" },
-                    { ingredient_name: "Vegetable oil", quantity: "2", unit: "tbsp" }
+                    { ingredient_name: "Vegetable oil", quantity: "3", unit: "tbsp" },
+                    { ingredient_name: "Fresh cilantro", quantity: "1/4", unit: "cup" }
                 ],
-                instructions: "1. Heat oil in a large pan over medium heat.\n2. Add chopped onions and cook until golden.\n3. Add minced garlic and ginger, cook for 1 minute.\n4. Add curry powder and turmeric, stir for 30 seconds.\n5. Add chicken pieces and brown on all sides.\n6. Pour in coconut milk and bring to a simmer.\n7. Season with salt and cook for 20-25 minutes until chicken is tender.\n8. Serve hot with rice or naan bread.",
-                contributor: {
-                    username: "ChefMaster",
-                    name: "Chef Master",
-                    bio: "Professional chef with 10+ years experience"
-                }
-            },
-            2: {
-                id: 2,
-                title: "Ndole",
-                description: "Traditional Cameroonian dish with groundnut paste and bitter leaves.",
-                image: "images/Ndole & Miondo.jpg",
-                prep_time: 45,
-                cooking_time: 60,
-                servings: 6,
-                calories: 420,
-                difficulty: "Hard",
-                meal_type: "Lunch",
-                ingredients: [
-                    { ingredient_name: "Bitter leaves", quantity: "2", unit: "cups" },
-                    { ingredient_name: "Groundnut paste", quantity: "1", unit: "cup" },
-                    { ingredient_name: "Dried fish", quantity: "3", unit: "pieces" },
-                    { ingredient_name: "Beef", quantity: "500", unit: "g" },
-                    { ingredient_name: "Crayfish", quantity: "3", unit: "tbsp" }
-                ],
-                instructions: "Traditional Cameroonian cooking method with detailed steps...",
-                contributor: {
-                    username: "CameroonChef",
-                    name: "Traditional Chef",
-                    bio: "Specialist in Cameroonian cuisine"
+                instructions: "1. Heat oil in a large pan over medium heat.\n2. Add onions and cook until soft.\n3. Add garlic, ginger, curry powder, and turmeric. Cook for 1 minute.\n4. Add chicken and cook until browned.\n5. Pour in coconut milk and bring to a simmer.\n6. Cook for 20-25 minutes until chicken is cooked through.\n7. Season with salt and garnish with cilantro.\n8. Serve with rice or naan bread.",
+                created_by: {
+                    username: "ChefDemo",
+                    first_name: "Demo",
+                    last_name: "Chef"
                 }
             }
         };
-        
-        return mockRecipes[id] || mockRecipes[1];
+
+        return mockRecipes[id] || null;
     }
 
     renderRecipe(recipe) {
         console.log('🎨 Rendering recipe:', recipe.title || recipe.name);
         
-        // Set hero image and title
-        const imageUrl = this.getImageUrl(recipe.image);
-        if (imageUrl && this.heroImage) {
-            this.heroImage.src = imageUrl;
-            this.heroImage.alt = recipe.title || recipe.name || 'Recipe Image';
+        // Set hero image
+        if (this.heroImage && recipe.image) {
+            this.heroImage.src = this.getImageUrl(recipe.image);
+            this.heroImage.alt = recipe.title || recipe.name || 'Recipe image';
         }
         
+        // Set title and subtitle
         if (this.recipeTitle) {
             this.recipeTitle.textContent = recipe.title || recipe.name || 'Untitled Recipe';
         }
@@ -233,52 +335,56 @@ class RecipeDetailManager {
         }
         
         if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
-            console.log('❌ No valid ingredients array found');
-            this.ingredientsList.innerHTML = '<li class="ingredient-item"><span class="ingredient-name">No ingredients listed</span></li>';
-            return;
+            console.log('❌ No valid ingredients array found, using parser fallback');
+            const fallbackIngredients = this.ingredientParser.createFallbackIngredients(
+                this.currentRecipe?.title || this.currentRecipe?.name || ''
+            );
+            ingredients = fallbackIngredients;
         }
 
         console.log(`✅ Processing ${ingredients.length} ingredients`);
 
         const ingredientItems = ingredients.map((ingredient, index) => {
-            let name, quantity = '';
+            let displayText = '';
             
             if (typeof ingredient === 'string') {
-                name = ingredient;
-                console.log(`String ingredient ${index + 1}: "${name}"`);
+                displayText = ingredient;
+                console.log(`String ingredient ${index + 1}: "${displayText}"`);
             } else if (typeof ingredient === 'object' && ingredient !== null) {
-                // Extract name - try common field names
-                name = ingredient.ingredient_name || 
-                       ingredient.name || 
-                       ingredient.title || 
-                       ingredient.item ||
-                       ingredient.display_name ||
-                       (ingredient.ingredient && ingredient.ingredient.name) ||
-                       (ingredient.ingredient && ingredient.ingredient.ingredient_name) ||
-                       `Ingredient ${index + 1}`;
-                
-                // Extract quantity and unit
-                const qty = ingredient.quantity || ingredient.amount || ingredient.qty || '';
-                const unit = ingredient.unit || ingredient.units || ingredient.measurement || '';
-                
-                if (qty && unit) {
-                    quantity = `${qty} ${unit}`;
-                } else if (qty) {
-                    quantity = qty.toString();
-                }
-                
-                console.log(`Object ingredient ${index + 1}:`, { name, quantity, original: ingredient });
+                // Use the advanced parser to format complex ingredient objects
+                displayText = this.ingredientParser.parseIngredientObject(ingredient);
+                console.log(`Object ingredient ${index + 1}:`, { displayText, original: ingredient });
             } else {
-                name = `Unknown ingredient ${index + 1}`;
+                displayText = `Ingredient ${index + 1}`;
                 console.log(`Unknown ingredient type ${index + 1}:`, typeof ingredient);
             }
 
-            return `
-                <li class="ingredient-item">
-                    <span class="ingredient-name">${name}</span>
-                    ${quantity ? `<span class="ingredient-quantity">${quantity}</span>` : ''}
-                </li>
-            `;
+            // Clean up the display text
+            displayText = displayText.trim();
+            if (!displayText) {
+                displayText = `Ingredient ${index + 1}`;
+            }
+
+            // Split quantity and name for better formatting
+            const parts = displayText.split(' ');
+            const hasQuantity = parts.length > 1 && (/\d/.test(parts[0]) || /\d/.test(parts[1]));
+            
+            if (hasQuantity && parts.length >= 3) {
+                const quantity = `${parts[0]} ${parts[1]}`;
+                const name = parts.slice(2).join(' ');
+                return `
+                    <li class="ingredient-item">
+                        <span class="ingredient-name">${name}</span>
+                        <span class="ingredient-quantity">${quantity}</span>
+                    </li>
+                `;
+            } else {
+                return `
+                    <li class="ingredient-item">
+                        <span class="ingredient-name">${displayText}</span>
+                    </li>
+                `;
+            }
         }).join('');
 
         this.ingredientsList.innerHTML = ingredientItems;
@@ -323,14 +429,14 @@ class RecipeDetailManager {
     }
 
     getImageUrl(imagePath) {
-        if (!imagePath) return null;
+        if (!imagePath) return 'assets/default-recipe.jpg';
         
         if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
             return imagePath;
         }
         
         if (imagePath.startsWith('/')) {
-            return imagePath;
+            return this.baseUrl + imagePath;
         }
         
         return imagePath;
@@ -338,7 +444,7 @@ class RecipeDetailManager {
 
     showLoading() {
         if (this.loadingSpinner) {
-            this.loadingSpinner.style.display = 'flex';
+            this.loadingSpinner.classList.remove('hidden');
         }
         if (this.recipeContent) {
             this.recipeContent.classList.add('hidden');
@@ -350,29 +456,32 @@ class RecipeDetailManager {
 
     hideLoading() {
         if (this.loadingSpinner) {
-            this.loadingSpinner.style.display = 'none';
+            this.loadingSpinner.classList.add('hidden');
         }
     }
 
     showError(message) {
-        if (this.errorMessage) {
-            this.errorMessage.textContent = message;
-        }
         if (this.errorState) {
             this.errorState.classList.remove('hidden');
+            if (this.errorMessage) {
+                this.errorMessage.textContent = message;
+            }
         }
         if (this.recipeContent) {
             this.recipeContent.classList.add('hidden');
+        }
+        if (this.loadingSpinner) {
+            this.loadingSpinner.classList.add('hidden');
         }
     }
 
     showToast(message, type = 'info') {
         console.log(`Toast (${type}): ${message}`);
+        // Toast implementation would go here
     }
 }
 
-// Initialize when DOM is loaded
+// Initialize the recipe detail manager when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DOM loaded, initializing RecipeDetailManager...');
-    window.recipeDetailManager = new RecipeDetailManager();
+    new RecipeDetailManager();
 });

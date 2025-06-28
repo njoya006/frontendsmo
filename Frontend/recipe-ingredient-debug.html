@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Ingredient Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .debug-title { font-weight: bold; color: #333; margin-bottom: 10px; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .error { color: red; }
+        .success { color: green; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>Recipe Ingredient Debug Tool</h1>
+    
+    <div class="debug-section">
+        <div class="debug-title">Recipe ID Input:</div>
+        <input type="number" id="recipeId" placeholder="Enter Recipe ID" value="1">
+        <button onclick="debugRecipe()">Debug Recipe</button>
+        <button onclick="listAllRecipes()">List All Recipes</button>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">Debug Output:</div>
+        <div id="debugOutput"></div>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">Raw API Response:</div>
+        <pre id="rawResponse"></pre>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">Parsed Ingredients:</div>
+        <pre id="parsedIngredients"></pre>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://njoya.pythonanywhere.com/api';
+        
+        async function debugRecipe() {
+            const recipeId = document.getElementById('recipeId').value;
+            const output = document.getElementById('debugOutput');
+            const rawResponse = document.getElementById('rawResponse');
+            const parsedIngredients = document.getElementById('parsedIngredients');
+            
+            output.innerHTML = '<div class="warning">Loading...</div>';
+            
+            try {
+                // Get auth token
+                const token = localStorage.getItem('authToken');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Token ${token}`;
+                }
+                
+                // Fetch recipe
+                const response = await fetch(`${API_BASE_URL}/recipes/${recipeId}/`, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                output.innerHTML = `<div class="success">Status: ${response.status} ${response.statusText}</div>`;
+                
+                const data = await response.json();
+                rawResponse.textContent = JSON.stringify(data, null, 2);
+                
+                // Debug ingredients specifically
+                console.log('Full recipe object:', data);
+                console.log('Ingredients field:', data.ingredients);
+                console.log('Type of ingredients:', typeof data.ingredients);
+                
+                if (data.ingredients) {
+                    if (Array.isArray(data.ingredients)) {
+                        console.log('Ingredients array length:', data.ingredients.length);
+                        data.ingredients.forEach((ing, index) => {
+                            console.log(`Ingredient ${index}:`, ing);
+                            console.log(`Type: ${typeof ing}`);
+                            if (typeof ing === 'object') {
+                                console.log('Object keys:', Object.keys(ing));
+                            }
+                        });
+                    }
+                    
+                    parsedIngredients.textContent = JSON.stringify(data.ingredients, null, 2);
+                } else {
+                    // Check other possible fields
+                    const possibleFields = ['ingredient_list', 'recipe_ingredients', 'ingredients_text', 'ingredient_data'];
+                    let foundField = null;
+                    
+                    for (const field of possibleFields) {
+                        if (data[field]) {
+                            foundField = field;
+                            console.log(`Found ingredients in field '${field}':`, data[field]);
+                            parsedIngredients.textContent = JSON.stringify({
+                                field: field,
+                                data: data[field]
+                            }, null, 2);
+                            break;
+                        }
+                    }
+                    
+                    if (!foundField) {
+                        parsedIngredients.textContent = 'No ingredient field found. Recipe fields: ' + Object.keys(data).join(', ');
+                    }
+                }
+                
+            } catch (error) {
+                output.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                console.error('Debug error:', error);
+            }
+        }
+        
+        async function listAllRecipes() {
+            const output = document.getElementById('debugOutput');
+            const rawResponse = document.getElementById('rawResponse');
+            
+            output.innerHTML = '<div class="warning">Loading recipes list...</div>';
+            
+            try {
+                const token = localStorage.getItem('authToken');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Token ${token}`;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/recipes/`, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                const data = await response.json();
+                output.innerHTML = `<div class="success">Found ${data.length || data.results?.length || 0} recipes</div>`;
+                
+                // Show first few recipes with their ingredient structure
+                const recipesToShow = data.results || data;
+                const summary = recipesToShow.slice(0, 5).map(recipe => ({
+                    id: recipe.id,
+                    title: recipe.title || recipe.name,
+                    has_ingredients: !!recipe.ingredients,
+                    ingredients_type: typeof recipe.ingredients,
+                    ingredients_length: Array.isArray(recipe.ingredients) ? recipe.ingredients.length : 'N/A',
+                    ingredient_sample: Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 ? recipe.ingredients[0] : null
+                }));
+                
+                rawResponse.textContent = JSON.stringify(summary, null, 2);
+                
+            } catch (error) {
+                output.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                console.error('List recipes error:', error);
+            }
+        }
+        
+        // Auto-debug on load if recipe ID in URL
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const recipeId = urlParams.get('id');
+            if (recipeId) {
+                document.getElementById('recipeId').value = recipeId;
+                debugRecipe();
+            }
+        });
+    </script>
+</body>
+</html>
