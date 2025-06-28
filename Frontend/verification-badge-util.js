@@ -35,7 +35,7 @@ class VerificationBadgeUtil {
         return Date.now() - cacheEntry.timestamp < this.cacheExpiration;
     }
 
-    // Get verification status with caching
+    // Get verification status with caching - enhanced with universal verification
     async getVerificationStatus(userId = null) {
         const cacheKey = userId || 'current-user';
         const cached = this.verificationCache.get(cacheKey);
@@ -67,6 +67,33 @@ class VerificationBadgeUtil {
                 }
             }
 
+            // Use universal verification system if available
+            if (window.universalVerification) {
+                console.log('🔍 Badge Util - Using universal verification system...');
+                
+                let universalStatus;
+                if (userId) {
+                    universalStatus = await window.universalVerification.getUserVerificationStatus(userId);
+                } else {
+                    universalStatus = await window.universalVerification.getCurrentUserVerificationStatus();
+                }
+                
+                if (universalStatus && universalStatus.status !== 'error') {
+                    console.log('✅ Badge Util - Universal verification result:', universalStatus);
+                    
+                    // Cache the result
+                    this.verificationCache.set(cacheKey, {
+                        data: universalStatus,
+                        timestamp: Date.now()
+                    });
+                    
+                    return universalStatus;
+                }
+            }
+
+            // Fallback to original comprehensive logic
+            console.log('🔍 Badge Util - Falling back to original verification logic...');
+
             // First check user profile for existing verification flags
             let profileData = null;
             if (!userId) {
@@ -86,7 +113,7 @@ class VerificationBadgeUtil {
                         console.log('  - is_staff:', profileData.is_staff);
                         console.log('  - verification_status:', profileData.verification_status);
                         
-                        // Check if user is already verified through existing flags (improved detection)
+                        // Check if user is already verified through existing flags (enhanced detection)
                         const isCurrentlyVerified = 
                             profileData.is_verified === true || 
                             profileData.verified === true || 
@@ -94,7 +121,44 @@ class VerificationBadgeUtil {
                             profileData.is_superuser === true ||
                             profileData.verification_status === 'approved' ||
                             profileData.verification_status === 'verified' ||
-                            profileData.verification_approved === true;
+                            profileData.verification_approved === true ||
+                            
+                            // Nested profile object checks
+                            profileData.profile?.is_verified === true ||
+                            profileData.profile?.verified === true ||
+                            profileData.profile?.verification_status === 'approved' ||
+                            
+                            // User verification field variations
+                            profileData.user_verification === 'approved' ||
+                            profileData.user_verification === true ||
+                            profileData.user_verified === true ||
+                            profileData.verified_user === true ||
+                            
+                            // Staff/admin status (with confirmation they should be verified)
+                            (profileData.is_staff === true && this.shouldStaffBeVerified(profileData)) ||
+                            (profileData.is_superuser === true && this.shouldSuperuserBeVerified(profileData)) ||
+                            
+                            // Group-based verification
+                            this.checkVerificationFromGroups(profileData) ||
+                            
+                            // Role-based verification
+                            this.checkVerificationFromRoles(profileData) ||
+                            
+                            // Custom field patterns (common in different frameworks)
+                            profileData.account_verified === true ||
+                            profileData.email_verified === true && profileData.profile_verified === true ||
+                            
+                            // Business/contributor specific flags
+                            profileData.is_contributor === true ||
+                            profileData.contributor_status === 'verified' ||
+                            profileData.business_verified === true ||
+                            
+                            // Date-based verification (if verified_at exists, user is verified)
+                            (profileData.verified_at && new Date(profileData.verified_at) <= new Date()) ||
+                            (profileData.verification_date && new Date(profileData.verification_date) <= new Date()) ||
+                            
+                            // Fuzzy verification detection as fallback
+                            this.fuzzyVerificationDetection(profileData);
                         
                         if (isCurrentlyVerified) {
                             console.log('✅ Badge Util - User is verified!');
@@ -146,7 +210,13 @@ class VerificationBadgeUtil {
                         profileData.is_verified === true || 
                         profileData.verified === true || 
                         profileData.verification_status === 'approved' ||
-                        profileData.verification_status === 'verified';
+                        profileData.verification_status === 'verified' ||
+                        profileData.verification_approved === true ||
+                        profileData.is_staff === true ||
+                        profileData.is_superuser === true ||
+                        this.checkVerificationFromGroups(profileData) ||
+                        this.checkVerificationFromRoles(profileData) ||
+                        this.fuzzyVerificationDetection(profileData);
                         
                     if (isVerifiedInProfile) {
                         console.log('✅ Badge Util - Found verification in profile despite 404');
@@ -491,6 +561,76 @@ class VerificationBadgeUtil {
         this.clearCache();
         await this.initializeOnCurrentPage();
     }
+
+    // Helper method: Check if staff should be considered verified
+    shouldStaffBeVerified(profileData) {
+        return profileData.is_staff === true && !profileData.verification_revoked;
+    }
+
+    // Helper method: Check if superuser should be considered verified
+    shouldSuperuserBeVerified(profileData) {
+        return profileData.is_superuser === true && !profileData.verification_revoked;
+    }
+
+    // Helper method: Check verification from user groups
+    checkVerificationFromGroups(profileData) {
+        if (!profileData.groups || !Array.isArray(profileData.groups)) {
+            return false;
+        }
+
+        const verificationGroups = ['verified', 'contributors', 'verified_users', 'business_verified', 'moderators'];
+        return profileData.groups.some(group => {
+            const groupName = typeof group === 'string' ? group : group.name;
+            return verificationGroups.some(vGroup => 
+                groupName.toLowerCase().includes(vGroup.toLowerCase())
+            );
+        });
+    }
+
+    // Helper method: Check verification from user roles
+    checkVerificationFromRoles(profileData) {
+        if (!profileData.roles && !profileData.role) {
+            return false;
+        }
+
+        const roles = profileData.roles || [profileData.role];
+        const verificationRoles = ['verified', 'contributor', 'business', 'moderator', 'chef', 'cook'];
+        
+        return roles.some(role => {
+            const roleName = typeof role === 'string' ? role : role.name;
+            return verificationRoles.some(vRole => 
+                roleName.toLowerCase().includes(vRole.toLowerCase())
+            );
+        });
+    }
+
+    // Enhanced verification detection with fuzzy matching
+    fuzzyVerificationDetection(profileData) {
+        console.log('🔍 Badge Util - Running fuzzy verification detection...');
+        
+        const profileText = JSON.stringify(profileData).toLowerCase();
+        
+        const verificationPatterns = [
+            'verified.*true',
+            'verification.*approv',
+            'verification.*success',
+            'status.*verified',
+            'verified.*user',
+            'contributor.*verified',
+            'business.*verified',
+            'account.*verified'
+        ];
+
+        for (const pattern of verificationPatterns) {
+            const regex = new RegExp(pattern, 'i');
+            if (regex.test(profileText)) {
+                console.log('✅ Badge Util - Fuzzy match found:', pattern);
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 // Global verification badge utility instance
@@ -522,6 +662,17 @@ window.addEventListener('load', () => {
         }
     }, 1000);
 });
+
+// Load universal verification if not already loaded
+if (!window.universalVerification) {
+    // Dynamically load universal verification script
+    const script = document.createElement('script');
+    script.src = 'universal-verification.js';
+    script.onload = () => {
+        console.log('✅ Universal verification loaded dynamically');
+    };
+    document.head.appendChild(script);
+}
 
 // Expose utility globally for other scripts
 window.verificationBadgeUtil = verificationBadgeUtil;

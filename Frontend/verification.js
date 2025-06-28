@@ -114,7 +114,7 @@ class VerificationSystem {
         }
     }
 
-    // Check user's verification status
+    // Check user's verification status using universal verification logic
     async checkVerificationStatus() {
         try {
             // Check for manual override first (for testing/admin purposes)
@@ -130,6 +130,23 @@ class VerificationSystem {
                 }
             }
 
+            // Use universal verification system for comprehensive detection
+            if (window.universalVerification) {
+                console.log('🔍 Using universal verification system...');
+                const universalStatus = await window.universalVerification.getCurrentUserVerificationStatus();
+                
+                console.log('🔍 Universal verification result:', universalStatus);
+                
+                if (universalStatus.is_verified) {
+                    console.log('✅ User is verified via universal system!');
+                    console.log('✅ Verification source:', universalStatus.verification_source);
+                    return universalStatus;
+                }
+            }
+
+            // Fallback to original logic if universal system is not available
+            console.log('🔍 Falling back to original verification check...');
+            
             // First check if user has verification status in their profile
             const profileResponse = await fetch(`${this.baseUrl}/api/users/profile/`, {
                 headers: this.getHeaders()
@@ -149,49 +166,122 @@ class VerificationSystem {
                 console.log('  - verified_at:', profileData.verified_at);
                 console.log('  - verification_approved:', profileData.verification_approved);
                 
-                // Check if user is currently verified through any possible flags
+                // Enhanced verification detection for various backend patterns
                 const isCurrentlyVerified = 
+                    // Standard verification flags
                     profileData.is_verified === true || 
                     profileData.verified === true || 
-                    profileData.is_staff === true || 
-                    profileData.is_superuser === true ||
                     profileData.verification_status === 'approved' ||
                     profileData.verification_status === 'verified' ||
                     profileData.verification_approved === true ||
-                    // Additional checks for common backend implementations
+                    
+                    // Nested profile object checks
                     profileData.profile?.is_verified === true ||
                     profileData.profile?.verified === true ||
+                    profileData.profile?.verification_status === 'approved' ||
+                    
+                    // User verification field variations
                     profileData.user_verification === 'approved' ||
                     profileData.user_verification === true ||
-                    // Check if username indicates verification (temporary solution)
-                    (profileData.username && profileData.username.toLowerCase().includes('admin')) ||
-                    // Check if user has special roles or permissions that indicate verification
-                    (profileData.groups && profileData.groups.some(group => 
-                        group.name && (group.name.toLowerCase().includes('verified') || 
-                                      group.name.toLowerCase().includes('contributor'))
-                    ));
+                    profileData.user_verified === true ||
+                    profileData.verified_user === true ||
+                    
+                    // Staff/admin status (with confirmation they should be verified)
+                    (profileData.is_staff === true && this.shouldStaffBeVerified(profileData)) ||
+                    (profileData.is_superuser === true && this.shouldSuperuserBeVerified(profileData)) ||
+                    
+                    // Group-based verification
+                    this.checkVerificationFromGroups(profileData) ||
+                    
+                    // Role-based verification
+                    this.checkVerificationFromRoles(profileData) ||
+                    
+                    // Custom field patterns (common in different frameworks)
+                    profileData.account_verified === true ||
+                    profileData.email_verified === true && profileData.profile_verified === true ||
+                    
+                    // Business/contributor specific flags
+                    profileData.is_contributor === true ||
+                    profileData.contributor_status === 'verified' ||
+                    profileData.business_verified === true ||
+                    
+                    // Date-based verification (if verified_at exists, user is verified)
+                    (profileData.verified_at && new Date(profileData.verified_at) <= new Date()) ||
+                    (profileData.verification_date && new Date(profileData.verification_date) <= new Date()) ||
+                    
+                    // Fuzzy verification detection as fallback
+                    this.fuzzyVerificationDetection(profileData);
                 
-                console.log('🎯 Final verification status:', isCurrentlyVerified);
+                console.log('🎯 Enhanced verification check result:', isCurrentlyVerified);
                 
-                // TEMPORARY FIX: If no verification flags exist but user is admin/superuser by name or role
+                // Enhanced detection: Check various verification patterns and special user types
                 if (!isCurrentlyVerified) {
-                    const tempVerification = 
+                    // Check for special user types that should be automatically verified
+                    const autoVerifiedConditions = 
+                        // Admin/Staff verification (they can verify themselves)
+                        profileData.is_staff === true ||
+                        profileData.is_superuser === true ||
+                        
+                        // Special usernames that indicate verified status
                         profileData.username === 'admin' ||
                         profileData.username === 'njoya' ||
                         profileData.email?.includes('admin') ||
-                        profileData.is_staff === true ||
-                        profileData.is_superuser === true;
+                        
+                        // Business or contributor accounts with specific patterns
+                        profileData.account_type === 'business' ||
+                        profileData.account_type === 'contributor' ||
+                        profileData.user_type === 'verified' ||
+                        profileData.user_type === 'business' ||
+                        
+                        // Group-based verification
+                        this.checkVerificationFromGroups(profileData) ||
+                        
+                        // Role-based verification
+                        this.checkVerificationFromRoles(profileData) ||
+                        
+                        // Permission-based verification
+                        this.checkVerificationFromPermissions(profileData) ||
+                        
+                        // Date-based verification (if they have a verification date in the past)
+                        (profileData.verified_at && new Date(profileData.verified_at) <= new Date()) ||
+                        (profileData.verification_date && new Date(profileData.verification_date) <= new Date()) ||
+                        
+                        // Legacy verification patterns
+                        profileData.legacy_verified === true ||
+                        profileData.migrated_verified === true ||
+                        
+                        // Business-specific verification flags
+                        profileData.business_verified === true ||
+                        profileData.is_business_owner === true ||
+                        profileData.business_license_verified === true ||
+                        
+                        // Content creator verification
+                        profileData.content_creator_verified === true ||
+                        profileData.chef_verified === true ||
+                        profileData.recipe_contributor === true ||
+                        
+                        // Enhanced fuzzy detection
+                        this.fuzzyVerificationDetection(profileData);
                     
-                    if (tempVerification) {
-                        console.log('🔧 TEMPORARY: Admin user detected, treating as verified');
+                    if (autoVerifiedConditions) {
+                        const userDisplayName = profileData.business_name || 
+                                              (profileData.first_name && profileData.last_name ? 
+                                               `${profileData.first_name} ${profileData.last_name}` : 
+                                               profileData.username || 'Verified User');
+                        
+                        console.log('✅ Auto-verified user detected:', userDisplayName);
                         return { 
                             status: 'approved', 
                             is_verified: true,
                             application: {
-                                business_name: 'Administrator',
-                                business_license: 'Admin Privileges',
-                                created_at: profileData.date_joined || new Date().toISOString(),
-                                description: 'Administrator account with verification privileges'
+                                business_name: userDisplayName,
+                                business_license: profileData.is_staff || profileData.is_superuser ? 
+                                                'Admin Privileges' : 
+                                                profileData.business_license || 'Auto-Verified Account',
+                                created_at: profileData.verified_at || profileData.date_joined || new Date().toISOString(),
+                                description: profileData.is_staff || profileData.is_superuser ?
+                                           'Administrator account with verification privileges' :
+                                           'Account meets auto-verification criteria'
                             }
                         };
                     }
@@ -690,6 +780,18 @@ class VerificationSystem {
     async showApplicationModal(isUpdate = false) {
         console.log('📝 Showing application modal, isUpdate:', isUpdate);
         
+        // First, check if user is already verified and prevent reapplication
+        try {
+            const currentStatus = await this.checkVerificationStatus();
+            if (currentStatus.is_verified || currentStatus.status === 'approved') {
+                console.log('🚫 User is already verified, preventing new application');
+                this.showToast('You are already verified! No need to apply again.', 'info');
+                return;
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not check verification status before showing modal:', error);
+        }
+        
         const modal = document.getElementById('applicationModal');
         if (!modal) {
             console.error('❌ Application modal not found!');
@@ -702,6 +804,14 @@ class VerificationSystem {
             try {
                 console.log('📋 Loading existing application data...');
                 const verificationData = await this.checkVerificationStatus();
+                
+                // Double-check: if user is verified, they shouldn't be updating
+                if (verificationData.is_verified || verificationData.status === 'approved') {
+                    console.log('🚫 User is verified, no need to update application');
+                    this.showToast('You are already verified!', 'info');
+                    return;
+                }
+                
                 if (verificationData.application) {
                     this.populateApplicationForm(verificationData.application);
                 }
@@ -757,6 +867,19 @@ class VerificationSystem {
         e.preventDefault();
         
         console.log('📝 Submitting verification application...');
+        
+        // First, check if user is already verified
+        try {
+            const currentStatus = await this.checkVerificationStatus();
+            if (currentStatus.is_verified || currentStatus.status === 'approved') {
+                console.log('🚫 User is already verified, preventing application submission');
+                this.showToast('You are already verified! No need to submit a new application.', 'info');
+                this.closeApplicationModal();
+                return;
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not check verification status before submission:', error);
+        }
         
         const formData = new FormData(e.target);
         const applicationData = {
@@ -884,6 +1007,147 @@ class VerificationSystem {
         }
     }
 
+    // Helper method to check if staff should be considered verified
+    shouldStaffBeVerified(profileData) {
+        // Only consider staff as verified if they have additional verification indicators
+        return profileData.is_staff && (
+            profileData.username?.toLowerCase().includes('admin') ||
+            profileData.username?.toLowerCase().includes('staff') ||
+            profileData.email?.includes('admin') ||
+            profileData.role?.toLowerCase().includes('admin') ||
+            // Staff with business information should be verified
+            (profileData.business_name || profileData.company_name)
+        );
+    }
+
+    // Helper method to check if superuser should be considered verified
+    shouldSuperuserBeVerified(profileData) {
+        // Superusers are typically verified, but let's be more specific
+        return profileData.is_superuser && (
+            profileData.username !== 'testuser' &&
+            profileData.username !== 'test' &&
+            !profileData.username?.toLowerCase().includes('test')
+        );
+    }
+
+    // Helper method to check verification from user groups
+    checkVerificationFromGroups(profileData) {
+        if (!profileData.groups || !Array.isArray(profileData.groups)) {
+            return false;
+        }
+        
+        return profileData.groups.some(group => {
+            const groupName = (group.name || group).toLowerCase();
+            return groupName.includes('verified') ||
+                   groupName.includes('contributor') ||
+                   groupName.includes('chef') ||
+                   groupName.includes('business') ||
+                   groupName.includes('premium') ||
+                   groupName.includes('approved');
+        });
+    }
+
+    // Helper method to check verification from user roles
+    checkVerificationFromRoles(profileData) {
+        const role = profileData.role || profileData.user_role || profileData.account_type;
+        if (!role) return false;
+        
+        const roleString = role.toString().toLowerCase();
+        return roleString.includes('verified') ||
+               roleString.includes('contributor') ||
+               roleString.includes('chef') ||
+               roleString.includes('business') ||
+               roleString.includes('premium') ||
+               roleString.includes('pro');
+    }
+
+    // Enhanced verification detection with fuzzy matching
+    detectVerificationFromAnyField(profileData) {
+        // Convert profile data to string and search for verification patterns
+        const profileString = JSON.stringify(profileData).toLowerCase();
+        
+        // Look for verification-related terms in the entire profile
+        const verificationTerms = [
+            'verified', 'approved', 'confirmed', 'validated',
+            'contributor', 'chef', 'business', 'premium'
+        ];
+        
+        return verificationTerms.some(term => {
+            const regex = new RegExp(`"[^"]*${term}[^"]*"\\s*:\\s*(?:true|"true"|"approved"|"verified"|"yes"|1)`, 'i');
+            return regex.test(profileString);
+        });
+    }
+
+    // Helper methods for enhanced verification detection
+    isStaffOrAdmin(profileData) {
+        return profileData.is_staff === true || 
+               profileData.is_superuser === true ||
+               profileData.role === 'admin' ||
+               profileData.role === 'staff' ||
+               profileData.user_type === 'admin' ||
+               profileData.user_type === 'staff';
+    }
+
+    hasVerificationGroups(profileData) {
+        if (!profileData.groups || !Array.isArray(profileData.groups)) return false;
+        
+        const verificationGroupNames = [
+            'verified', 'verified_users', 'verified_contributors', 
+            'contributors', 'content_creators', 'chefs', 
+            'verified_chefs', 'premium_users'
+        ];
+        
+        return profileData.groups.some(group => {
+            const groupName = group.name ? group.name.toLowerCase() : '';
+            return verificationGroupNames.some(vgName => groupName.includes(vgName));
+        });
+    }
+
+    hasVerificationPermissions(profileData) {
+        if (!profileData.user_permissions && !profileData.permissions) return false;
+        
+        const permissions = profileData.user_permissions || profileData.permissions || [];
+        const verificationPerms = [
+            'can_create_recipes', 'can_publish_recipes', 'verified_user',
+            'contributor', 'content_creator', 'chef_permissions'
+        ];
+        
+        return permissions.some(perm => {
+            const permName = typeof perm === 'string' ? perm.toLowerCase() : 
+                           (perm.codename ? perm.codename.toLowerCase() : '');
+            return verificationPerms.some(vPerm => permName.includes(vPerm));
+        });
+    }
+
+    fuzzyVerificationDetection(profileData) {
+        // Check for any field that might indicate verification
+        const possibleVerificationFields = [
+            'verified', 'is_verified', 'verification_status', 'verification_approved',
+            'verified_at', 'verification_date', 'approved_at', 'contributor_status',
+            'chef_verified', 'content_creator', 'premium_user', 'verified_contributor'
+        ];
+        
+        for (const field of possibleVerificationFields) {
+            const value = profileData[field];
+            if (value === true || value === 'approved' || value === 'verified' || 
+                value === 'active' || value === 'confirmed') {
+                console.log(`🔍 Fuzzy detection found verification in field: ${field} = ${value}`);
+                return true;
+            }
+        }
+        
+        // Check nested objects
+        if (profileData.profile) {
+            return this.fuzzyVerificationDetection(profileData.profile);
+        }
+        
+        if (profileData.user_profile) {
+            return this.fuzzyVerificationDetection(profileData.user_profile);
+        }
+        
+        return false;
+    }
+
     // Utility methods
     redirectToLogin() {
         this.showToast('Please log in to access verification system.', 'error');
@@ -904,6 +1168,102 @@ class VerificationSystem {
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 1000);
+    }
+
+    // Helper method: Check if staff should be considered verified
+    shouldStaffBeVerified(profileData) {
+        // Staff members are generally verified unless explicitly excluded
+        // You can add logic here to exclude certain staff roles if needed
+        return profileData.is_staff === true && !profileData.verification_revoked;
+    }
+
+    // Helper method: Check if superuser should be considered verified
+    shouldSuperuserBeVerified(profileData) {
+        // Superusers are generally verified unless explicitly excluded
+        return profileData.is_superuser === true && !profileData.verification_revoked;
+    }
+
+    // Helper method: Check verification from user groups
+    checkVerificationFromGroups(profileData) {
+        if (!profileData.groups || !Array.isArray(profileData.groups)) {
+            return false;
+        }
+
+        // Check for verification-related groups
+        const verificationGroups = ['verified', 'contributors', 'verified_users', 'business_verified', 'moderators'];
+        return profileData.groups.some(group => {
+            const groupName = typeof group === 'string' ? group : group.name;
+            return verificationGroups.some(vGroup => 
+                groupName.toLowerCase().includes(vGroup.toLowerCase())
+            );
+        });
+    }
+
+    // Helper method: Check verification from user roles
+    checkVerificationFromRoles(profileData) {
+        if (!profileData.roles && !profileData.role) {
+            return false;
+        }
+
+        const roles = profileData.roles || [profileData.role];
+        const verificationRoles = ['verified', 'contributor', 'business', 'moderator', 'chef', 'cook'];
+        
+        return roles.some(role => {
+            const roleName = typeof role === 'string' ? role : role.name;
+            return verificationRoles.some(vRole => 
+                roleName.toLowerCase().includes(vRole.toLowerCase())
+            );
+        });
+    }
+
+    // Helper method: Check verification from user permissions
+    checkVerificationFromPermissions(profileData) {
+        if (!profileData.user_permissions && !profileData.permissions) {
+            return false;
+        }
+
+        const permissions = profileData.user_permissions || profileData.permissions || [];
+        const verificationPermissions = [
+            'can_verify', 'verified_user', 'business_user', 'contributor',
+            'create_recipe', 'verified_contributor', 'premium_user'
+        ];
+        
+        return permissions.some(permission => {
+            const permissionName = typeof permission === 'string' ? permission : permission.name || permission.codename;
+            return verificationPermissions.some(vPerm => 
+                permissionName.toLowerCase().includes(vPerm.toLowerCase())
+            );
+        });
+    }
+
+    // Enhanced verification detection with fuzzy matching
+    fuzzyVerificationDetection(profileData) {
+        console.log('🔍 Running fuzzy verification detection...');
+        
+        // Convert profile data to searchable text
+        const profileText = JSON.stringify(profileData).toLowerCase();
+        
+        // Look for verification-related patterns in the data
+        const verificationPatterns = [
+            'verified.*true',
+            'verification.*approv',
+            'verification.*success',
+            'status.*verified',
+            'verified.*user',
+            'contributor.*verified',
+            'business.*verified',
+            'account.*verified'
+        ];
+
+        for (const pattern of verificationPatterns) {
+            const regex = new RegExp(pattern, 'i');
+            if (regex.test(profileText)) {
+                console.log('✅ Fuzzy match found:', pattern);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     showSpinner() {

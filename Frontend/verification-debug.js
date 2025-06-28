@@ -178,6 +178,182 @@ function verifyMyself() {
     setManualVerificationStatus(true, 'Admin self-verification');
 }
 
+// Universal Verification Test Utility
+// This utility can test verification status for any user and apply universal fixes
+
+function createUniversalVerificationTest() {
+    return {
+        // Test any user's verification status
+        async testUserVerification(username = null) {
+            console.log('🔍 UNIVERSAL VERIFICATION TEST');
+            console.log('='.repeat(60));
+            
+            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (!authToken) {
+                console.log('❌ No auth token found');
+                return;
+            }
+            
+            try {
+                const profileResponse = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+                    headers: {
+                        'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!profileResponse.ok) {
+                    console.log('❌ Failed to fetch profile data');
+                    return;
+                }
+                
+                const profileData = await profileResponse.json();
+                
+                console.log('👤 Profile Data for:', profileData.username);
+                console.log(JSON.stringify(profileData, null, 2));
+                
+                // Test all possible verification patterns
+                const verificationTests = this.runAllVerificationTests(profileData);
+                
+                console.log('\n🧪 VERIFICATION TEST RESULTS:');
+                Object.entries(verificationTests).forEach(([test, result]) => {
+                    console.log(`  ${result ? '✅' : '❌'} ${test}: ${result}`);
+                });
+                
+                const shouldBeVerified = Object.values(verificationTests).some(test => test);
+                console.log(`\n🏆 RECOMMENDATION: User ${shouldBeVerified ? 'SHOULD BE' : 'SHOULD NOT BE'} verified`);
+                
+                if (shouldBeVerified && !this.checkBasicVerification(profileData)) {
+                    console.log('\n💡 SUGGESTED ACTIONS:');
+                    console.log('1. Set is_verified=True in backend');
+                    console.log('2. OR set verification_status="approved"');
+                    console.log('3. OR use manual override: setManualVerificationStatus(true)');
+                    console.log('\n🔧 QUICK FIX: Run setManualVerificationStatus(true) to verify this user locally');
+                }
+                
+                return { profileData, verificationTests, shouldBeVerified };
+                
+            } catch (error) {
+                console.error('❌ Error testing verification:', error);
+                return null;
+            }
+        },
+        
+        // Run all possible verification tests
+        runAllVerificationTests(profileData) {
+            return {
+                'is_verified flag': profileData.is_verified === true,
+                'verified flag': profileData.verified === true,
+                'is_staff flag': profileData.is_staff === true,
+                'is_superuser flag': profileData.is_superuser === true,
+                'verification_status approved': profileData.verification_status === 'approved',
+                'verification_status verified': profileData.verification_status === 'verified',
+                'verification_approved flag': profileData.verification_approved === true,
+                'admin username': profileData.username === 'admin' || profileData.username === 'njoya',
+                'admin email': profileData.email && profileData.email.includes('admin'),
+                'business_verified flag': profileData.business_verified === true,
+                'is_contributor flag': profileData.is_contributor === true,
+                'contributor_status': profileData.contributor_status === 'verified',
+                'verified_at date exists': !!(profileData.verified_at),
+                'verification_date exists': !!(profileData.verification_date),
+                'account_type business': profileData.account_type === 'business',
+                'user_type verified': profileData.user_type === 'verified',
+                'chef_verified flag': profileData.chef_verified === true,
+                'content_creator_verified': profileData.content_creator_verified === true,
+                'has verification groups': this.hasVerificationGroups(profileData),
+                'has verification roles': this.hasVerificationRoles(profileData),
+                'has verification permissions': this.hasVerificationPermissions(profileData),
+                'nested profile verified': profileData.profile?.is_verified === true || profileData.profile?.verified === true,
+                'fuzzy pattern match': this.fuzzyVerificationPattern(profileData)
+            };
+        },
+        
+        // Check basic verification flags
+        checkBasicVerification(profileData) {
+            return profileData.is_verified === true || 
+                   profileData.verified === true || 
+                   profileData.verification_status === 'approved';
+        },
+        
+        // Check groups
+        hasVerificationGroups(profileData) {
+            if (!profileData.groups || !Array.isArray(profileData.groups)) return false;
+            const verificationGroups = ['verified', 'contributor', 'business', 'chef', 'premium', 'approved'];
+            return profileData.groups.some(group => {
+                const groupName = (group.name || group || '').toLowerCase();
+                return verificationGroups.some(vg => groupName.includes(vg));
+            });
+        },
+        
+        // Check roles
+        hasVerificationRoles(profileData) {
+            const roles = profileData.roles || (profileData.role ? [profileData.role] : []);
+            const verificationRoles = ['verified', 'contributor', 'business', 'chef', 'moderator'];
+            return roles.some(role => {
+                const roleName = (role.name || role || '').toLowerCase();
+                return verificationRoles.some(vr => roleName.includes(vr));
+            });
+        },
+        
+        // Check permissions
+        hasVerificationPermissions(profileData) {
+            const permissions = profileData.user_permissions || profileData.permissions || [];
+            const verificationPerms = ['verified', 'contributor', 'business', 'chef'];
+            return permissions.some(perm => {
+                const permName = (perm.name || perm.codename || perm || '').toLowerCase();
+                return verificationPerms.some(vp => permName.includes(vp));
+            });
+        },
+        
+        // Fuzzy pattern matching
+        fuzzyVerificationPattern(profileData) {
+            const dataString = JSON.stringify(profileData).toLowerCase();
+            const patterns = [
+                'verified.*true', 'verification.*approv', 'status.*verified',
+                'contributor.*true', 'business.*verified', 'chef.*verified'
+            ];
+            return patterns.some(pattern => new RegExp(pattern).test(dataString));
+        },
+        
+        // Apply universal verification fix
+        async applyUniversalVerificationFix() {
+            console.log('🔧 Applying universal verification fix...');
+            
+            const testResult = await this.testUserVerification();
+            if (!testResult) {
+                console.log('❌ Could not test user verification');
+                return;
+            }
+            
+            const { profileData, verificationTests, shouldBeVerified } = testResult;
+            
+            if (shouldBeVerified) {
+                console.log('✅ User should be verified, applying manual override...');
+                setManualVerificationStatus(true, 'Universal auto-verification based on profile analysis');
+            } else {
+                console.log('ℹ️ User does not meet verification criteria');
+                console.log('📝 Available options:');
+                console.log('- setManualVerificationStatus(true) - Force verify');
+                console.log('- Contact admin to set backend verification flags');
+            }
+        }
+    };
+}
+
+// Create and expose the universal verification test
+const universalVerificationTest = createUniversalVerificationTest();
+
+// Add convenient global functions
+window.testMyVerification = () => universalVerificationTest.testUserVerification();
+window.applyUniversalVerificationFix = () => universalVerificationTest.applyUniversalVerificationFix();
+window.universalVerificationTest = universalVerificationTest;
+
+console.log('🧪 Universal Verification Test utility loaded!');
+console.log('📋 Available functions:');
+console.log('- testMyVerification() - Test your verification status');
+console.log('- applyUniversalVerificationFix() - Auto-fix verification if criteria are met');
+console.log('- universalVerificationTest.testUserVerification() - Detailed test');
+
 // Auto-run debug after a delay
 setTimeout(debugVerificationSystem, 2000);
 
