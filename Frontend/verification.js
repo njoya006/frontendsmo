@@ -267,6 +267,34 @@ class VerificationSystem {
                     </div>
                 </div>
             `;
+        } else if (application && (status === 'pending' || status === 'applied' || status === 'pending_review')) {
+            // Show pending state if application exists and status is pending
+            panelHTML = `
+                <div class="verification-status-card pending">
+                    <div class="verification-status-header">
+                        <i class="fas fa-hourglass-half verification-status-icon"></i>
+                        <div>
+                            <h3 class="verification-status-title">Verification Pending</h3>
+                            <p class="verification-status-subtitle">Your application is under review</p>
+                        </div>
+                    </div>
+                    <div class="verification-status-content">
+                        <p>Thank you for applying to become a verified contributor! Your application is currently <strong>pending</strong> and will be reviewed within 48 hours.</p>
+                        <div class="verification-details">
+                            <p><strong>Full Name:</strong> ${application.full_name || 'N/A'}</p>
+                            <p><strong>Submitted:</strong> ${application.created_at ? new Date(application.created_at).toLocaleDateString() : 'Recently'}</p>
+                        </div>
+                        <div class="verification-note">
+                            <p><small><i class="fas fa-info-circle"></i> You will be notified once your application is reviewed.</small></p>
+                        </div>
+                    </div>
+                    <div class="verification-status-actions">
+                        <button id="refreshVerificationBtn" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px;">
+                            <i class="fas fa-sync-alt"></i> Refresh Status
+                        </button>
+                    </div>
+                </div>
+            `;
         } else {
             panelHTML = `
                 <div class="verification-status-card not-verified">
