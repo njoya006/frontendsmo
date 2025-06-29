@@ -473,9 +473,13 @@ class VerificationSystem {
             motivation: form.motivation.value.trim(),
         };
         try {
-            const response = await fetch(`${this.baseUrl}/api/users/verification-application/`, {
+            // Update the endpoint URL to match backend
+            const response = await fetch('/api/users/verification/apply/', {
                 method: 'POST',
-                headers: this.getHeaders(),
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...this.getHeaders(),
+                },
                 body: JSON.stringify(data),
             });
             if (response.ok) {
