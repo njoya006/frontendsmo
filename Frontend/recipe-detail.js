@@ -547,18 +547,18 @@ class RecipeDetailManager {
                 console.log(`String ingredient ${index + 1}: "${displayText}"`);
             } else if (typeof ingredient === 'object' && ingredient !== null) {
                 // Extract structured data for better display
-                const name = ingredient.ingredient_name || 
+                let name = ingredient.ingredient_name || 
                             ingredient.ingredient || 
                             ingredient.name || 
                             ingredient.title || 
                             ingredient.item ||
                             (typeof ingredient.toString === 'function' ? ingredient.toString() : '') ||
-                            `Ingredient ${index + 1}`;
-                
+                            '';
+                name = (typeof name === 'string' ? name.trim() : String(name));
+                if (!name) name = `Unnamed Ingredient`;
                 const quantity = ingredient.quantity || ingredient.amount || ingredient.qty || '';
                 const unit = ingredient.unit || ingredient.units || ingredient.measurement || '';
                 preparation = ingredient.preparation || ingredient.prep || ingredient.method || '';
-                
                 // Format the main ingredient text
                 if (quantity && unit) {
                     displayText = `${quantity} ${unit} ${name}`;
@@ -567,12 +567,10 @@ class RecipeDetailManager {
                 } else {
                     displayText = name;
                 }
-                
                 // Fallback: if still not a string, force to string
                 if (typeof displayText !== 'string') {
                     displayText = String(displayText);
                 }
-                
                 console.log(`Object ingredient ${index + 1}:`, { 
                     name, quantity, unit, preparation, displayText, original: ingredient 
                 });
