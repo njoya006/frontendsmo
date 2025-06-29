@@ -47,7 +47,14 @@ class IngredientParser {
         if (!item) return null;
         if (typeof item === 'object') {
             // Already structured, normalize keys
-            let name = item.ingredient_name || item.name || item.ingredient || item.title || item.item || '';
+            let name =
+                item.ingredient_name ||
+                item.name ||
+                (item.ingredient && (item.ingredient.name || item.ingredient.ingredient_name || item.ingredient.title)) ||
+                (typeof item.ingredient === 'string' ? item.ingredient : '') ||
+                item.title ||
+                item.item ||
+                '';
             name = (typeof name === 'string' ? name.trim() : String(name));
             if (!name) name = 'Unnamed Ingredient';
             return {
