@@ -512,12 +512,74 @@ class RecipeDetailManager {
         const instructionsData = this.extractInstructions(recipe);
         this.renderInstructions(instructionsData);
         
+        // Render analytics buttons and stats
+        this.renderAnalytics(recipe);
+        
         // Show content
         if (this.recipeContent) {
             this.recipeContent.classList.remove('hidden');
         }
         
         console.log('✅ Recipe rendered successfully');
+    }
+
+    renderAnalytics(recipe) {
+        if (!this.actionButtons) return;
+        // Clear previous analytics buttons
+        this.actionButtons.innerHTML = `
+            <button class="action-btn btn-secondary" onclick="printRecipe()">
+                <i class="fas fa-print"></i> Print Recipe
+            </button>
+            <button class="action-btn btn-secondary" onclick="shareRecipe()">
+                <i class="fas fa-share-alt"></i> Share
+            </button>
+            <button class="action-btn btn-primary" id="saveBtn">
+                <i class="fas fa-heart"></i> Save (<span id="saveCount">${recipe.saves_count || 0}</span>)
+            </button>
+            <button class="action-btn btn-primary" id="likeBtn">
+                <i class="fas fa-thumbs-up"></i> Like (<span id="likeCount">${recipe.likes_count || 0}</span>)
+            </button>
+            <button class="action-btn btn-primary" id="commentBtn">
+                <i class="fas fa-comment"></i> Comment (<span id="commentCount">${recipe.comments_count || 0}</span>)
+            </button>
+        `;
+        // Attach event listeners
+        const recipeId = recipe.id;
+        const saveBtn = document.getElementById('saveBtn');
+        const likeBtn = document.getElementById('likeBtn');
+        const commentBtn = document.getElementById('commentBtn');
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                saveBtn.disabled = true;
+                const result = await window.RecipeAnalytics.save(recipeId);
+                if (result && result.saves_count !== undefined) {
+                    document.getElementById('saveCount').textContent = result.saves_count;
+                }
+                saveBtn.disabled = false;
+            };
+        }
+        if (likeBtn) {
+            likeBtn.onclick = async () => {
+                likeBtn.disabled = true;
+                const result = await window.RecipeAnalytics.like(recipeId);
+                if (result && result.likes_count !== undefined) {
+                    document.getElementById('likeCount').textContent = result.likes_count;
+                }
+                likeBtn.disabled = false;
+            };
+        }
+        if (commentBtn) {
+            commentBtn.onclick = async () => {
+                const comment = prompt('Enter your comment:');
+                if (!comment) return;
+                commentBtn.disabled = true;
+                const result = await window.RecipeAnalytics.comment(recipeId, comment);
+                if (result && result.comments_count !== undefined) {
+                    document.getElementById('commentCount').textContent = result.comments_count;
+                }
+                commentBtn.disabled = false;
+            };
+        }
     }
 
     renderIngredients(ingredients) {
