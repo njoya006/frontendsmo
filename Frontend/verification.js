@@ -430,6 +430,15 @@ class VerificationSystem {
             });
         }
 
+        // Verification application form submission
+        const verificationForm = document.getElementById('verificationApplicationForm');
+        if (verificationForm) {
+            verificationForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.submitVerificationApplication();
+            });
+        }
+
         // Page visibility change handler
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
@@ -443,6 +452,49 @@ class VerificationSystem {
                 }, 1000);
             }
         });
+    }
+
+    // Submit verification application to backend
+    async submitVerificationApplication() {
+        const form = document.getElementById('verificationApplicationForm');
+        if (!form) return;
+        const submitBtn = document.getElementById('submitApplication');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        }
+        // Collect form data
+        const data = {
+            full_name: form.full_name.value.trim(),
+            cooking_experience: form.cooking_experience.value.trim(),
+            specialties: form.specialties.value.trim(),
+            social_media_links: form.social_media_links.value.trim(),
+            sample_recipes: form.sample_recipes.value.trim(),
+            motivation: form.motivation.value.trim(),
+        };
+        try {
+            const response = await fetch(`${this.baseUrl}/api/users/verification-application/`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(data),
+            });
+            if (response.ok) {
+                this.showToast('Your application is pending, it will be reviewed within 48hrs', 'success');
+                this.closeApplicationModal();
+                // Optionally refresh status
+                setTimeout(() => this.forceRefreshVerificationStatus(), 1000);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                this.showToast(errorData.detail || 'Failed to submit application. Please try again.', 'error');
+            }
+        } catch (error) {
+            this.showToast('Network error. Please try again.', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
+            }
+        }
     }
 
     // Show application modal
@@ -476,96 +528,60 @@ class VerificationSystem {
         }
     }
 
+    // Show toast notifications
     showToast(message, type = 'info') {
-        console.log(`🔔 Toast (${type}):`, message);
-        
-        const toast = document.getElementById('toastMessage');
-        if (toast) {
-            toast.textContent = message;
-            toast.className = `toast-${type}`;
-            toast.style.display = 'block';
-            
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 4000);
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) return;
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+            <div class="toast-icon">
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info-circle'}"></i>
+            </div>
+            <div class="toast-message">${message}</div>
+            <div class="toast-close">
+                <i class="fas fa-times"></i>
+            </div>
+        `;
+
+        // Add to container
+        toastContainer.appendChild(toast);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            toastContainer.removeChild(toast);
+        }, 5000);
+
+        // Manual close button
+        const closeBtn = toast.querySelector('.toast-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                toastContainer.removeChild(toast);
+            });
         }
     }
 
-    redirectToLogin() {
-        window.location.href = 'Login.html';
-    }
-
+    // Logout function
     logout() {
+        console.log('🔓 Logging out...');
+        
+        // Clear auth tokens
         localStorage.removeItem('authToken');
         sessionStorage.removeItem('authToken');
+        
+        // Redirect to login page
         this.redirectToLogin();
+    }
+
+    // Redirect to login page
+    redirectToLogin() {
+        window.location.href = 'login.html';
     }
 }
 
-// Initialize verification system when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait a moment for other scripts to load
-    setTimeout(() => {
-        window.verificationSystem = new VerificationSystem();
-    }, 500);
+// Initialize the verification system on page load
+document.addEventListener('DOMContentLoaded', () => {
+    window.verificationSystem = new VerificationSystem();
 });
-
-// Global functions for testing
-window.testVerificationSystem = function() {
-    if (window.verificationSystem) {
-        return window.verificationSystem.checkVerificationStatusUniversal();
-    }
-    return Promise.resolve({ status: 'not_initialized' });
-};
-
-window.forceRefreshVerificationSystem = function() {
-    if (window.verificationSystem) {
-        return window.verificationSystem.forceRefreshVerificationStatus();
-    }
-    return Promise.resolve({ status: 'not_initialized' });
-};
-
-window.debugVerificationStatus = async function() {
-    console.log('🔧 === VERIFICATION DEBUG REPORT ===');
-    
-    // Check auth token
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    console.log('🔑 Auth token present:', !!token);
-    console.log('🔑 Token length:', token ? token.length : 0);
-    
-    // Check universal verification system
-    console.log('🌍 Universal verification available:', !!window.universalVerification);
-    
-    // Check verification system
-    console.log('🏠 Verification system available:', !!window.verificationSystem);
-    
-    if (window.universalVerification) {
-        try {
-            const universalStatus = await window.universalVerification.forceRefreshVerificationStatus();
-            console.log('🌍 Universal verification result:', universalStatus);
-        } catch (error) {
-            console.error('❌ Universal verification error:', error);
-        }
-    }
-    
-    if (window.verificationSystem) {
-        try {
-            const systemStatus = await window.verificationSystem.checkVerificationStatusUniversal();
-            console.log('🏠 System verification result:', systemStatus);
-        } catch (error) {
-            console.error('❌ System verification error:', error);
-        }
-    }
-    
-    // Check current page elements
-    console.log('📄 Verification panel exists:', !!document.getElementById('verificationPanel'));
-    console.log('📄 Panel content length:', document.getElementById('verificationPanel')?.innerHTML?.length || 0);
-    
-    console.log('🔧 === DEBUG REPORT COMPLETE ===');
-};
-
-console.log('🔧 Clean Verification System loaded');
-console.log('🛠️ Available debug functions:');
-console.log('  - testVerificationSystem() - Test verification');
-console.log('  - forceRefreshVerificationSystem() - Force refresh');
-console.log('  - debugVerificationStatus() - Complete debug report');
