@@ -72,6 +72,15 @@ class RecipeDetailManager {
         this.showLoading();
         console.log('🔍 Loading recipe with ID:', this.recipeId);
 
+        // --- Timeout fallback: always hide loader after 8 seconds ---
+        let timeoutTriggered = false;
+        const timeoutId = setTimeout(() => {
+            timeoutTriggered = true;
+            this.hideLoading();
+            this.showError('Failed to load recipe: Request timed out. Please try again later.');
+            console.error('❌ Recipe loading timed out.');
+        }, 8000);
+
         try {
             let recipe;
             
@@ -106,31 +115,36 @@ class RecipeDetailManager {
             this.isOwner = false;
             this.renderRecipe(recipe);
             this.hideLoading();
+            clearTimeout(timeoutId);
             
             console.log('🎉 Recipe loaded successfully!');
             
         } catch (error) {
-            console.error('❌ API Error loading recipe:', error);
-            
-            // Try fallback to mock data
-            console.log('🔄 Trying fallback to mock data...');
-            try {
-                const mockRecipe = this.getMockRecipe(this.recipeId);
-                if (mockRecipe) {
-                    console.log('✅ Using mock data as fallback:', mockRecipe);
-                    this.currentRecipe = mockRecipe;
-                    this.isOwner = false;
-                    this.renderRecipe(mockRecipe);
-                    this.hideLoading();
-                    this.showToast('Using demo recipe data (API connection failed)', 'warning');
-                    return;
+            if (!timeoutTriggered) {
+                console.error('❌ API Error loading recipe:', error);
+                
+                // Try fallback to mock data
+                console.log('🔄 Trying fallback to mock data...');
+                try {
+                    const mockRecipe = this.getMockRecipe(this.recipeId);
+                    if (mockRecipe) {
+                        console.log('✅ Using mock data as fallback:', mockRecipe);
+                        this.currentRecipe = mockRecipe;
+                        this.isOwner = false;
+                        this.renderRecipe(mockRecipe);
+                        this.hideLoading();
+                        this.showToast('Using demo recipe data (API connection failed)', 'warning');
+                        clearTimeout(timeoutId);
+                        return;
+                    }
+                } catch (mockError) {
+                    console.error('❌ Mock data fallback failed:', mockError);
                 }
-            } catch (mockError) {
-                console.error('❌ Mock data fallback failed:', mockError);
+                
+                this.hideLoading();
+                this.showError(`Failed to load recipe: ${error.message}`);
+                clearTimeout(timeoutId);
             }
-            
-            this.hideLoading();
-            this.showError(`Failed to load recipe: ${error.message}`);
         }
     }
 
