@@ -7,7 +7,9 @@ class UniversalVerification {
         this.baseUrl = 'https://njoya.pythonanywhere.com';
         this.authToken = this.getAuthToken();
         this.verificationCache = new Map();
-        this.cacheExpiration = 5 * 60 * 1000; // 5 minutes
+        this.cacheExpiration = 30 * 1000; // 30 seconds for more responsive updates
+        this.lastCheck = 0;
+        this.checkInterval = 15 * 1000; // Check every 15 seconds if needed
     }
 
     // Get auth token from storage
@@ -148,6 +150,18 @@ class UniversalVerification {
 
     // Comprehensive verification pattern checking
     checkAllVerificationPatterns(profileData) {
+        // First check if verification is explicitly revoked or disabled
+        if (profileData.verification_revoked === true || 
+            profileData.verification_disabled === true ||
+            profileData.is_banned === true ||
+            profileData.account_disabled === true ||
+            profileData.verification_status === 'revoked' ||
+            profileData.verification_status === 'disabled' ||
+            profileData.verification_status === 'rejected') {
+            console.log('❌ Verification explicitly revoked or disabled');
+            return { isVerified: false, source: 'explicitly_revoked' };
+        }
+
         const checks = [
             // Direct verification flags
             { check: () => profileData.is_verified === true, source: 'is_verified_flag' },
@@ -349,6 +363,40 @@ class UniversalVerification {
     // Clear verification cache
     clearCache() {
         this.verificationCache.clear();
+        console.log('🧹 Verification cache cleared');
+    }
+
+    // Force refresh verification status (ignores cache)
+    async forceRefreshVerificationStatus(userId = null) {
+        const cacheKey = userId || 'current-user';
+        this.verificationCache.delete(cacheKey);
+        console.log('🔄 Forcing verification status refresh for:', cacheKey);
+        return await this.getUniversalVerificationStatus(userId);
+    }
+
+    // Check if verification status should be refreshed
+    shouldRefreshVerification() {
+        const now = Date.now();
+        return (now - this.lastCheck) > this.checkInterval;
+    }
+
+    // Periodic verification check
+    async periodicVerificationCheck(userId = null) {
+        if (!this.shouldRefreshVerification()) {
+            return null; // Skip if checked recently
+        }
+        
+        this.lastCheck = Date.now();
+        console.log('🔍 Performing periodic verification check...');
+        
+        try {
+            const freshStatus = await this.forceRefreshVerificationStatus(userId);
+            console.log('✅ Periodic check result:', freshStatus.is_verified ? 'VERIFIED' : 'NOT VERIFIED');
+            return freshStatus;
+        } catch (error) {
+            console.warn('⚠️ Periodic verification check failed:', error);
+            return null;
+        }
     }
 
     // Get verification status for current user (main public method)

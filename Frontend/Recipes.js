@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Global variables
     let recipeData = [];
     let allRecipes = []; // Keep original data for reset
+    let verificationCheckInterval = null; // For periodic checks
+    let currentVerificationStatus = null; // Track current status
 
     // ======= TOAST NOTIFICATION SYSTEM =======
     
@@ -884,10 +886,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ======= CREATE RECIPE BUTTON INITIALIZATION =======
     
-    // ======= SIMPLE VERIFICATION CHECK =======
+    // ======= ENHANCED VERIFICATION CHECK =======
     
     async function checkUserVerification() {
-        console.log('� Checking user verification...');
+        console.log('🔍 Checking user verification with enhanced system...');
         
         // Get auth token
         const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
@@ -897,7 +899,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            // Try to get profile data directly
+            // Use universal verification system if available
+            if (window.universalVerification) {
+                console.log('🔍 Using universal verification system...');
+                const verificationData = await window.universalVerification.forceRefreshVerificationStatus();
+                console.log('🔍 Universal verification result:', verificationData);
+                
+                const isVerified = verificationData.is_verified || verificationData.status === 'approved';
+                
+                return {
+                    isVerified: isVerified,
+                    reason: isVerified ? 'verified' : 'not_verified',
+                    verificationData: verificationData
+                };
+            }
+            
+            // Fallback to direct profile check
+            console.log('⚠️ Universal verification not available, using direct check...');
             const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
                 headers: {
                     'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`,
@@ -919,21 +937,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 profileData.verified === true ||
                 profileData.verification_status === 'approved' ||
                 profileData.verification_status === 'verified' ||
-                profileData.is_staff === true ||
-                (profileData.profile && profileData.profile.is_verified === true);
+                profileData.user_verification === 'approved' ||
+                profileData.user_verification === true ||
+                (profileData.profile && profileData.profile.is_verified === true) ||
+                (profileData.profile && profileData.profile.verification_status === 'approved');
             
-            console.log('🔍 Verification result:', isVerified);
+            console.log('🔍 Direct verification result:', isVerified);
             console.log('🔍 Verification fields:', {
                 is_verified: profileData.is_verified,
                 verified: profileData.verified,
                 verification_status: profileData.verification_status,
-                is_staff: profileData.is_staff
+                user_verification: profileData.user_verification,
+                profile_verified: profileData.profile?.is_verified
             });
-            
-            // Note: Backend verification should be properly configured to set is_verified = true for verified users
-            // TEMPORARY: Show button for all users until backend verification is fixed
-            console.log('🔧 TEMPORARY: Showing Create Recipe button for all users until backend verification is fixed');
-            isVerified = true;
             
             return { 
                 isVerified, 
@@ -944,6 +960,38 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('❌ Error checking verification:', error);
             return { isVerified: false, reason: 'error', error: error.message };
+        }
+    }
+
+    // Periodic verification status check
+    async function periodicVerificationCheck() {
+        try {
+            console.log('� Performing periodic verification check...');
+            
+            const newVerificationResult = await checkUserVerification();
+            
+            // Check if verification status has changed
+            if (currentVerificationStatus && 
+                currentVerificationStatus.isVerified !== newVerificationResult.isVerified) {
+                
+                console.log('🚨 Verification status changed!');
+                console.log('Previous:', currentVerificationStatus.isVerified);
+                console.log('Current:', newVerificationResult.isVerified);
+                
+                // Update the create recipe button immediately
+                currentVerificationStatus = newVerificationResult;
+                await initializeCreateRecipeButton();
+                
+                // Show notification to user
+                if (newVerificationResult.isVerified) {
+                    showToast('✅ Your account has been verified! You can now create recipes.', '#4caf50');
+                } else {
+                    showToast('⚠️ Your verification status has changed. Recipe creation is now restricted.', '#ff9800');
+                }
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ Periodic verification check failed:', error);
         }
     }
 
@@ -968,6 +1016,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Verification check result:', verificationResult);
             console.log('🔍 Is verified?', verificationResult.isVerified);
             console.log('🔍 Reason:', verificationResult.reason);
+            
+            // Store current verification status for comparison
+            currentVerificationStatus = verificationResult;
             
             if (verificationResult.isVerified) {
                 console.log('✅ User is verified - showing Create Recipe button');
@@ -995,11 +1046,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (createBtn) {
                     createBtn.addEventListener('click', function() {
                         console.log('🎯 Create Recipe button clicked');
-                        const modal = document.getElementById('createRecipeModal');
-                        if (modal) {
-                            modal.style.display = 'block';
-                            document.body.style.overflow = 'hidden';
-                        }
+                        
+                        // Double-check verification before opening modal
+                        checkUserVerification().then(currentStatus => {
+                            if (currentStatus.isVerified) {
+                                const modal = document.getElementById('createRecipeModal');
+                                if (modal) {
+                                    modal.style.display = 'block';
+                                    document.body.style.overflow = 'hidden';
+                                }
+                            } else {
+                                showToast('⚠️ Verification required to create recipes. Please verify your account.', '#ff9800');
+                                // Refresh the button state
+                                initializeCreateRecipeButton();
+                            }
+                        });
                     });
                 }
                 
@@ -1062,6 +1123,45 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             
             container.appendChild(errorMessage);
+        }
+    }
+
+    // Setup manual refresh button
+    const refreshVerificationBtn = document.getElementById('refreshVerificationBtn');
+    if (refreshVerificationBtn) {
+        refreshVerificationBtn.addEventListener('click', async function() {
+            console.log('🔄 Manual verification refresh requested');
+            
+            // Show loading state
+            const originalText = refreshVerificationBtn.innerHTML;
+            refreshVerificationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+            refreshVerificationBtn.disabled = true;
+            
+            try {
+                // Clear cache and force refresh
+                if (window.universalVerification) {
+                    window.universalVerification.clearCache();
+                }
+                
+                // Re-check verification
+                await initializeCreateRecipeButton();
+                
+                showToast('✅ Verification status refreshed', '#4caf50');
+                
+            } catch (error) {
+                console.error('❌ Manual refresh failed:', error);
+                showToast('❌ Failed to refresh verification status', '#f44336');
+            } finally {
+                // Restore button state
+                refreshVerificationBtn.innerHTML = originalText;
+                refreshVerificationBtn.disabled = false;
+            }
+        });
+        
+        // Show the refresh button for logged-in users
+        const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        if (authToken) {
+            refreshVerificationBtn.style.display = 'inline-flex';
         }
     }
 
@@ -1154,6 +1254,35 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize Create Recipe button based on user verification status
     initializeCreateRecipeButton();
+    
+    // Start periodic verification checks (every 30 seconds)
+    verificationCheckInterval = setInterval(periodicVerificationCheck, 30000);
+    
+    // Cleanup interval on page unload
+    window.addEventListener('beforeunload', function() {
+        if (verificationCheckInterval) {
+            clearInterval(verificationCheckInterval);
+        }
+    });
+
+    // Handle visibility changes to refresh verification status
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            console.log('👁️ Page became visible - checking verification status');
+            // Small delay to ensure any backend changes are reflected
+            setTimeout(async () => {
+                await periodicVerificationCheck();
+            }, 1000);
+        }
+    });
+    
+    // Also check when window gets focus
+    window.addEventListener('focus', function() {
+        console.log('🔍 Window gained focus - checking verification status');
+        setTimeout(async () => {
+            await periodicVerificationCheck();
+        }, 1000);
+    });
 
     // ======= QUICK DEBUG OVERRIDE =======
     
@@ -1214,6 +1343,20 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🔍 Container content after init:', document.getElementById('createRecipeButtonContainer')?.innerHTML);
     };
     
+    window.forceRefreshVerification = async function() {
+        console.log('🔄 Forcing verification status refresh...');
+        
+        // Clear verification cache
+        if (window.universalVerification) {
+            window.universalVerification.clearCache();
+        }
+        
+        // Re-check verification and update button
+        await initializeCreateRecipeButton();
+        
+        console.log('✅ Verification status refreshed');
+    };
+    
     window.forceShowCreateButton = function() {
         console.log('🔧 Forcing Create Recipe button to show...');
         const container = document.getElementById('createRecipeButtonContainer');
@@ -1222,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="create-recipe-section" style="text-align: center;">
                     <button class="create-recipe-btn" id="createRecipeBtn">
                         <i class="fas fa-plus-circle"></i>
-                        Create New Recipe
+                        Create New Recipe (DEBUG)
                     </button>
                 </div>
             `;
@@ -1274,7 +1417,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('🛠️ Test functions available in console:');
     console.log('  - testCreateRecipeButton() - Test the button functionality');
-    console.log('  - forceShowCreateButton() - Force the button to appear');
+    console.log('  - forceRefreshVerification() - Force refresh verification status');  
+    console.log('  - forceShowCreateButton() - Force the button to appear (DEBUG)');
     console.log('  - forceLoadRecipes() - Force reload recipes from API or fallback');
 
 });

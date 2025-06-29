@@ -610,6 +610,13 @@
             <!-- Create New Recipe button will be dynamically inserted here for verified users only -->
             <div id="createRecipeButtonContainer"></div>
             
+            <!-- Manual verification refresh button -->
+            <div style="text-align: center; margin: 10px 0;">
+                <button id="refreshVerificationBtn" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; display: none;">
+                    <i class="fas fa-sync-alt"></i> Refresh Status
+                </button>
+            </div>
+            
             <div id="createRecipeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="createRecipeModalTitle">
                 <div class="modal-content">
                     <button id="closeCreateRecipeModal" class="modal-close-btn" aria-label="Close create recipe modal">&times;</button>
