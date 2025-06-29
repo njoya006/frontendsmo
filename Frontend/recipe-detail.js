@@ -552,6 +552,7 @@ class RecipeDetailManager {
                             ingredient.name || 
                             ingredient.title || 
                             ingredient.item ||
+                            (typeof ingredient.toString === 'function' ? ingredient.toString() : '') ||
                             `Ingredient ${index + 1}`;
                 
                 const quantity = ingredient.quantity || ingredient.amount || ingredient.qty || '';
@@ -565,6 +566,11 @@ class RecipeDetailManager {
                     displayText = `${quantity} ${name}`;
                 } else {
                     displayText = name;
+                }
+                
+                // Fallback: if still not a string, force to string
+                if (typeof displayText !== 'string') {
+                    displayText = String(displayText);
                 }
                 
                 console.log(`Object ingredient ${index + 1}:`, { 
