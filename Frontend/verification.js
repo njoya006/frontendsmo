@@ -87,7 +87,26 @@ class VerificationSystem {
 
             this.currentUser = await response.json();
             this.isAdmin = this.currentUser.is_staff || this.currentUser.is_superuser || false;
-            
+
+            // Update username and badge in the UI
+            const userNameEl = document.getElementById('userName');
+            if (userNameEl) {
+                userNameEl.textContent = this.currentUser.username || '';
+                // Add badge if available
+                if (this.currentUser.verified_badge) {
+                    const badgeSpan = document.createElement('span');
+                    badgeSpan.className = 'verified-badge';
+                    badgeSpan.style.marginLeft = '8px';
+                    badgeSpan.style.color = this.currentUser.verified_badge.color || '#2ecc40';
+                    badgeSpan.innerHTML = `${this.currentUser.verified_badge.icon || '✅'} <span style="font-size:12px;vertical-align:middle;">${this.currentUser.verified_badge.label || ''}</span>`;
+                    userNameEl.appendChild(badgeSpan);
+                }
+            }
+            // Optionally update email
+            const userEmailEl = document.getElementById('userEmail');
+            if (userEmailEl) {
+                userEmailEl.textContent = this.currentUser.email || '';
+            }
             console.log('👤 Current user loaded:', this.currentUser.username);
             console.log('🔒 Admin status:', this.isAdmin);
             
