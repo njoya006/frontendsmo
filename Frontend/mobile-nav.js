@@ -137,6 +137,7 @@ class MobileNavigation {
                     <li><a href="MealPlans.html"><i class="fas fa-calendar-alt"></i> Meal Plans</a></li>
                     <li><a href="MealSuggestion.html"><i class="fas fa-lightbulb"></i> Suggestions</a></li>
                     <li><a href="Profile.html"><i class="fas fa-user"></i> Profile</a></li>
+                    <li><a href="verification.html"><i class="fas fa-badge-check"></i> Verification</a></li>
                 ` : `
                     <li><a href="Recipes.html"><i class="fas fa-book-open"></i> Recipes</a></li>
                     <li><a href="About.html"><i class="fas fa-info-circle"></i> About</a></li>

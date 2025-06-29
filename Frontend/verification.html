@@ -59,44 +59,86 @@
 
                         <form id="verificationApplicationForm">
                             <div class="verification-form-group">
-                                <label for="businessName" class="verification-form-label">
-                                    Business/Restaurant Name *
+                                <label for="fullName" class="verification-form-label">
+                                    Full Name *
                                 </label>
                                 <input 
                                     type="text" 
-                                    id="businessName" 
-                                    name="business_name" 
+                                    id="fullName" 
+                                    name="full_name" 
                                     class="verification-form-input" 
-                                    placeholder="Enter your business or restaurant name"
+                                    placeholder="Enter your full name"
                                     required
                                 >
                             </div>
 
                             <div class="verification-form-group">
-                                <label for="businessLicense" class="verification-form-label">
-                                    Business License Number *
-                                </label>
-                                <input 
-                                    type="text" 
-                                    id="businessLicense" 
-                                    name="business_license" 
-                                    class="verification-form-input" 
-                                    placeholder="Enter your business license number"
-                                    required
-                                >
-                            </div>
-
-                            <div class="verification-form-group">
-                                <label for="description" class="verification-form-label">
-                                    Tell us about your experience *
+                                <label for="cookingExperience" class="verification-form-label">
+                                    Cooking Experience *
                                 </label>
                                 <textarea 
-                                    id="description" 
-                                    name="description" 
+                                    id="cookingExperience" 
+                                    name="cooking_experience" 
                                     class="verification-form-textarea" 
-                                    placeholder="Describe your cooking experience, qualifications, and why you want to become a verified contributor (minimum 50 characters)..."
+                                    placeholder="Describe your cooking experience, qualifications, and background (minimum 50 characters)..."
                                     required
                                     minlength="50"
+                                ></textarea>
+                            </div>
+
+                            <div class="verification-form-group">
+                                <label for="specialties" class="verification-form-label">
+                                    Specialties *
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="specialties" 
+                                    name="specialties" 
+                                    class="verification-form-input" 
+                                    placeholder="e.g. Nigerian cuisine, vegan meals"
+                                    required
+                                >
+                            </div>
+
+                            <div class="verification-form-group">
+                                <label for="socialMediaLinks" class="verification-form-label">
+                                    Social Media Links *
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="socialMediaLinks" 
+                                    name="social_media_links" 
+                                    class="verification-form-input" 
+                                    placeholder="e.g. https://instagram.com/yourprofile, https://twitter.com/yourprofile"
+                                    required
+                                >
+                            </div>
+
+                            <div class="verification-form-group">
+                                <label for="sampleRecipes" class="verification-form-label">
+                                    Sample Recipes *
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="sampleRecipes" 
+                                    name="sample_recipes" 
+                                    class="verification-form-input" 
+                                    placeholder="List a few of your signature recipes (comma separated)"
+                                    required
+                                >
+                            </div>
+
+                            <div class="verification-form-group">
+                                <label for="motivation" class="verification-form-label">
+                                    Motivation *
+                                </label>
+                                <textarea 
+                                    id="motivation" 
+                                    name="motivation" 
+                                    class="verification-form-textarea" 
+                                    placeholder="Why do you want to become a verified contributor? (minimum 30 characters)"
+                                    required
+                                    minlength="30"
                                 ></textarea>
                             </div>
 
