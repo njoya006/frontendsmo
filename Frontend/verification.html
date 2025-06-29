@@ -140,9 +140,37 @@
     </footer>
 
     <!-- Loading Spinner -->
-    <div id="loadingSpinner" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.9); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+    <div id="loadingSpinner" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.9); z-index: 9999; align-items: center; justify-content: center;">
         <div style="width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #228B22; border-radius: 50%; animation: spin 1s linear infinite;"></div>
     </div>
+
+    <!-- Add CSS for spinner animation -->
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    #loadingSpinner.show {
+        display: flex !important;
+    }
+    
+    .toast-success {
+        background: #4caf50 !important;
+    }
+    
+    .toast-warning {
+        background: #ff9800 !important;
+    }
+    
+    .toast-error {
+        background: #f44336 !important;
+    }
+    
+    .toast-info {
+        background: #2196f3 !important;
+    }
+    </style>
 
     <!-- Toast Notification -->
     <div id="toastMessage" style="display: none; position: fixed; bottom: 30px; right: 30px; background: #228B22; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 10000;"></div>
@@ -150,6 +178,60 @@
     <script src="mobile-nav.js?v=6"></script>
     <script src="universal-verification.js"></script>
     <script src="verification.js"></script>
-    <script src="verification-debug.js"></script>
+    
+    <!-- Simplified Enhanced Verification Status Checking -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔧 Verification page enhancement loaded');
+        
+        // Simple manual test functions for console
+        window.testCurrentVerificationStatus = async function() {
+            console.log('🧪 Testing current verification status...');
+            
+            try {
+                if (window.universalVerification) {
+                    const status = await window.universalVerification.forceRefreshVerificationStatus();
+                    console.log('🔍 Current status:', status);
+                    return status;
+                } else {
+                    console.log('❌ Universal verification system not available');
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ Test failed:', error);
+                return null;
+            }
+        };
+        
+        window.simulateVerificationChange = function(isVerified = true) {
+            console.log('🎭 Simulating verification change to:', isVerified);
+            
+            if (window.verificationSystem) {
+                const mockStatus = {
+                    status: isVerified ? 'approved' : 'not_applied',
+                    is_verified: isVerified,
+                    application: isVerified ? {
+                        business_name: 'Test User',
+                        created_at: new Date().toISOString()
+                    } : null,
+                    verification_source: 'test_simulation'
+                };
+                
+                window.verificationSystem.updateVerificationPanel(mockStatus);
+                console.log('✅ UI updated with simulated status');
+            } else {
+                console.log('❌ Verification system not available');
+            }
+        };
+        
+        // Add some helpful UI feedback
+        setTimeout(() => {
+            console.log('�️ Verification page test functions available:');
+            console.log('  - testCurrentVerificationStatus() - Test verification status');
+            console.log('  - simulateVerificationChange(true/false) - Simulate status change');
+            console.log('  - forceRefreshVerificationSystem() - Force refresh');
+        }, 2000);
+    });
+    </script>
 </body>
 </html>
