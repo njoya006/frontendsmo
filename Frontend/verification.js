@@ -474,7 +474,7 @@ class VerificationSystem {
         };
         try {
             // Update the endpoint URL to match backend
-            const response = await fetch('/api/users/verification/apply/', {
+            const response = await fetch('https://njoya.pythonanywhere.com/api/users/verification/apply/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
