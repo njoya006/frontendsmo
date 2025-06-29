@@ -522,12 +522,14 @@ class RecipeDetailManager {
 
     renderIngredients(ingredients) {
         console.log('🍯 Rendering ingredients:', ingredients);
-        
+        // Debug: print each ingredient's structure
+        ingredients.forEach((ingredient, idx) => {
+            console.log(`Ingredient ${idx + 1}:`, ingredient, typeof ingredient);
+        });
         if (!this.ingredientsList) {
             console.error('❌ Ingredients list element not found');
             return;
         }
-        
         if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
             console.log('❌ No valid ingredients array found, using parser fallback');
             const fallbackIngredients = this.ingredientParser.createFallbackIngredients(
@@ -535,7 +537,6 @@ class RecipeDetailManager {
             );
             ingredients = fallbackIngredients;
         }
-
         console.log(`✅ Processing ${ingredients.length} ingredients`);
 
         const ingredientItems = ingredients.map((ingredient, index) => {
