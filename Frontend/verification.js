@@ -88,8 +88,6 @@ class VerificationSystem {
             this.currentUser = await response.json();
             this.isAdmin = this.currentUser.is_staff || this.currentUser.is_superuser || false;
 
-            // Add debug log for badge
-            console.log('🔖 verified_badge:', this.currentUser.verified_badge);
             // Update username and badge in the UI
             const userNameEl = document.getElementById('userName');
             if (userNameEl) {
@@ -257,7 +255,6 @@ class VerificationSystem {
         let panelHTML = '';
 
         if (is_verified) {
-            // Always show Create Recipe for verified users
             panelHTML = `
                 <div class="verification-status-card verified">
                     <div class="verification-status-header">

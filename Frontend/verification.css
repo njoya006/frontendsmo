@@ -923,3 +923,23 @@ body.modal-open {
         padding-right: 0;
     }
 }
+
+/* Toast notification styles */
+.toast {
+  display: flex;
+  align-items: center;
+  background: #228B22;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  min-width: 220px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  font-size: 15px;
+  z-index: 10001;
+}
+.toast-success { background: #4caf50; }
+.toast-error { background: #f44336; }
+.toast-info { background: #2196f3; }
+.toast-warning { background: #ff9800; }
+.toast-close { margin-left: 16px; cursor: pointer; }

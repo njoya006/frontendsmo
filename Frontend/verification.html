@@ -37,6 +37,13 @@
 
     <main style="padding: 140px 0 var(--space-16); min-height: calc(100vh - 140px); overflow-y: auto;">
         <div class="container verification-page-container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+            <!-- User Info and Toast Container (added for verification.js compatibility) -->
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+              <span id="userName"></span>
+              <span id="userEmail" style="color: #888; font-size: 14px;"></span>
+            </div>
+            <div id="toastContainer" style="position: fixed; bottom: 30px; right: 30px; z-index: 10000;" aria-live="polite"></div>
+
             <!-- Verification Status Panel -->
             <div id="verificationPanel" class="verification-status-panel">
                 <!-- Content will be dynamically loaded here -->
@@ -213,9 +220,6 @@
         background: #2196f3 !important;
     }
     </style>
-
-    <!-- Toast Notification -->
-    <div id="toastMessage" style="display: none; position: fixed; bottom: 30px; right: 30px; background: #228B22; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 10000;"></div>
 
     <script src="mobile-nav.js?v=6"></script>
     <script src="universal-verification.js"></script>

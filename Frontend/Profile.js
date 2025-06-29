@@ -1,9 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize verification badge
-    if (typeof initializeVerificationBadge === 'function') {
-        initializeVerificationBadge();
-    }
-
     console.log('Profile page loaded, checking for elements...');
     
     // Debug: Check if critical elements exist
@@ -129,7 +124,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update display elements
             if (document.getElementById('userName')) {
-                document.getElementById('userName').textContent = fullName;
+                const userNameEl = document.getElementById('userName');
+                userNameEl.innerHTML = '';
+                const nameNode = document.createTextNode(fullName);
+                userNameEl.appendChild(nameNode);
+                // Add verification badge if present
+                if (data.verified_badge) {
+                    const badgeSpan = document.createElement('span');
+                    badgeSpan.className = 'verified-badge';
+                    badgeSpan.style.marginLeft = '8px';
+                    badgeSpan.style.color = data.verified_badge.color || '#2ecc40';
+                    badgeSpan.innerHTML = `${data.verified_badge.icon || '✅'} <span style="font-size:12px;vertical-align:middle;">${data.verified_badge.label || ''}</span>`;
+                    userNameEl.appendChild(badgeSpan);
+                }
             }
             if (document.getElementById('userEmail')) {
                 document.getElementById('userEmail').textContent = data.email || 'No email provided';

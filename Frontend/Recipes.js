@@ -427,6 +427,14 @@ document.addEventListener('DOMContentLoaded', function() {
             let contributorHtml = '';
             if (recipe.contributor) {
                 const profileImageUrl = getProfileImageUrl(recipe.contributor);
+                // Badge logic
+                let badgeHtml = '';
+                if (recipe.contributor.verified_badge) {
+                    const badge = recipe.contributor.verified_badge;
+                    badgeHtml = `<span class="verified-badge" style="color:${badge.color || '#2ecc40'}; margin-left:6px; font-size:13px; vertical-align:middle;">
+                        ${badge.icon || '✅'} <span style="font-size:12px;">${badge.label || ''}</span>
+                    </span>`;
+                }
                 contributorHtml = `
                     <div class="contributor-info" style="display:flex;align-items:center;margin-bottom:8px;">
                         ${createImageWithFallback(
@@ -436,7 +444,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             DEFAULT_PROFILE_IMAGE
                         )}
                         <div>
-                            <div style="font-weight:600;font-size:14px;">${recipe.contributor.username || 'Unknown Chef'}</div>
+                            <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:4px;">
+                                <span>${recipe.contributor.username || 'Unknown Chef'}</span>
+                                ${badgeHtml}
+                            </div>
                             <div style="font-size:12px;color:#888;">${recipe.contributor.basic_ingredients || 'Ingredients Available'}</div>
                         </div>
                     </div>
