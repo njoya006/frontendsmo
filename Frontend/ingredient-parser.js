@@ -47,8 +47,11 @@ class IngredientParser {
         if (!item) return null;
         if (typeof item === 'object') {
             // Already structured, normalize keys
+            let name = item.ingredient_name || item.name || item.ingredient || item.title || item.item || '';
+            name = (typeof name === 'string' ? name.trim() : String(name));
+            if (!name) name = 'Unnamed Ingredient';
             return {
-                ingredient_name: item.ingredient_name || item.name || item.ingredient || item.title || '',
+                ingredient_name: name,
                 quantity: item.quantity || item.qty || item.amount || '',
                 unit: item.unit || item.units || item.measurement || '',
                 preparation: item.preparation || item.prep || item.method || ''
@@ -76,6 +79,7 @@ class IngredientParser {
                     name = name.replace(this.unitsPattern, '').trim();
                 }
             }
+            if (!name) name = 'Unnamed Ingredient';
             return {
                 ingredient_name: name,
                 quantity,
@@ -84,7 +88,7 @@ class IngredientParser {
             };
         }
         // Fallback: treat as name only
-        return { ingredient_name: line, quantity: '', unit: '', preparation: '' };
+        return { ingredient_name: line || 'Unnamed Ingredient', quantity: '', unit: '', preparation: '' };
     }
 
     // Extract ingredients from free text (e.g. description or instructions)
