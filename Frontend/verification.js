@@ -91,7 +91,11 @@ class VerificationSystem {
             // Update username and badge in the UI
             const userNameEl = document.getElementById('userName');
             if (userNameEl) {
-                userNameEl.textContent = this.currentUser.username || '';
+                // Clear previous content
+                userNameEl.innerHTML = '';
+                // Add username
+                const nameNode = document.createTextNode(this.currentUser.username || '');
+                userNameEl.appendChild(nameNode);
                 // Add badge if available
                 if (this.currentUser.verified_badge) {
                     const badgeSpan = document.createElement('span');
