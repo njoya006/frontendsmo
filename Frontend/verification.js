@@ -97,25 +97,41 @@ class VerificationSystem {
         }
     }
 
+    // Fetch verification application status from backend
+    async fetchVerificationStatus() {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/users/verification/status/`, {
+                headers: this.getHeaders()
+            });
+            if (!response.ok) throw new Error('Failed to fetch verification status');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching verification status:', error);
+            return { verification_status: 'error', application: null };
+        }
+    }
+
     // Initialize UI based on user status
     async initializeUI() {
         try {
-            // Show loading while checking verification status
             this.showSpinner();
-            
-            // Load verification status using universal system
-            const verificationStatus = await this.checkVerificationStatusUniversal();
-            
-            // Update verification panel
-            this.updateVerificationPanel(verificationStatus);
-            
-            // Show admin panel if user is admin
+            // Fetch both profile and verification status
+            const [profile, verificationData] = await Promise.all([
+                this.loadCurrentUser(),
+                this.fetchVerificationStatus()
+            ]);
+            // Use verificationData for panel
+            this.updateVerificationPanel({
+                status: verificationData.verification_status,
+                is_verified: this.currentUser?.is_verified_contributor || false,
+                application: verificationData.application,
+                verification_source: this.currentUser?.verified_badge?.label || null,
+                profile_data: this.currentUser
+            });
             if (this.isAdmin) {
                 await this.initializeAdminPanel();
             }
-            
             this.hideSpinner();
-            
         } catch (error) {
             console.error('❌ Error initializing UI:', error);
             this.hideSpinner();
