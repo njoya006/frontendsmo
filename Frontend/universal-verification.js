@@ -95,30 +95,31 @@ class UniversalVerification {
             }
 
             // Also check dedicated verification endpoint
-            if (!isVerified) {
-                try {
-                    let verificationUrl = `${this.baseUrl}/api/verification/status/`;
-                    if (userId) {
-                        verificationUrl += `?user_id=${userId}`;
-                    }
-
-                    const verificationResponse = await fetch(verificationUrl, {
-                        headers: this.getHeaders()
-                    });
-
-                    if (verificationResponse.ok) {
-                        const verificationData = await verificationResponse.json();
-                        
-                        if (verificationData.status === 'approved' || verificationData.is_verified) {
-                            isVerified = true;
-                            verificationSource = 'verification_endpoint';
-                            applicationData = verificationData.application || applicationData;
-                        }
-                    }
-                } catch (e) {
-                    // Verification endpoint might not exist, continue
-                }
-            }
+            // (DISABLED: endpoint does not exist, rely on profile only)
+            // if (!isVerified) {
+            //     try {
+            //         let verificationUrl = `${this.baseUrl}/api/verification/status/`;
+            //         if (userId) {
+            //             verificationUrl += `?user_id=${userId}`;
+            //         }
+            //
+            //         const verificationResponse = await fetch(verificationUrl, {
+            //             headers: this.getHeaders()
+            //         });
+            //
+            //         if (verificationResponse.ok) {
+            //             const verificationData = await verificationResponse.json();
+            //             
+            //             if (verificationData.status === 'approved' || verificationData.is_verified) {
+            //                 isVerified = true;
+            //                 verificationSource = 'verification_endpoint';
+            //                 applicationData = verificationData.application || applicationData;
+            //             }
+            //         }
+            //     } catch (e) {
+            //         // Verification endpoint might not exist, continue
+            //     }
+            // }
 
             // Prepare result
             const result = {
