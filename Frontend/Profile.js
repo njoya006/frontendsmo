@@ -138,7 +138,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     badgeEl = document.createElement('span');
                     badgeEl.id = badgeContainerId;
                     badgeEl.className = 'verification-badge';
-                    badgeEl.style.background = data.verified_badge.color || '#4CAF50';
+                    // Defensive: fallback color/icon/label
+                    const badgeColor = (data.verified_badge.color && typeof data.verified_badge.color === 'string') ? data.verified_badge.color : '#4CAF50';
+                    const badgeIcon = (data.verified_badge.icon && typeof data.verified_badge.icon === 'string') ? data.verified_badge.icon : 'fas fa-certificate';
+                    const badgeLabel = (data.verified_badge.label && typeof data.verified_badge.label === 'string') ? data.verified_badge.label : 'Verified';
+                    badgeEl.style.background = badgeColor + ' !important';
                     badgeEl.style.display = 'inline-flex';
                     badgeEl.style.alignItems = 'center';
                     badgeEl.style.marginLeft = '8px';
@@ -148,8 +152,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     badgeEl.style.border = '2px solid #fff';
                     badgeEl.style.outline = '1.5px solid rgba(34,139,34,0.18)';
                     badgeEl.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.18)';
-                    badgeEl.innerHTML = `<i class="${data.verified_badge.icon || 'fas fa-certificate'}"></i> ${data.verified_badge.label || 'Verified'}`;
+                    badgeEl.style.verticalAlign = 'middle';
+                    badgeEl.style.padding = '2px 8px';
+                    badgeEl.style.borderRadius = '16px';
+                    badgeEl.style.lineHeight = '1.2';
+                    badgeEl.innerHTML = `<i class="${badgeIcon}"></i> ${badgeLabel}`;
                     document.getElementById('userName').after(badgeEl);
+                    console.log('Verification badge rendered beside username:', badgeLabel);
+                } else {
+                    console.log('No verification badge to render (is_verified_contributor:', data.is_verified_contributor, ', verified_badge:', data.verified_badge, ')');
                 }
             }
             if (document.getElementById('userEmail')) {
@@ -490,7 +501,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 avatarFile = null; // Reset avatar file after successful upload
                 
                 // Add success visual feedback
-                personalInfoForm.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%)';
+                personalInfoForm.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
                 setTimeout(() => {
                     personalInfoForm.style.background = '';
                 }, 3000);
