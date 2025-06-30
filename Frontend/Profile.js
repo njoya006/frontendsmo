@@ -794,6 +794,49 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // --- Verification Badge Integration (Improved) ---
+    async function updateVerificationBadge() {
+        if (!window.universalVerification) return;
+        const badge = document.getElementById('verificationBadge');
+        if (!badge) return;
+        badge.innerHTML = '<span class="badge loading">Checking...</span>';
+        badge.classList.remove('active', 'not-verified', 'verified');
+        try {
+            const status = await window.universalVerification.forceRefreshVerificationStatus();
+            if (status.is_verified) {
+                badge.innerHTML = '<span class="badge verified"><i class="fas fa-certificate"></i> Verified</span>';
+                badge.classList.add('active', 'verified');
+                badge.classList.remove('not-verified');
+            } else {
+                badge.innerHTML = '<span class="badge not-verified"><i class="fas fa-times-circle"></i> Not Verified</span>';
+                badge.classList.add('not-verified');
+                badge.classList.remove('active', 'verified');
+            }
+        } catch (e) {
+            badge.innerHTML = '<span class="badge not-verified">Status Error</span>';
+            badge.classList.add('not-verified');
+            badge.classList.remove('active', 'verified');
+        }
+    }
+    // Add a refresh button for badge
+    if (document.getElementById('verificationBadge')) {
+        updateVerificationBadge();
+        // Add refresh button if not present
+        if (!document.getElementById('refreshVerificationBadgeBtn')) {
+            const refreshBtn = document.createElement('button');
+            refreshBtn.id = 'refreshVerificationBadgeBtn';
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            refreshBtn.title = 'Refresh Verification Status';
+            refreshBtn.style.marginLeft = '8px';
+            refreshBtn.className = 'btn btn-outline btn-xs';
+            document.getElementById('verificationBadge').appendChild(refreshBtn);
+            refreshBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                updateVerificationBadge();
+            });
+        }
+    }
+    
     // Initialize form validation after DOM is loaded
     setTimeout(setupFormValidation, 500);
 

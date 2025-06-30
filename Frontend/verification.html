@@ -223,60 +223,27 @@
 
     <script src="mobile-nav.js?v=6"></script>
     <script src="universal-verification.js"></script>
-    <script src="verification.js"></script>
     
     <!-- Simplified Enhanced Verification Status Checking -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🔧 Verification page enhancement loaded');
-        
-        // Simple manual test functions for console
-        window.testCurrentVerificationStatus = async function() {
-            console.log('🧪 Testing current verification status...');
-            
-            try {
-                if (window.universalVerification) {
-                    const status = await window.universalVerification.forceRefreshVerificationStatus();
-                    console.log('🔍 Current status:', status);
-                    return status;
-                } else {
-                    console.log('❌ Universal verification system not available');
-                    return null;
-                }
-            } catch (error) {
-                console.error('❌ Test failed:', error);
-                return null;
-            }
-        };
-        
-        window.simulateVerificationChange = function(isVerified = true) {
-            console.log('🎭 Simulating verification change to:', isVerified);
-            
-            if (window.verificationSystem) {
-                const mockStatus = {
-                    status: isVerified ? 'approved' : 'not_applied',
-                    is_verified: isVerified,
-                    application: isVerified ? {
-                        business_name: 'Test User',
-                        created_at: new Date().toISOString()
-                    } : null,
-                    verification_source: 'test_simulation'
-                };
-                
-                window.verificationSystem.updateVerificationPanel(mockStatus);
-                console.log('✅ UI updated with simulated status');
+        // Use only universalVerification for status
+        async function updateVerificationStatusUI() {
+            if (!window.universalVerification) return;
+            const status = await window.universalVerification.forceRefreshVerificationStatus();
+            const panel = document.getElementById('verificationPanel');
+            if (!panel) return;
+            if (status.is_verified) {
+                panel.innerHTML = '<div class="verified-message">✅ You are verified!</div>';
             } else {
-                console.log('❌ Verification system not available');
+                panel.innerHTML = '<div class="not-verified-message">❌ You are NOT verified.</div>';
             }
-        };
-        
-        // Add some helpful UI feedback
-        setTimeout(() => {
-            console.log('�️ Verification page test functions available:');
-            console.log('  - testCurrentVerificationStatus() - Test verification status');
-            console.log('  - simulateVerificationChange(true/false) - Simulate status change');
-            console.log('  - forceRefreshVerificationSystem() - Force refresh');
-        }, 2000);
+        }
+        // Initial load
+        updateVerificationStatusUI();
+        // Optionally, add a refresh button and handler here
+        window.refreshVerificationStatus = updateVerificationStatusUI;
     });
     </script>
 </body>
