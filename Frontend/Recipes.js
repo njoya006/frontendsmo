@@ -1270,7 +1270,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </p>
                 </div>
             `;
-            
             container.appendChild(createButton);
             
             const createBtn = document.getElementById('createRecipeBtn');
@@ -1359,4 +1358,103 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('❌ Error in forceLoadRecipes:', e);
         }
     };
+    
+    // ======= CREATE RECIPE FORM ENHANCEMENTS =======
+
+    // Utility: Fetch options from backend
+    async function fetchOptions(endpoint) {
+        try {
+            const response = await fetch(`https://njoya.pythonanywhere.com/api/${endpoint}/`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (!response.ok) return [];
+            // Accepts [{name: 'X', id: 1}, ...] or [{name: 'X'}, ...]
+            return Array.isArray(data) ? data : [];
+        } catch (e) { return []; }
+    }
+
+    // Populate select options for categories, cuisines, tags
+    async function populateRecipeFormOptions() {
+        const [categories, cuisines, tags] = await Promise.all([
+            fetchOptions('categories'),
+            fetchOptions('cuisines'),
+            fetchOptions('tags')
+        ]);
+        const catSel = document.getElementById('recipeCategories');
+        const cuiSel = document.getElementById('recipeCuisines');
+        const tagSel = document.getElementById('recipeTags');
+        if (catSel) { catSel.innerHTML = categories.map(c => `<option value="${c.id || c.name}">${c.name}</option>`).join(''); }
+        if (cuiSel) { cuiSel.innerHTML = cuisines.map(c => `<option value="${c.id || c.name}">${c.name}</option>`).join(''); }
+        if (tagSel) { tagSel.innerHTML = tags.map(t => `<option value="${t.id || t.name}">${t.name}</option>`).join(''); }
+    }
+
+    // Ingredient add/remove logic
+    function setupIngredientFields() {
+        const list = document.getElementById('ingredientsList');
+        const addBtn = document.getElementById('addIngredientBtn');
+        if (!list || !addBtn) return;
+        function createIngredientRow() {
+            const row = document.createElement('div');
+            row.className = 'ingredient-row';
+            row.style.display = 'flex';
+            row.style.gap = '8px';
+            row.style.marginBottom = '8px';
+            row.innerHTML = `
+                <input type="text" name="ingredient_name[]" placeholder="Ingredient" required style="flex:2;min-width:0;"/>
+                <input type="text" name="quantity[]" placeholder="Qty" required style="width:60px;"/>
+                <input type="text" name="unit[]" placeholder="Unit" style="width:60px;"/>
+                <button type="button" class="btn btn-outline btn-remove-ingredient" title="Remove">&times;</button>
+            `;
+            row.querySelector('.btn-remove-ingredient').onclick = () => row.remove();
+            return row;
+        }
+        addBtn.onclick = () => list.appendChild(createIngredientRow());
+        // Add one row by default if empty
+        if (!list.children.length) addBtn.onclick();
+    }
+
+    // Style file input and add modern look
+    function styleRecipeFileInput() {
+        const fileInput = document.getElementById('recipeImage');
+        if (!fileInput) return;
+        fileInput.style.display = 'none';
+        let label = fileInput.nextElementSibling;
+        if (!label || label.tagName !== 'LABEL') {
+            label = document.createElement('label');
+            label.htmlFor = 'recipeImage';
+            fileInput.parentNode.insertBefore(label, fileInput.nextSibling);
+        }
+        label.className = 'btn btn-outline';
+        label.style.marginTop = '8px';
+        label.innerHTML = '<i class="fas fa-upload"></i> Choose File';
+        fileInput.onchange = function() {
+            label.innerHTML = this.files && this.files[0] ? `<i class="fas fa-upload"></i> ${this.files[0].name}` : '<i class="fas fa-upload"></i> Choose File';
+        };
+    }
+
+    // Enhance form on modal open
+    function enhanceCreateRecipeForm() {
+        populateRecipeFormOptions();
+        setupIngredientFields();
+        styleRecipeFileInput();
+        // Style Add Ingredient button
+        const addBtn = document.getElementById('addIngredientBtn');
+        if (addBtn) {
+            addBtn.className = 'btn btn-primary';
+            addBtn.style.marginTop = '8px';
+        }
+    }
+
+    // Hook into modal open
+    const createRecipeModal = document.getElementById('createRecipeModal');
+    if (createRecipeModal) {
+        const observer = new MutationObserver(() => {
+            if (createRecipeModal.style.display === 'block') {
+                setTimeout(enhanceCreateRecipeForm, 100);
+            }
+        });
+        observer.observe(createRecipeModal, { attributes: true, attributeFilter: ['style'] });
+    }
 });
