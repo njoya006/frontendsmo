@@ -139,6 +139,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     badgeEl.id = badgeContainerId;
                     badgeEl.className = 'verification-badge';
                     badgeEl.style.background = data.verified_badge.color || '#4CAF50';
+                    badgeEl.style.display = 'inline-flex';
+                    badgeEl.style.alignItems = 'center';
+                    badgeEl.style.marginLeft = '8px';
+                    badgeEl.style.color = '#fff';
+                    badgeEl.style.fontWeight = 'bold';
+                    badgeEl.style.fontSize = '13px';
+                    badgeEl.style.border = '2px solid #fff';
+                    badgeEl.style.outline = '1.5px solid rgba(34,139,34,0.18)';
+                    badgeEl.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.18)';
                     badgeEl.innerHTML = `<i class="${data.verified_badge.icon || 'fas fa-certificate'}"></i> ${data.verified_badge.label || 'Verified'}`;
                     document.getElementById('userName').after(badgeEl);
                 }
