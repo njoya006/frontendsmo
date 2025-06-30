@@ -1405,6 +1405,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" name="ingredient_name[]" placeholder="Ingredient" required style="flex:2;min-width:0;"/>
                 <input type="text" name="quantity[]" placeholder="Qty" required style="width:60px;"/>
                 <input type="text" name="unit[]" placeholder="Unit" style="width:60px;"/>
+                <input type="text" name="preparation[]" placeholder="Preparation (optional)" style="flex:1;min-width:0;"/>
                 <button type="button" class="btn btn-outline btn-remove-ingredient" title="Remove">&times;</button>
             `;
             row.querySelector('.btn-remove-ingredient').onclick = () => row.remove();
@@ -1456,5 +1457,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         observer.observe(createRecipeModal, { attributes: true, attributeFilter: ['style'] });
+    }
+    
+    // ======= CREATE RECIPE FORM SUBMISSION HANDLER =======
+    const createRecipeForm = document.getElementById('createRecipeForm');
+    if (createRecipeForm) {
+        createRecipeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            // Collect ingredient fields
+            const ingredientNames = Array.from(document.getElementsByName('ingredient_name[]')).map(input => input.value.trim());
+            const quantities = Array.from(document.getElementsByName('quantity[]')).map(input => input.value.trim());
+            const units = Array.from(document.getElementsByName('unit[]')).map(input => input.value.trim());
+            const preparations = Array.from(document.getElementsByName('preparation[]')).map(input => input.value.trim());
+            // Build ingredients array with preparation
+            const ingredients = ingredientNames.map((name, i) => ({
+                name,
+                quantity: quantities[i] || '',
+                unit: units[i] || '',
+                preparation: preparations[i] || '' // Optional
+            }));
+            // Example: log to verify
+            console.log('Submitting recipe with ingredients:', ingredients);
+            // You should now include 'ingredients' in your form data sent to the backend
+        });
     }
 });
