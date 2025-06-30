@@ -224,25 +224,90 @@
     <script src="mobile-nav.js?v=6"></script>
     <script src="universal-verification.js"></script>
     
-    <!-- Simplified Enhanced Verification Status Checking -->
+    <!-- Enhanced Verification Status Checking and Application Flow -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('🔧 Verification page enhancement loaded');
-        // Use only universalVerification for status
+        // Modal logic
+        const applicationModal = document.getElementById('applicationModal');
+        const closeModalBtn = document.getElementById('closeApplicationModal');
+        function openApplicationModal() {
+            applicationModal.style.display = 'block';
+        }
+        function closeApplicationModal() {
+            applicationModal.style.display = 'none';
+        }
+        if (closeModalBtn) closeModalBtn.onclick = closeApplicationModal;
+        window.onclick = function(event) {
+            if (event.target === applicationModal) closeApplicationModal();
+        };
+
+        // Main verification panel logic
         async function updateVerificationStatusUI() {
             if (!window.universalVerification) return;
             const status = await window.universalVerification.forceRefreshVerificationStatus();
             const panel = document.getElementById('verificationPanel');
             if (!panel) return;
+
             if (status.is_verified) {
                 panel.innerHTML = '<div class="verified-message">✅ You are verified!</div>';
-            } else {
-                panel.innerHTML = '<div class="not-verified-message">❌ You are NOT verified.</div>';
+                return;
             }
+
+            // Handle pending/rejected states
+            if (status.status === 'pending') {
+                panel.innerHTML = `
+                  <div class="verification-status-header">
+                    <span class="verification-status-icon pending"><i class="fas fa-hourglass-half"></i></span>
+                    <div>
+                      <h2 class="verification-status-title">Verification Pending</h2>
+                      <div class="verification-status-subtitle">Your application is under review. You will be notified once a decision is made.</div>
+                    </div>
+                  </div>
+                `;
+                return;
+            }
+            if (status.status === 'rejected') {
+                panel.innerHTML = `
+                  <div class="verification-status-header">
+                    <span class="verification-status-icon rejected"><i class="fas fa-times-circle"></i></span>
+                    <div>
+                      <h2 class="verification-status-title">Verification Rejected</h2>
+                      <div class="verification-status-subtitle">Your application was not approved. You may contact support for more info or reapply later.</div>
+                    </div>
+                  </div>
+                  <button class="verification-form-submit" id="reapplyBtn">Reapply for Verification</button>
+                `;
+                document.getElementById('reapplyBtn').onclick = openApplicationModal;
+                return;
+            }
+
+            // Not verified and can apply
+            panel.innerHTML = `
+              <div class="verification-status-header">
+                <span class="verification-status-icon none"><i class="fas fa-user-times"></i></span>
+                <div>
+                  <h2 class="verification-status-title">You are not verified</h2>
+                  <div class="verification-status-subtitle">Become a verified contributor to unlock more features!</div>
+                </div>
+              </div>
+              <section class="verification-requirements">
+                <div class="verification-requirements-title"><i class="fas fa-list-check"></i> Requirements & Benefits</div>
+                <ul class="verification-requirements-list">
+                  <li class="verification-requirements-item">Share at least 3 original recipes</li>
+                  <li class="verification-requirements-item">Complete your profile with a real name and photo</li>
+                  <li class="verification-requirements-item">Demonstrate cooking experience or passion</li>
+                  <li class="verification-requirements-item">Get a badge and priority recipe listing</li>
+                  <li class="verification-requirements-item">Access to exclusive features and community events</li>
+                </ul>
+              </section>
+              <button class="verification-form-submit" id="applyBtn">
+                <i class="fas fa-paper-plane"></i> Apply for Verification
+              </button>
+            `;
+            document.getElementById('applyBtn').onclick = openApplicationModal;
         }
         // Initial load
         updateVerificationStatusUI();
-        // Optionally, add a refresh button and handler here
         window.refreshVerificationStatus = updateVerificationStatusUI;
     });
     </script>
