@@ -126,10 +126,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Display user data with fallbacks
             const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.username || 'User';
-            
+
             // Update display elements
             if (document.getElementById('userName')) {
                 document.getElementById('userName').textContent = fullName;
+                // Show badge beside username if verified_badge exists
+                const badgeContainerId = 'userVerifiedBadge';
+                let badgeEl = document.getElementById(badgeContainerId);
+                if (badgeEl) badgeEl.remove();
+                if (data.verified_badge && data.is_verified_contributor) {
+                    badgeEl = document.createElement('span');
+                    badgeEl.id = badgeContainerId;
+                    badgeEl.className = 'verification-badge';
+                    badgeEl.style.background = data.verified_badge.color || '#4CAF50';
+                    badgeEl.innerHTML = `<i class="${data.verified_badge.icon || 'fas fa-certificate'}"></i> ${data.verified_badge.label || 'Verified'}`;
+                    document.getElementById('userName').after(badgeEl);
+                }
             }
             if (document.getElementById('userEmail')) {
                 document.getElementById('userEmail').textContent = data.email || 'No email provided';
@@ -796,15 +808,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- Verification Badge Integration (Improved) ---
     async function updateVerificationBadge() {
-        if (!window.universalVerification) return;
         const badge = document.getElementById('verificationBadge');
         if (!badge) return;
         badge.innerHTML = '<span class="badge loading">Checking...</span>';
         badge.classList.remove('active', 'not-verified', 'verified');
         try {
-            const status = await window.universalVerification.forceRefreshVerificationStatus();
-            if (status.is_verified) {
-                badge.innerHTML = '<span class="badge verified"><i class="fas fa-certificate"></i> Verified</span>';
+            // Fetch profile for up-to-date status
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            const data = await response.json();
+            if (data.is_verified_contributor && data.verified_badge) {
+                badge.innerHTML = `<span class="badge verified" style="background:${data.verified_badge.color || '#4CAF50'}"><i class="${data.verified_badge.icon || 'fas fa-certificate'}"></i> ${data.verified_badge.label || 'Verified'}</span>`;
                 badge.classList.add('active', 'verified');
                 badge.classList.remove('not-verified');
             } else {

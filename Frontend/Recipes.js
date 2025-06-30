@@ -900,74 +900,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // ======= ENHANCED VERIFICATION CHECK =======
     
     async function checkUserVerification() {
-        console.log('🔍 Checking user verification with enhanced system...');
-        
+        console.log('🔍 Checking user verification with new is_verified_contributor field...');
         // Get auth token
         const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         if (!authToken) {
             console.log('❌ No auth token found');
             return { isVerified: false, reason: 'not_logged_in' };
         }
-        
         try {
-            // Use universal verification system if available
-            if (window.universalVerification) {
-                console.log('🔍 Using universal verification system...');
-                const verificationData = await window.universalVerification.forceRefreshVerificationStatus();
-                console.log('🔍 Universal verification result:', verificationData);
-                
-                const isVerified = verificationData.is_verified || verificationData.status === 'approved';
-                
-                return {
-                    isVerified: isVerified,
-                    reason: isVerified ? 'verified' : 'not_verified',
-                    verificationData: verificationData
-                };
-            }
-            
-            // Fallback to direct profile check
-            console.log('⚠️ Universal verification not available, using direct check...');
             const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
                 headers: {
                     'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`,
                     'Content-Type': 'application/json'
                 }
             });
-            
             if (!response.ok) {
                 console.log('❌ Profile request failed:', response.status);
                 return { isVerified: false, reason: 'api_error', status: response.status };
             }
-            
             const profileData = await response.json();
-            console.log('✅ Profile data received:', profileData);
-            
-            // Check multiple verification patterns
-            let isVerified = 
-                profileData.is_verified === true ||
-                profileData.verified === true ||
-                profileData.verification_status === 'approved' ||
-                profileData.verification_status === 'verified' ||
-                profileData.user_verification === 'approved' ||
-                profileData.user_verification === true ||
-                (profileData.profile && profileData.profile.is_verified === true) ||
-                (profileData.profile && profileData.profile.verification_status === 'approved');
-            
-            console.log('🔍 Direct verification result:', isVerified);
-            console.log('🔍 Verification fields:', {
-                is_verified: profileData.is_verified,
-                verified: profileData.verified,
-                verification_status: profileData.verification_status,
-                user_verification: profileData.user_verification,
-                profile_verified: profileData.profile?.is_verified
-            });
-            
-            return { 
-                isVerified, 
+            const isVerified = profileData.is_verified_contributor === true;
+            return {
+                isVerified,
                 reason: isVerified ? 'verified' : 'not_verified',
-                profileData 
+                profileData
             };
-            
         } catch (error) {
             console.error('❌ Error checking verification:', error);
             return { isVerified: false, reason: 'error', error: error.message };
@@ -1033,7 +990,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (verificationResult.isVerified) {
                 console.log('✅ User is verified - showing Create Recipe button');
-                
                 // Create the Create Recipe button
                 const createButton = document.createElement('div');
                 createButton.className = 'create-recipe-section';
@@ -1049,15 +1005,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </p>
                     </div>
                 `;
-                
                 container.appendChild(createButton);
-                
                 // Add click event to open the modal
                 const createBtn = document.getElementById('createRecipeBtn');
                 if (createBtn) {
                     createBtn.addEventListener('click', function() {
                         console.log('🎯 Create Recipe button clicked');
-                        
                         // Double-check verification before opening modal
                         checkUserVerification().then(currentStatus => {
                             if (currentStatus.isVerified) {
@@ -1068,13 +1021,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             } else {
                                 showToast('⚠️ Verification required to create recipes. Please verify your account.', '#ff9800');
-                                // Refresh the button state
+                                // Refresh the button status
                                 initializeCreateRecipeButton();
                             }
                         });
                     });
                 }
-                
             } else if (verificationResult.reason === 'not_logged_in') {
                 console.log('❌ User not logged in - showing login prompt');
                 
@@ -1402,34 +1354,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const recipes = await fetchRecipes();
             console.log('✅ Fetched recipes:', recipes.length);
-            
-            if (recipes.length > 0) {
-                allRecipes = recipes;
-                recipeData = recipes;
-                displayRecipes(recipes);
-                console.log('✅ Recipes displayed successfully');
-            } else {
-                console.log('⚠️ No recipes returned, loading fallback...');
-                const fallback = getFallbackRecipes();
-                allRecipes = fallback;
-                recipeData = fallback;
-                displayRecipes(fallback);
-                console.log('✅ Fallback recipes displayed');
-            }
-        } catch (error) {
-            console.error('❌ Force load failed:', error);
-            const fallback = getFallbackRecipes();
-            allRecipes = fallback;
-            recipeData = fallback;
-            displayRecipes(fallback);
-            console.log('✅ Emergency fallback recipes displayed');
+            // You can add more debug/test logic here if needed
+        } catch (e) {
+            console.error('❌ Error in forceLoadRecipes:', e);
         }
     };
-    
-    console.log('🛠️ Test functions available in console:');
-    console.log('  - testCreateRecipeButton() - Test the button functionality');
-    console.log('  - forceRefreshVerification() - Force refresh verification status');  
-    console.log('  - forceShowCreateButton() - Force the button to appear (DEBUG)');
-    console.log('  - forceLoadRecipes() - Force reload recipes from API or fallback');
-
 });
