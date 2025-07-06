@@ -156,20 +156,58 @@
         if (typing) typing.remove();
     }
 
-    // API call
+    // API call with improved error handling
     async function askChefAssistant(prompt) {
         try {
+            // Get auth token if user is logged in
+            const authToken = localStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (authToken) {
+                headers['Authorization'] = `Token ${authToken}`;
+            }
+
             const response = await fetch('https://njoya.pythonanywhere.com/api/chef-assistant/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
+                headers: headers,
+                body: JSON.stringify({ 
+                    prompt,
+                    // Send unique conversation ID to maintain context
+                    conversation_id: localStorage.getItem('chef_conversation_id') || Date.now().toString()
+                })
             });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const errorMsg = errorData.detail || errorData.message || 'Error communicating with Chef Assistant';
+                
+                // Handle specific error cases
+                if (response.status === 401) {
+                    return 'Please log in to use the Chef Assistant.';
+                } else if (response.status === 429) {
+                    return 'Too many requests. Please wait a moment before trying again.';
+                } else if (response.status === 503) {
+                    return 'The Chef Assistant service is currently unavailable. Please try again later.';
+                }
+                throw new Error(errorMsg);
+            }
+
             const data = await response.json();
-            if (!response.ok) throw new Error(data.detail || 'Error from Chef Assistant');
+            
+            // Store conversation ID for context
+            if (data.conversation_id) {
+                localStorage.setItem('chef_conversation_id', data.conversation_id);
+            }
+
             return data.response;
         } catch (err) {
             console.error('Chef Assistant error:', err);
-            return 'Sorry, I could not process your request.';
+            // More user-friendly error message
+            if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                return 'Sorry, I cannot connect to the server right now. Please check your internet connection and try again.';
+            }
+            return `Sorry, I could not process your request. ${err.message}`;
         }
     }
 
