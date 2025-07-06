@@ -1364,15 +1364,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Utility: Fetch options from backend
     async function fetchOptions(endpoint) {
         try {
+            console.log(`[DEBUG] Fetching options for: ${endpoint}`);
             const response = await fetch(`https://njoya.pythonanywhere.com/api/${endpoint}/`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
             const data = await response.json();
-            if (!response.ok) return [];
-            // Accepts [{name: 'X', id: 1}, ...] or [{name: 'X'}, ...]
+            console.log(`[DEBUG] Response for ${endpoint}:`, data);
+            if (!response.ok) {
+                console.error(`[ERROR] Fetch for ${endpoint} failed:`, data);
+                return [];
+            }
             return Array.isArray(data) ? data : [];
-        } catch (e) { return []; }
+        } catch (e) {
+            console.error(`[ERROR] Exception fetching ${endpoint}:`, e);
+            return [];
+        }
     }
 
     // Populate select options for categories, cuisines, tags
@@ -1385,9 +1392,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const catSel = document.getElementById('recipeCategories');
         const cuiSel = document.getElementById('recipeCuisines');
         const tagSel = document.getElementById('recipeTags');
-        if (catSel) { catSel.innerHTML = categories.map(c => `<option value="${c.id || c.name}">${c.name}</option>`).join(''); }
-        if (cuiSel) { cuiSel.innerHTML = cuisines.map(c => `<option value="${c.id || c.name}">${c.name}</option>`).join(''); }
-        if (tagSel) { tagSel.innerHTML = tags.map(t => `<option value="${t.id || t.name}">${t.name}</option>`).join(''); }
+        if (catSel) {
+            catSel.innerHTML = categories.length
+                ? categories.map(c => `<option value="${c.id || c.name}">${c.name}</option>`).join('')
+                : '<option disabled selected>No categories found</option>';
+            console.log('[DEBUG] Categories select populated:', catSel.innerHTML);
+        }
+        if (cuiSel) {
+            cuiSel.innerHTML = cuisines.length
+                ? cuisines.map(c => `<option value="${c.id || c.name}">${c.name}</option>`).join('')
+                : '<option disabled selected>No cuisines found</option>';
+            console.log('[DEBUG] Cuisines select populated:', cuiSel.innerHTML);
+        }
+        if (tagSel) {
+            tagSel.innerHTML = tags.length
+                ? tags.map(t => `<option value="${t.id || t.name}">${t.name}</option>`).join('')
+                : '<option disabled selected>No tags found</option>';
+            console.log('[DEBUG] Tags select populated:', tagSel.innerHTML);
+        }
     }
 
     // Ingredient add/remove logic
