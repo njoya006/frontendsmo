@@ -81,6 +81,23 @@
         </form>
     `;
     document.body.appendChild(widget);
+    widget.style.display = 'none'; // Hide by default
+
+    // Show widget when navbar button is clicked
+    function showWidget() {
+        widget.style.display = 'flex';
+        setTimeout(() => input.focus(), 200);
+    }
+    // Listen for nav button
+    document.addEventListener('DOMContentLoaded', function() {
+        const navBtn = document.getElementById('chefAssistantNavBtn');
+        if (navBtn) {
+            navBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showWidget();
+            });
+        }
+    });
 
     // Draggable logic
     let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
