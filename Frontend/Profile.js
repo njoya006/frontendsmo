@@ -32,6 +32,25 @@ document.addEventListener('DOMContentLoaded', function() {
         this.querySelector('i').classList.toggle('fa-times');
     });
 
+    // --- Chef AI Button Icon Fix: Use fa-robot for guaranteed visibility ---
+    function updateChefAIBtnIcon() {
+        // Look for all Chef AI buttons in the navbar
+        const chefAIBtns = document.querySelectorAll('.chef-ai-btn');
+        chefAIBtns.forEach(btn => {
+            // Remove any previous icon
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-robot';
+            } else {
+                // If no icon, add one
+                const newIcon = document.createElement('i');
+                newIcon.className = 'fas fa-robot';
+                btn.prepend(newIcon);
+            }
+        });
+    }
+    updateChefAIBtnIcon();
+
     // Logout Functionality
     const logoutBtn = document.getElementById('logoutBtn');
     logoutBtn.addEventListener('click', function() {
@@ -121,9 +140,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 null, // No success message for loading
                 'Failed to load profile data'
             );
-            
+
             console.log('Profile API response:', data); // DEBUG: log the full response
-            
+
             // Display user data with fallbacks
             const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.username || 'User';
 
@@ -168,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (document.getElementById('userEmail')) {
                 document.getElementById('userEmail').textContent = data.email || 'No email provided';
             }
-            
+
             // Update form fields
             const formFields = [
                 { id: 'firstName', value: data.first_name || '' },
@@ -181,14 +200,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 { id: 'dietaryPreferences', value: data.dietary_preferences || '' },
                 { id: 'basicIngredients', value: data.basic_ingredients || '' }
             ];
-            
+
             formFields.forEach(field => {
                 const element = document.getElementById(field.id);
                 if (element) {
                     element.value = field.value;
                 }
             });
-            
+
             // Update stats if available
             if (document.getElementById('recipesCount')) {
                 document.getElementById('recipesCount').textContent = data.saved_recipes_count || '0';
@@ -196,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (document.getElementById('mealsPlanned')) {
                 document.getElementById('mealsPlanned').textContent = data.meal_plans_count || '0';
             }
-            
+
             // Handle profile photo with improved error handling
             const avatarImg = document.getElementById('avatarImg');
             if (avatarImg) {
@@ -211,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Relative path or filename
                         photoUrl = `https://njoya.pythonanywhere.com/media/${photoUrl.replace(/^media\/?/, '')}`;
                     }
-                    
+
                     // Set the image with error handling
                     avatarImg.onload = function() {
                         console.log('Profile image loaded successfully');
@@ -226,15 +245,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Set placeholder with user's initial
                     const initial = data.first_name ? data.first_name.charAt(0).toUpperCase() : 'U';
                     avatarImg.src = `https://via.placeholder.com/140x140/4CAF50/white?text=${initial}`;
-                }            }
-            
+                }
+            }
+
+            // --- Chef AI Button Icon Fix (for guaranteed visibility) ---
+            // Replace the Chef AI icon with fa-robot if not visible
+            try {
+                const chefAiBtn = document.getElementById('chefAiBtn');
+                if (chefAiBtn) {
+                    const icon = chefAiBtn.querySelector('i');
+                    if (icon && !icon.classList.contains('fa-robot')) {
+                        icon.className = 'fas fa-robot';
+                    }
+                }
+            } catch (e) {
+                console.warn('Chef AI icon fix failed:', e);
+            }
+
             console.log('Profile data loaded successfully');
-            
+
             // Store original form data for reset functionality
             if (window.storeOriginalFormData) {
                 setTimeout(() => window.storeOriginalFormData(), 100);
             }
-            
+
         } catch (error) {
             console.error('Profile loading error:', error);
             if (error && error.status === 401) {
