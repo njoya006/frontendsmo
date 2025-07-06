@@ -156,7 +156,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     badgeEl.style.padding = '2px 8px';
                     badgeEl.style.borderRadius = '16px';
                     badgeEl.style.lineHeight = '1.2';
-                    badgeEl.innerHTML = `<i class="${badgeIcon}"></i> ${badgeLabel}`;
+                    badgeEl.style.gap = '6px';
+                    badgeEl.style.transition = 'all 0.2s';
+                    badgeEl.innerHTML = `<i class="${badgeIcon}" style="margin-right:5px;"></i> <span>${badgeLabel}</span>`;
                     document.getElementById('userName').after(badgeEl);
                     console.log('Verification badge rendered beside username:', badgeLabel);
                 } else {
