@@ -162,15 +162,18 @@
             // Get auth token if user is logged in
             const authToken = localStorage.getItem('authToken');
             const headers = {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             };
             if (authToken) {
                 headers['Authorization'] = `Token ${authToken}`;
             }
 
+            console.log('Sending request to Chef Assistant API...');
             const response = await fetch('https://njoya.pythonanywhere.com/api/chef-assistant/', {
                 method: 'POST',
                 headers: headers,
+                credentials: 'include', // Include cookies if needed
                 body: JSON.stringify({ 
                     prompt,
                     // Send unique conversation ID to maintain context
@@ -178,8 +181,19 @@
                 })
             });
 
+            console.log('Response status:', response.status);
+            
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                const responseText = await response.text();
+                console.log('Error response:', responseText);
+                
+                let errorData = {};
+                try {
+                    errorData = JSON.parse(responseText);
+                } catch (e) {
+                    console.log('Failed to parse error response as JSON');
+                }
+                
                 const errorMsg = errorData.detail || errorData.message || 'Error communicating with Chef Assistant';
                 
                 // Handle specific error cases
@@ -189,8 +203,10 @@
                     return 'Too many requests. Please wait a moment before trying again.';
                 } else if (response.status === 503) {
                     return 'The Chef Assistant service is currently unavailable. Please try again later.';
+                } else if (response.status === 500) {
+                    return 'The server encountered an internal error. This might be due to API key configuration. Please contact support.';
                 }
-                throw new Error(errorMsg);
+                throw new Error(`${errorMsg} (Status: ${response.status})`);
             }
 
             const data = await response.json();
