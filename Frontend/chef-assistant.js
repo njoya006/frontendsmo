@@ -169,29 +169,40 @@
                 headers['Authorization'] = `Token ${authToken}`;
             }
 
-            console.log('Sending request to Chef Assistant API...');
-            const response = await fetch('https://njoya.pythonanywhere.com/api/chef-assistant/', {
+            // Debug: Log full request details
+            const apiUrl = 'https://njoya.pythonanywhere.com/api/v1/chef-assistant/';  // Updated to include v1
+            console.log('Sending request to:', apiUrl);
+            console.log('Request headers:', headers);
+            const requestBody = { 
+                prompt,
+                conversation_id: localStorage.getItem('chef_conversation_id') || Date.now().toString()
+            };
+            console.log('Request body:', requestBody);
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: headers,
-                credentials: 'include', // Include cookies if needed
-                body: JSON.stringify({ 
-                    prompt,
-                    // Send unique conversation ID to maintain context
-                    conversation_id: localStorage.getItem('chef_conversation_id') || Date.now().toString()
-                })
+                credentials: 'include',
+                body: JSON.stringify(requestBody)
             });
 
             console.log('Response status:', response.status);
             
+            // Debug: Log full response details
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+            
             if (!response.ok) {
                 const responseText = await response.text();
-                console.log('Error response:', responseText);
+                console.log('Error response text:', responseText);
+                console.log('Response status:', response.status);
+                console.log('Response status text:', response.statusText);
                 
                 let errorData = {};
                 try {
                     errorData = JSON.parse(responseText);
+                    console.log('Parsed error data:', errorData);
                 } catch (e) {
-                    console.log('Failed to parse error response as JSON');
+                    console.log('Failed to parse error response as JSON:', e.message);
                 }
                 
                 const errorMsg = errorData.detail || errorData.message || 'Error communicating with Chef Assistant';
