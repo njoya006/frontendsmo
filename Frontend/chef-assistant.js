@@ -174,7 +174,13 @@
             console.log('Sending request to:', apiUrl);
             console.log('Request headers:', headers);
             const requestBody = { 
-                prompt  // Just send the prompt as specified in the example
+                prompt,
+                conversation_id: localStorage.getItem('chef_conversation_id'),
+                user_preferences: {
+                    dietary_preferences: localStorage.getItem('dietary_preferences'),
+                    favorite_cuisines: localStorage.getItem('favorite_cuisines'),
+                    allergies: localStorage.getItem('allergies')
+                }
             };
             console.log('Request body:', requestBody);
 
@@ -205,21 +211,42 @@
                 
                 const errorMsg = errorData.detail || errorData.message || 'Error communicating with Chef Assistant';
                 
-                // Handle specific error cases
+                // Enhanced error handling with fallbacks
                 if (response.status === 401) {
-                    return 'Please log in to use the Chef Assistant.';
+                    return 'Please log in to use the Chef Assistant. This will help me provide personalized cooking suggestions based on your preferences.';
                 } else if (response.status === 429) {
-                    return 'Too many requests. Please wait a moment before trying again.';
+                    return 'I\'m getting a lot of requests right now. While you wait, here\'s a tip: For Cameroonian dishes, freshly ground spices like pebe (African white pepper) and garlic make a huge difference in flavor.';
                 } else if (response.status === 503) {
-                    return 'The Chef Assistant service is currently unavailable. Please try again later.';
+                    return 'The Chef Assistant is taking a short break. While you wait, remember that the key to perfect Ndolé is to blanch the leaves twice to remove bitterness.';
                 } else if (response.status === 500) {
-                    return 'The server encountered an internal error. This might be due to API key configuration. Please contact support.';
+                    return 'I encountered a technical issue. While our team fixes it, here\'s a tip: When making Achu soup, use limestone (kanwa) to achieve that perfect smooth texture.';
                 }
+                
+                // If we have fallback suggestions in the error response, use them
+                if (errorData.fallback_suggestion) {
+                    return `${errorMsg}\n\nIn the meantime, here's a helpful tip: ${errorData.fallback_suggestion}`;
+                }
+                
                 throw new Error(`${errorMsg} (Status: ${response.status})`);
             }
 
             const data = await response.json();
-            return data.suggestion;  // Use suggestion field as shown in the example
+            
+            // Store conversation ID for context
+            if (data.conversation_id) {
+                localStorage.setItem('chef_conversation_id', data.conversation_id);
+            }
+
+            // Enhanced response handling
+            if (data.error) {
+                console.error('Chef Assistant API error:', data.error);
+                if (data.fallback_suggestion) {
+                    return `${data.error}\n\nHere's a helpful suggestion: ${data.fallback_suggestion}`;
+                }
+                throw new Error(data.error);
+            }
+
+            return data.suggestion || data.response;
         } catch (err) {
             console.error('Chef Assistant error:', err);
             // More user-friendly error message
@@ -256,7 +283,10 @@
         }
     });
 
-    // Start with a welcome message
-    chatHistory.push({ type: 'chef', text: '👋 Hi! I am your Chef Assistant. Ask me anything about cooking, recipes, or kitchen tips!' });
+    // Start with a contextual welcome message
+    const welcomeMessage = localStorage.getItem('authToken') 
+        ? '👋 Welcome back! I remember your preferences and our previous conversations. Ask me anything about cooking, especially Cameroonian cuisine!' 
+        : '👋 Hi! I am your Chef Assistant, specializing in Cameroonian and international cuisine. Log in to get personalized cooking tips!';
+    chatHistory.push({ type: 'chef', text: welcomeMessage });
     renderMessages();
 })();
