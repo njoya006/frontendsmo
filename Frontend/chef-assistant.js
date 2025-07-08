@@ -156,6 +156,9 @@
         if (typing) typing.remove();
     }
 
+    // Store conversation ID for continuous conversation
+    let currentConversationId = localStorage.getItem('chef_conversation_id') || null;
+
     // API call with improved error handling
     async function askChefAssistant(prompt) {
         try {
@@ -169,54 +172,44 @@
                 headers['Authorization'] = `Token ${authToken}`;
             }
 
-            // Debug: Log full request details
-            const apiUrl = 'https://njoya.pythonanywhere.com/api/chef-assistant/';  // Original endpoint path
-            console.log('Sending request to:', apiUrl);
-            console.log('Request headers:', headers);
-            // Parse stored preferences (they might be JSON strings)
-            let dietary_preferences = [];
-            let favorite_cuisines = [];
-            let allergies = [];
+            // Prepare request payload
+            const requestBody = {
+                prompt: prompt
+            };
             
-            try {
-                const storedDietary = localStorage.getItem('dietary_preferences');
-                const storedCuisines = localStorage.getItem('favorite_cuisines');
-                const storedAllergies = localStorage.getItem('allergies');
-                
-                dietary_preferences = storedDietary ? JSON.parse(storedDietary) : [];
-                favorite_cuisines = storedCuisines ? JSON.parse(storedCuisines) : [];
-                allergies = storedAllergies ? JSON.parse(storedAllergies) : [];
-            } catch (e) {
-                console.log('Error parsing preferences:', e);
+            // Include conversation ID if we have one
+            if (currentConversationId) {
+                requestBody.conversation_id = currentConversationId;
             }
 
-            const requestBody = { 
-                prompt: prompt,
-                conversation_id: localStorage.getItem('chef_conversation_id') || null,
-                preferences: {
-                    dietary: dietary_preferences,
-                    cuisines: favorite_cuisines,
-                    allergies: allergies
-                }
-            };
+            // Debug: Log full request details
+            const apiUrl = 'https://njoya.pythonanywhere.com/api/chef-assistant/';
+            console.log('Sending request to Chef Assistant API:', {
+                url: apiUrl,
+                headers: headers,
+                payload: requestBody
+            });
             console.log('Request body:', requestBody);
 
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: headers,
+                credentials: 'same-origin',  // For CSRF handling
                 body: JSON.stringify(requestBody)
             });
 
-            console.log('Response status:', response.status);
+            console.log('Received response status:', response.status);
             
-            // Debug: Log full response details
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+            // Get the raw response text first for debugging
+            const responseText = await response.text();
+            console.log('Raw response:', responseText);
             
             if (!response.ok) {
-                const responseText = await response.text();
-                console.log('Error response text:', responseText);
-                console.log('Response status:', response.status);
-                console.log('Response status text:', response.statusText);
+                console.log('Error response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: responseText
+                });
                 
                 let errorData = {};
                 try {
@@ -250,23 +243,29 @@
                 throw new Error(`${errorMsg} (Status: ${response.status})`);
             }
 
-            const data = await response.json();
+            // Parse the JSON response
+            let data;
+            try {
+                data = JSON.parse(responseText);
+                console.log('Parsed response:', data);
+            } catch (e) {
+                console.error('Error parsing response:', e);
+                throw new Error('Invalid response from Chef Assistant');
+            }
             
-            // Store conversation ID for context
+            // Store the conversation ID for future exchanges
             if (data.conversation_id) {
+                currentConversationId = data.conversation_id;
                 localStorage.setItem('chef_conversation_id', data.conversation_id);
             }
 
-            // Enhanced response handling
+            // Handle error responses
             if (data.error) {
                 console.error('Chef Assistant API error:', data.error);
-                if (data.fallback_suggestion) {
-                    return `${data.error}\n\nHere's a helpful suggestion: ${data.fallback_suggestion}`;
-                }
                 throw new Error(data.error);
             }
 
-            return data.suggestion || data.response;
+            return data.suggestion;
         } catch (err) {
             console.error('Chef Assistant error:', err);
             // More user-friendly error message
