@@ -170,19 +170,17 @@
             }
 
             // Debug: Log full request details
-            const apiUrl = 'https://njoya.pythonanywhere.com/api/v1/chef-assistant/';  // Updated to include v1
+            const apiUrl = 'https://njoya.pythonanywhere.com/api/chef-assistant/';  // Original endpoint path
             console.log('Sending request to:', apiUrl);
             console.log('Request headers:', headers);
             const requestBody = { 
-                prompt,
-                conversation_id: localStorage.getItem('chef_conversation_id') || Date.now().toString()
+                prompt  // Just send the prompt as specified in the example
             };
             console.log('Request body:', requestBody);
 
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: headers,
-                credentials: 'include',
                 body: JSON.stringify(requestBody)
             });
 
@@ -221,13 +219,7 @@
             }
 
             const data = await response.json();
-            
-            // Store conversation ID for context
-            if (data.conversation_id) {
-                localStorage.setItem('chef_conversation_id', data.conversation_id);
-            }
-
-            return data.response;
+            return data.suggestion;  // Use suggestion field as shown in the example
         } catch (err) {
             console.error('Chef Assistant error:', err);
             // More user-friendly error message
