@@ -173,13 +173,30 @@
             const apiUrl = 'https://njoya.pythonanywhere.com/api/chef-assistant/';  // Original endpoint path
             console.log('Sending request to:', apiUrl);
             console.log('Request headers:', headers);
+            // Parse stored preferences (they might be JSON strings)
+            let dietary_preferences = [];
+            let favorite_cuisines = [];
+            let allergies = [];
+            
+            try {
+                const storedDietary = localStorage.getItem('dietary_preferences');
+                const storedCuisines = localStorage.getItem('favorite_cuisines');
+                const storedAllergies = localStorage.getItem('allergies');
+                
+                dietary_preferences = storedDietary ? JSON.parse(storedDietary) : [];
+                favorite_cuisines = storedCuisines ? JSON.parse(storedCuisines) : [];
+                allergies = storedAllergies ? JSON.parse(storedAllergies) : [];
+            } catch (e) {
+                console.log('Error parsing preferences:', e);
+            }
+
             const requestBody = { 
-                prompt,
-                conversation_id: localStorage.getItem('chef_conversation_id'),
-                user_preferences: {
-                    dietary_preferences: localStorage.getItem('dietary_preferences'),
-                    favorite_cuisines: localStorage.getItem('favorite_cuisines'),
-                    allergies: localStorage.getItem('allergies')
+                prompt: prompt,
+                conversation_id: localStorage.getItem('chef_conversation_id') || null,
+                preferences: {
+                    dietary: dietary_preferences,
+                    cuisines: favorite_cuisines,
+                    allergies: allergies
                 }
             };
             console.log('Request body:', requestBody);
@@ -212,7 +229,10 @@
                 const errorMsg = errorData.detail || errorData.message || 'Error communicating with Chef Assistant';
                 
                 // Enhanced error handling with fallbacks
-                if (response.status === 401) {
+                if (response.status === 400) {
+                    console.error('Request format error:', errorData);
+                    return 'I had trouble understanding your request. Try rephrasing your question about cooking or recipes.';
+                } else if (response.status === 401) {
                     return 'Please log in to use the Chef Assistant. This will help me provide personalized cooking suggestions based on your preferences.';
                 } else if (response.status === 429) {
                     return 'I\'m getting a lot of requests right now. While you wait, here\'s a tip: For Cameroonian dishes, freshly ground spices like pebe (African white pepper) and garlic make a huge difference in flavor.';
