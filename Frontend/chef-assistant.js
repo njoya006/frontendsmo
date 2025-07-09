@@ -129,8 +129,95 @@
     const input = widget.querySelector('#chefAssistantInput');
     const sendBtn = widget.querySelector('#chefAssistantSendBtn');
 
-    // Message history
+    // Message history with conversation tracking
     let chatHistory = [];
+    let currentConversationId = localStorage.getItem('chef_conversation_id');
+    
+    // Recipe social features utilities
+    const recipeSocial = {
+        // Base API URL
+        baseUrl: 'https://njoya.pythonanywhere.com/api',
+        
+        // Get authorization headers
+        getAuthHeaders() {
+            const authToken = localStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            if (authToken) {
+                headers['Authorization'] = `Token ${authToken}`;
+            }
+            return headers;
+        },
+        
+        // Get ratings for a recipe
+        async getRecipeRatings(recipeId) {
+            try {
+                const response = await fetch(`${this.baseUrl}/recipes/ratings/?recipe_id=${recipeId}`, {
+                    method: 'GET',
+                    headers: this.getAuthHeaders()
+                });
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching recipe ratings:', error);
+                return null;
+            }
+        },
+        
+        // Get recipe details with social counts
+        async getRecipeDetails(recipeId) {
+            try {
+                const response = await fetch(`${this.baseUrl}/recipes/${recipeId}/`, {
+                    method: 'GET',
+                    headers: this.getAuthHeaders()
+                });
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching recipe details:', error);
+                return null;
+            }
+        },
+        
+        // Format recipe social info for display in chat
+        async getFormattedRecipeSocialInfo(recipeId) {
+            const details = await this.getRecipeDetails(recipeId);
+            if (!details) return "I couldn't find information for this recipe.";
+            
+            const ratings = await this.getRecipeRatings(recipeId);
+            
+            let result = `Recipe: ${details.title || `#${recipeId}`}\n\n`;
+            
+            if (details.average_rating) {
+                result += `⭐ Average Rating: ${details.average_rating.toFixed(1)}/5 (${details.rating_count} ratings)\n`;
+            } else {
+                result += "⭐ No ratings yet\n";
+            }
+            
+            result += `❤️ ${details.like_count || 0} people liked this recipe\n`;
+            result += `💬 ${details.comment_count || 0} comments\n\n`;
+            
+            if (ratings && ratings.length > 0) {
+                result += "Recent reviews:\n";
+                const topReviews = ratings
+                    .filter(r => r.review && r.review.trim() !== '')
+                    .slice(0, 2);
+                    
+                topReviews.forEach(r => {
+                    result += `- "${r.review.substring(0, 100)}${r.review.length > 100 ? '...' : ''}" - ${r.user.username}\n`;
+                });
+                
+                if (ratings.length > 2) {
+                    result += `\n(${ratings.length - 2} more reviews not shown)`;
+                }
+            }
+            
+            return result;
+        }
+    };
+    
     function renderMessages() {
         messages.innerHTML = '';
         chatHistory.forEach(msg => {
@@ -156,9 +243,6 @@
         if (typing) typing.remove();
     }
 
-    // Store conversation ID for continuous conversation
-    let currentConversationId = localStorage.getItem('chef_conversation_id') || null;
-
     // API call with improved error handling
     async function askChefAssistant(prompt) {
         try {
@@ -172,44 +256,59 @@
                 headers['Authorization'] = `Token ${authToken}`;
             }
 
-            // Prepare request payload
-            const requestBody = {
+            // Debug: Log full request details
+            const apiUrl = 'https://njoya.pythonanywhere.com/api/chef-assistant/';  // Original endpoint path
+            console.log('Sending request to:', apiUrl);
+            console.log('Request headers:', headers);
+            // Parse stored preferences (they might be JSON strings)
+            let dietary_preferences = [];
+            let favorite_cuisines = [];
+            let allergies = [];
+            
+            try {
+                const storedDietary = localStorage.getItem('dietary_preferences');
+                const storedCuisines = localStorage.getItem('favorite_cuisines');
+                const storedAllergies = localStorage.getItem('allergies');
+                
+                dietary_preferences = storedDietary ? JSON.parse(storedDietary) : [];
+                favorite_cuisines = storedCuisines ? JSON.parse(storedCuisines) : [];
+                allergies = storedAllergies ? JSON.parse(storedAllergies) : [];
+            } catch (e) {
+                console.log('Error parsing preferences:', e);
+            }
+
+            // Simplify request structure to exactly match API expectations
+            const requestBody = { 
                 prompt: prompt
             };
             
-            // Include conversation ID if we have one
-            if (currentConversationId) {
-                requestBody.conversation_id = currentConversationId;
+            // Only add conversation_id if it exists
+            const conversationId = localStorage.getItem('chef_conversation_id');
+            if (conversationId && conversationId !== 'null' && conversationId !== 'undefined') {
+                requestBody.conversation_id = conversationId;
             }
-
-            // Debug: Log full request details
-            const apiUrl = 'https://njoya.pythonanywhere.com/api/chef-assistant/';
-            console.log('Sending request to Chef Assistant API:', {
-                url: apiUrl,
-                headers: headers,
-                payload: requestBody
-            });
             console.log('Request body:', requestBody);
 
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: headers,
-                credentials: 'same-origin',  // For CSRF handling
                 body: JSON.stringify(requestBody)
             });
-
-            console.log('Received response status:', response.status);
             
-            // Get the raw response text first for debugging
-            const responseText = await response.text();
-            console.log('Raw response:', responseText);
+            // Detailed debugging
+            console.log('Raw request sent:', JSON.stringify(requestBody));
+
+            console.log('Response status:', response.status);
+            
+            // Debug: Log full response details
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
             
             if (!response.ok) {
-                console.log('Error response:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    body: responseText
-                });
+                // Get response as text first for debugging
+                const responseText = await response.text();
+                console.log('Error response text:', responseText);
+                console.log('Response status:', response.status);
+                console.log('Response status text:', response.statusText);
                 
                 let errorData = {};
                 try {
@@ -243,29 +342,36 @@
                 throw new Error(`${errorMsg} (Status: ${response.status})`);
             }
 
-            // Parse the JSON response
+            // Get response text first to avoid JSON parsing errors
+            const responseText = await response.text();
+            console.log('Raw response:', responseText);
+            
+            // Parse JSON manually after logging the raw text
             let data;
             try {
                 data = JSON.parse(responseText);
-                console.log('Parsed response:', data);
+                console.log('Parsed response data:', data);
             } catch (e) {
-                console.error('Error parsing response:', e);
-                throw new Error('Invalid response from Chef Assistant');
+                console.error('Error parsing JSON response:', e);
+                throw new Error('Invalid JSON response from Chef Assistant');
             }
             
-            // Store the conversation ID for future exchanges
+            // Store conversation ID for context
             if (data.conversation_id) {
-                currentConversationId = data.conversation_id;
                 localStorage.setItem('chef_conversation_id', data.conversation_id);
+                console.log('Stored conversation ID:', data.conversation_id);
             }
 
-            // Handle error responses
+            // Enhanced response handling
             if (data.error) {
                 console.error('Chef Assistant API error:', data.error);
+                if (data.fallback_suggestion) {
+                    return `${data.error}\n\nHere's a helpful suggestion: ${data.fallback_suggestion}`;
+                }
                 throw new Error(data.error);
             }
 
-            return data.suggestion;
+            return data.suggestion || data.response;
         } catch (err) {
             console.error('Chef Assistant error:', err);
             // More user-friendly error message
@@ -276,17 +382,48 @@
         }
     }
 
-    // Form submit
+    // Form submit with recipe social features integration
     form.onsubmit = async function(e) {
         e.preventDefault();
         const userMsg = input.value.trim();
         if (!userMsg) return;
+        
         chatHistory.push({ type: 'user', text: userMsg });
         renderMessages();
         input.value = '';
         sendBtn.disabled = true;
         showTyping();
-        const answer = await askChefAssistant(userMsg);
+        
+        // Check if the message is asking about recipe ratings, likes or comments
+        let answer;
+        
+        // Look for recipe ID in the query
+        // Match patterns like: "show ratings for recipe 5" or "what do people think of recipe 12"
+        const recipeIdMatch = userMsg.match(/recipe\s+#?(\d+)/i) || 
+                             userMsg.match(/ratings? for (?:recipe)?\s*#?(\d+)/i) || 
+                             userMsg.match(/reviews? (?:for|of) (?:recipe)?\s*#?(\d+)/i);
+                             
+        if (recipeIdMatch) {
+            // Extract recipe ID
+            const recipeId = recipeIdMatch[1];
+            
+            // Handle social feature request
+            try {
+                const socialInfo = await recipeSocial.getFormattedRecipeSocialInfo(recipeId);
+                answer = socialInfo;
+                
+                // Add a prompt to tell the user they can ask the Chef Assistant about the recipe
+                answer += "\n\nYou can ask me for cooking tips related to this recipe or how to modify it for different dietary needs!";
+            } catch (error) {
+                console.error('Error getting recipe social info:', error);
+                // Fall back to normal Chef Assistant
+                answer = await askChefAssistant(userMsg);
+            }
+        } else {
+            // Regular Chef Assistant query
+            answer = await askChefAssistant(userMsg);
+        }
+        
         hideTyping();
         chatHistory.push({ type: 'chef', text: answer });
         renderMessages();
@@ -302,10 +439,14 @@
         }
     });
 
-    // Start with a contextual welcome message
-    const welcomeMessage = localStorage.getItem('authToken') 
+    // Start with a contextual welcome message including social feature info
+    let welcomeMessage = localStorage.getItem('authToken') 
         ? '👋 Welcome back! I remember your preferences and our previous conversations. Ask me anything about cooking, especially Cameroonian cuisine!' 
         : '👋 Hi! I am your Chef Assistant, specializing in Cameroonian and international cuisine. Log in to get personalized cooking tips!';
+    
+    // Add info about recipe social features
+    welcomeMessage += '\n\nNew feature: You can now ask me about recipe ratings and reviews! Try "Show ratings for recipe 5" or "What do people think of recipe 12"';
+    
     chatHistory.push({ type: 'chef', text: welcomeMessage });
     renderMessages();
 })();

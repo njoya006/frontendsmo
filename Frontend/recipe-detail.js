@@ -515,6 +515,9 @@ class RecipeDetailManager {
         // Render analytics buttons and stats
         this.renderAnalytics(recipe);
         
+        // Update social features UI
+        this.updateSocialUI(recipe);
+        
         // Show content
         if (this.recipeContent) {
             this.recipeContent.classList.remove('hidden');
@@ -523,280 +526,176 @@ class RecipeDetailManager {
         console.log('✅ Recipe rendered successfully');
     }
 
-    renderAnalytics(recipe) {
-        if (!this.actionButtons) return;
-        // Clear previous analytics buttons
-        this.actionButtons.innerHTML = `
-            <button class="action-btn btn-secondary" onclick="printRecipe()">
-                <i class="fas fa-print"></i> Print Recipe
-            </button>
-            <button class="action-btn btn-secondary" onclick="shareRecipe()">
-                <i class="fas fa-share-alt"></i> Share
-            </button>
-            <button class="action-btn btn-primary" id="saveBtn">
-                <i class="fas fa-heart"></i> Save (<span id="saveCount">${recipe.saves_count || 0}</span>)
-            </button>
-            <button class="action-btn btn-primary" id="likeBtn">
-                <i class="fas fa-thumbs-up"></i> Like (<span id="likeCount">${recipe.likes_count || 0}</span>)
-            </button>
-            <button class="action-btn btn-primary" id="commentBtn">
-                <i class="fas fa-comment"></i> Comment (<span id="commentCount">${recipe.comments_count || 0}</span>)
-            </button>
-        `;
-        // Attach event listeners
-        const recipeId = recipe.id;
-        const saveBtn = document.getElementById('saveBtn');
+    // Update social features UI based on recipe data
+    updateSocialUI(recipe) {
+        if (!recipe) return;
+        
+        // Update like button state
         const likeBtn = document.getElementById('likeBtn');
-        const commentBtn = document.getElementById('commentBtn');
-        if (saveBtn) {
-            saveBtn.onclick = async () => {
-                saveBtn.disabled = true;
-                const result = await window.RecipeAnalytics.save(recipeId);
-                if (result && result.saves_count !== undefined) {
-                    document.getElementById('saveCount').textContent = result.saves_count;
-                }
-                saveBtn.disabled = false;
-            };
-        }
         if (likeBtn) {
-            likeBtn.onclick = async () => {
-                likeBtn.disabled = true;
-                const result = await window.RecipeAnalytics.like(recipeId);
-                if (result && result.likes_count !== undefined) {
-                    document.getElementById('likeCount').textContent = result.likes_count;
+            const likeCount = likeBtn.querySelector('#likeCount');
+            if (likeCount) {
+                likeCount.textContent = recipe.likes_count || 0;
+            }
+            
+            // Check if user has liked this recipe
+            if (recipe.is_liked) {
+                likeBtn.classList.add('liked');
+                const icon = likeBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-thumbs-up';
                 }
-                likeBtn.disabled = false;
-            };
+            }
+            
+            // Add event listener
+            likeBtn.addEventListener('click', () => {
+                this.toggleLikeRecipe();
+            });
         }
+        
+        // Update comment button
+        const commentBtn = document.getElementById('commentBtn');
         if (commentBtn) {
-            commentBtn.onclick = async () => {
-                const comment = prompt('Enter your comment:');
-                if (!comment) return;
-                commentBtn.disabled = true;
-                const result = await window.RecipeAnalytics.comment(recipeId, comment);
-                if (result && result.comments_count !== undefined) {
-                    document.getElementById('commentCount').textContent = result.comments_count;
+            const commentCount = commentBtn.querySelector('#commentCount');
+            if (commentCount) {
+                commentCount.textContent = recipe.comments_count || 0;
+            }
+            
+            // Add event listener to scroll to comments section
+            commentBtn.addEventListener('click', () => {
+                const socialSection = document.getElementById('socialFeaturesSection');
+                if (socialSection) {
+                    socialSection.scrollIntoView({ behavior: 'smooth' });
                 }
-                commentBtn.disabled = false;
-            };
+            });
+        }
+        
+        // Update save button
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn) {
+            const saveCount = saveBtn.querySelector('#saveCount');
+            if (saveCount) {
+                saveCount.textContent = recipe.saves_count || 0;
+            }
+            
+            // Check if user has saved this recipe
+            if (recipe.is_saved) {
+                saveBtn.classList.add('saved');
+                const icon = saveBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-heart';
+                }
+            }
+            
+            // Add event listener
+            saveBtn.addEventListener('click', () => {
+                this.toggleSaveRecipe();
+            });
         }
     }
 
-    renderIngredients(ingredients) {
-        console.log('🍯 Rendering ingredients:', ingredients);
-        // Debug: print each ingredient's structure
-        ingredients.forEach((ingredient, idx) => {
-            console.log(`Ingredient ${idx + 1}:`, ingredient, typeof ingredient);
-        });
-        if (!this.ingredientsList) {
-            console.error('❌ Ingredients list element not found');
+    // Toggle like status for the current recipe
+    async toggleLikeRecipe() {
+        if (!this.isAuthenticated()) {
+            this.showLoginPrompt('Please log in to like recipes');
             return;
         }
-        if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
-            console.log('❌ No valid ingredients array found, using parser fallback');
-            const fallbackIngredients = this.ingredientParser.createFallbackIngredients(
-                this.currentRecipe?.title || this.currentRecipe?.name || ''
-            );
-            ingredients = fallbackIngredients;
-        }
-        console.log(`✅ Processing ${ingredients.length} ingredients`);
-
-        const ingredientItems = ingredients.map((ingredient, index) => {
-            let displayText = '';
-            let preparation = '';
+        
+        try {
+            const response = await fetch(`${this.baseUrl}/api/recipes/${this.recipeId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${localStorage.getItem('authToken')}`
+                }
+            });
             
-            if (typeof ingredient === 'string') {
-                displayText = ingredient;
-                console.log(`String ingredient ${index + 1}: "${displayText}"`);
-            } else if (typeof ingredient === 'object' && ingredient !== null) {
-                // Extract structured data for better display
-                let name = ingredient.ingredient_name || 
-                            ingredient.ingredient || 
-                            ingredient.name || 
-                            ingredient.title || 
-                            ingredient.item ||
-                            (typeof ingredient.toString === 'function' ? ingredient.toString() : '') ||
-                            '';
-                name = (typeof name === 'string' ? name.trim() : String(name));
-                if (!name) name = `Unnamed Ingredient`;
-                const quantity = ingredient.quantity || ingredient.amount || ingredient.qty || '';
-                const unit = ingredient.unit || ingredient.units || ingredient.measurement || '';
-                preparation = ingredient.preparation || ingredient.prep || ingredient.method || '';
-                // Format the main ingredient text
-                if (quantity && unit) {
-                    displayText = `${quantity} ${unit} ${name}`;
-                } else if (quantity) {
-                    displayText = `${quantity} ${name}`;
+            if (!response.ok) {
+                throw new Error(`Error toggling like: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            // Update UI
+            const likeBtn = document.getElementById('likeBtn');
+            const likeCount = document.getElementById('likeCount');
+            
+            if (likeBtn && likeCount) {
+                likeCount.textContent = data.likes_count;
+                
+                const icon = likeBtn.querySelector('i');
+                if (data.is_liked) {
+                    likeBtn.classList.add('liked');
+                    if (icon) icon.className = 'fas fa-thumbs-up';
                 } else {
-                    displayText = name;
+                    likeBtn.classList.remove('liked');
+                    if (icon) icon.className = 'far fa-thumbs-up';
                 }
-                // Fallback: if still not a string, force to string
-                if (typeof displayText !== 'string') {
-                    displayText = String(displayText);
-                }
-                console.log(`Object ingredient ${index + 1}:`, { 
-                    name, quantity, unit, preparation, displayText, original: ingredient 
-                });
-            } else {
-                displayText = `Ingredient ${index + 1}`;
-                console.log(`Unknown ingredient type ${index + 1}:`, typeof ingredient);
-            }
-
-            // Clean up the display text
-            displayText = displayText.trim();
-            if (!displayText) {
-                displayText = `Ingredient ${index + 1}`;
-            }
-
-            // Create ingredient item with preparation info if available
-            let ingredientHTML = `
-                <li class="ingredient-item">
-                    <span class="ingredient-name">${displayText}</span>
-            `;
-            
-            if (preparation) {
-                ingredientHTML += `
-                    <span class="ingredient-preparation">${preparation}</span>
-                `;
             }
             
-            ingredientHTML += `</li>`;
-            
-            return ingredientHTML;
-        }).join('');
-
-        this.ingredientsList.innerHTML = ingredientItems;
-        console.log('✅ Ingredients rendered successfully');
+        } catch (error) {
+            console.error('Failed to toggle like:', error);
+            this.showToast('Failed to update like status', 'error');
+        }
     }
 
-    renderInstructions(instructions) {
-        if (!this.instructionsList) {
-            console.error('❌ Instructions list element not found');
+    // Toggle save status for the current recipe
+    async toggleSaveRecipe() {
+        if (!this.isAuthenticated()) {
+            this.showLoginPrompt('Please log in to save recipes');
             return;
         }
         
-        if (!instructions) {
-            this.instructionsList.innerHTML = '<li class="instruction-item"><span class="instruction-text">No instructions provided</span></li>';
-            return;
-        }
-
-        console.log('🔍 Raw instructions data:', instructions);
-
-        let steps = [];
-        
-        if (typeof instructions === 'string') {
-            // Check if this looks more like a description than instructions
-            const isDescriptionLike = this.isDescriptionLikeContent(instructions);
+        try {
+            const response = await fetch(`${this.baseUrl}/api/recipes/${this.recipeId}/save/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${localStorage.getItem('authToken')}`
+                }
+            });
             
-            if (isDescriptionLike) {
-                console.log('⚠️ Instructions content appears to be description-like, converting...');
-                // Try to convert description to basic instructions
-                steps = this.convertDescriptionToInstructions(instructions);
-            } else {
-                // Split by newlines and filter empty steps
-                steps = instructions.split(/\n/).filter(step => step.trim());
+            if (!response.ok) {
+                throw new Error(`Error toggling save: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            // Update UI
+            const saveBtn = document.getElementById('saveBtn');
+            const saveCount = document.getElementById('saveCount');
+            
+            if (saveBtn && saveCount) {
+                saveCount.textContent = data.saves_count;
                 
-                // If no newlines, try to split by numbered steps
-                if (steps.length <= 1) {
-                    steps = instructions.split(/\d+\.\s*/).filter(step => step.trim());
-                }
-                
-                // If still only one step and it's very long, it might be a description
-                if (steps.length === 1 && steps[0].length > 200) {
-                    console.log('⚠️ Single long instruction detected, might be description');
-                    steps = this.convertDescriptionToInstructions(instructions);
+                const icon = saveBtn.querySelector('i');
+                if (data.is_saved) {
+                    saveBtn.classList.add('saved');
+                    if (icon) icon.className = 'fas fa-heart';
+                    this.showToast('Recipe saved to your collection', 'success');
+                } else {
+                    saveBtn.classList.remove('saved');
+                    if (icon) icon.className = 'far fa-heart';
+                    this.showToast('Recipe removed from your collection', 'info');
                 }
             }
-        } else if (Array.isArray(instructions)) {
-            steps = instructions;
-        }
-
-        if (steps.length === 0) {
-            this.instructionsList.innerHTML = '<li class="instruction-item"><span class="instruction-text">No instructions provided</span></li>';
-            return;
-        }
-
-        const instructionItems = steps.map((step, index) => {
-            const cleanStep = step.trim().replace(/^\d+\.\s*/, '');
-            return `
-                <li class="instruction-item">
-                    <span class="step-number">${index + 1}</span>
-                    <span class="instruction-text">${cleanStep}</span>
-                </li>
-            `;
-        }).join('');
-
-        // Add a note if instructions were converted from description
-        let instructionNote = '';
-        if (typeof instructions === 'string' && this.isDescriptionLikeContent(instructions)) {
-            instructionNote = `
-                <div class="instruction-note" style="background: #fff3cd; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
-                    <i class="fas fa-info-circle" style="color: #856404; margin-right: 8px;"></i>
-                    <span style="color: #856404; font-size: 14px;">
-                        <strong>Note:</strong> The original instructions appeared to be description-like text. We've converted it into basic cooking steps for better clarity.
-                    </span>
-                </div>
-            `;
-        }
-
-        this.instructionsList.innerHTML = instructionNote + instructionItems;
-        console.log(`✅ Rendered ${steps.length} instruction steps`);
-    }
-
-    getImageUrl(imagePath) {
-        if (!imagePath) return 'assets/default-recipe.jpg';
-        
-        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-            return imagePath;
-        }
-        
-        if (imagePath.startsWith('/')) {
-            return this.baseUrl + imagePath;
-        }
-        
-        return imagePath;
-    }
-
-    showLoading() {
-        if (this.loadingSpinner) {
-            this.loadingSpinner.classList.remove('hidden');
-        }
-        if (this.recipeContent) {
-            this.recipeContent.classList.add('hidden');
-        }
-        if (this.errorState) {
-            this.errorState.classList.add('hidden');
+            
+        } catch (error) {
+            console.error('Failed to toggle save:', error);
+            this.showToast('Failed to update saved status', 'error');
         }
     }
 
-    hideLoading() {
-        if (this.loadingSpinner) {
-            this.loadingSpinner.classList.add('hidden');
-        }
+    // Check if user is authenticated
+    isAuthenticated() {
+        return !!localStorage.getItem('authToken');
     }
 
-    showError(message) {
-        if (this.errorState) {
-            this.errorState.classList.remove('hidden');
-            if (this.errorMessage) {
-                this.errorMessage.textContent = message;
-            }
-        }
-        if (this.recipeContent) {
-            this.recipeContent.classList.add('hidden');
-        }
-        if (this.loadingSpinner) {
-            this.loadingSpinner.classList.add('hidden');
-        }
-    }
-
-    showToast(message, type = 'info') {
-        console.log(`Toast (${type}): ${message}`);
-        // Toast implementation would go here
+    // Show login prompt
+    showLoginPrompt(message) {
+        this.showToast(message, 'warning');
+        setTimeout(() => {
+            window.location.href = `Login.html?redirect=${encodeURIComponent(window.location.href)}`;
+        }, 2000);
     }
 }
-
-// Initialize the recipe detail manager when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    new RecipeDetailManager();
-});
