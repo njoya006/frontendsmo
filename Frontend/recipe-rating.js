@@ -31,11 +31,68 @@ class RecipeRatingSystem {
             this.recipeId = urlParams.get('id');
             
             if (this.recipeId) {
+                // Check API endpoints to see what's available
+                this.discoverAPIEndpoints();
+                
+                // Load ratings and reviews
                 this.loadRatingsAndReviews();
             } else {
                 console.error('No recipe ID found in URL');
             }
         });
+    }
+    
+    // Helper method to discover available API endpoints
+    async discoverAPIEndpoints() {
+        try {
+            console.log('Discovering available API endpoints...');
+            
+            // Try to get API schema or root endpoint
+            const response = await fetch(`${this.baseUrl}/`, {
+                method: 'GET',
+                headers: this.getHeaders()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('API schema discovered:', data);
+                
+                // Look for relevant endpoints in the schema
+                if (data.endpoints || data.paths || data.routes) {
+                    const endpoints = data.endpoints || data.paths || data.routes;
+                    console.log('Available endpoints:', endpoints);
+                }
+            } else {
+                console.log(`API schema not available. Status: ${response.status}`);
+            }
+            
+            // Test specific endpoints for the current recipe
+            const endpointsToTest = [
+                `/recipes/${this.recipeId}/`,
+                `/recipes/${this.recipeId}/ratings/`,
+                `/recipes/${this.recipeId}/ratings/summary/`,
+                `/recipes/${this.recipeId}/reviews/`,
+                `/recipes/${this.recipeId}/comments/`,
+                `/recipes/${this.recipeId}/user-rating/`,
+                `/recipes/${this.recipeId}/user-review/`
+            ];
+            
+            console.log('Testing specific endpoints...');
+            for (const endpoint of endpointsToTest) {
+                try {
+                    const testResponse = await fetch(`${this.baseUrl}${endpoint}`, {
+                        method: 'GET',
+                        headers: this.getHeaders()
+                    });
+                    
+                    console.log(`Endpoint ${endpoint}: ${testResponse.status} ${testResponse.statusText}`);
+                } catch (err) {
+                    console.log(`Endpoint ${endpoint}: Error - ${err.message}`);
+                }
+            }
+        } catch (error) {
+            console.error('Error discovering API endpoints:', error);
+        }
     }
     
     initializeElements() {
@@ -197,7 +254,8 @@ class RecipeRatingSystem {
     // Fetch recipe ratings data
     async fetchRecipeRatings() {
         try {
-            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/ratings/summary/`, {
+            console.log(`Fetching ratings from: ${this.baseUrl}/recipes/${this.recipeId}/ratings/`);
+            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/ratings/`, {
                 method: 'GET',
                 headers: this.getHeaders()
             });
@@ -206,7 +264,18 @@ class RecipeRatingSystem {
                 throw new Error(`Error fetching ratings: ${response.statusText}`);
             }
             
-            return await response.json();
+            const data = await response.json();
+            console.log('Ratings data received:', data);
+            
+            // Transform the data into the expected format if needed
+            const formattedData = {
+                average_rating: data.average_rating || 0,
+                total_ratings: data.count || 0,
+                distribution: data.distribution || {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+                total_reviews: data.review_count || data.count || 0
+            };
+            
+            return formattedData;
         } catch (error) {
             console.error('Failed to fetch recipe ratings:', error);
             return {
@@ -222,12 +291,14 @@ class RecipeRatingSystem {
         if (!this.isAuthenticated) return null;
         
         try {
-            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/user-rating/`, {
+            console.log(`Fetching user rating from: ${this.baseUrl}/recipes/${this.recipeId}/user-review/`);
+            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/user-review/`, {
                 method: 'GET',
                 headers: this.getHeaders()
             });
             
             if (response.status === 404) {
+                console.log('User has not rated this recipe yet');
                 return null; // User hasn't rated this recipe yet
             }
             
@@ -235,7 +306,9 @@ class RecipeRatingSystem {
                 throw new Error(`Error fetching user rating: ${response.statusText}`);
             }
             
-            return await response.json();
+            const data = await response.json();
+            console.log('User rating data:', data);
+            return data;
         } catch (error) {
             console.error('Failed to fetch user rating:', error);
             return null;
@@ -327,17 +400,22 @@ class RecipeRatingSystem {
         this.isSubmitting = true;
         
         try {
-            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/rate/`, {
+            console.log(`Submitting rating to: ${this.baseUrl}/recipes/${this.recipeId}/rate-recipe/`);
+            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/rate-recipe/`, {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify({
-                    rating: rating
+                    rating: rating,
+                    recipe_id: this.recipeId
                 })
             });
             
             if (!response.ok) {
                 throw new Error(`Error submitting rating: ${response.statusText}`);
             }
+            
+            const data = await response.json();
+            console.log('Rating submission response:', data);
             
             // Show success message
             this.showSuccess('Your rating has been saved!');
@@ -379,18 +457,25 @@ class RecipeRatingSystem {
         const reviewText = this.reviewText.value.trim();
         
         try {
-            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/review/`, {
+            console.log(`Submitting review to: ${this.baseUrl}/recipes/${this.recipeId}/add-review/`);
+            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/add-review/`, {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify({
                     rating: this.userRating,
-                    review: reviewText
+                    review: reviewText,
+                    recipe_id: this.recipeId
                 })
             });
             
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
                 throw new Error(`Error submitting review: ${response.statusText}`);
             }
+            
+            const data = await response.json();
+            console.log('Review submission response:', data);
             
             // Show success message
             this.showSuccess('Your review has been published!');
@@ -420,7 +505,8 @@ class RecipeRatingSystem {
         }
         
         try {
-            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/comments/?page=${this.currentPage}&page_size=${this.commentsPerPage}`, {
+            console.log(`Fetching comments from: ${this.baseUrl}/recipes/${this.recipeId}/reviews/?page=${this.currentPage}&page_size=${this.commentsPerPage}`);
+            const response = await fetch(`${this.baseUrl}/recipes/${this.recipeId}/reviews/?page=${this.currentPage}&page_size=${this.commentsPerPage}`, {
                 method: 'GET',
                 headers: this.getHeaders()
             });
@@ -430,9 +516,10 @@ class RecipeRatingSystem {
             }
             
             const data = await response.json();
+            console.log('Comments/reviews data:', data);
             
             // Display comments
-            this.displayComments(data.results);
+            this.displayComments(data.results || []);
             
             // Update pagination
             this.hasMoreComments = !!data.next;
@@ -469,27 +556,46 @@ class RecipeRatingSystem {
     displayComments(comments) {
         if (!this.commentsContainer) return;
         
-        if (comments.length === 0 && this.currentPage === 1) {
-            this.commentsContainer.innerHTML = '<div class="no-comments">No reviews yet. Be the first to review this recipe!</div>';
+        // Handle case where comments is not an array or is empty
+        if (!Array.isArray(comments) || comments.length === 0) {
+            if (this.currentPage === 1) {
+                this.commentsContainer.innerHTML = '<div class="no-comments">No reviews yet. Be the first to review this recipe!</div>';
+            }
             return;
         }
         
         const currentUserId = this.getCurrentUserId();
         
         comments.forEach(comment => {
+            // Skip if comment is missing critical data
+            if (!comment || (typeof comment !== 'object')) {
+                console.warn('Invalid comment object:', comment);
+                return;
+            }
+            
+            // Handle different API response structures
+            const user = comment.user || comment.author || {};
+            const username = user.username || user.name || 'Anonymous';
+            const userId = user.id || user.user_id;
+            const isVerified = user.is_verified || user.verified || false;
+            const rating = comment.rating || comment.stars || 0;
+            const reviewText = comment.review || comment.text || comment.content || '';
+            const likesCount = comment.likes_count || comment.likes || 0;
+            const createdAt = comment.created_at || comment.date || comment.timestamp || new Date().toISOString();
+            
             const commentElement = document.createElement('div');
             commentElement.className = 'comment-card';
             
             // Add special class if this is the current user's comment
-            if (currentUserId && comment.user.id === currentUserId) {
+            if (currentUserId && userId === currentUserId) {
                 commentElement.classList.add('own-comment');
             }
             
             // Create avatar with first letter of username
-            const firstLetter = comment.user.username.charAt(0).toUpperCase();
+            const firstLetter = username.charAt(0).toUpperCase();
             
             // Format date
-            const commentDate = new Date(comment.created_at);
+            const commentDate = new Date(createdAt);
             const formattedDate = this.formatDate(commentDate);
             
             commentElement.innerHTML = `
@@ -498,25 +604,25 @@ class RecipeRatingSystem {
                         <div class="comment-avatar">${firstLetter}</div>
                         <div>
                             <div class="comment-author-name">
-                                ${this.escapeHTML(comment.user.username)}
-                                ${comment.user.is_verified ? '<i class="fas fa-check-circle verified-badge" title="Verified Contributor"></i>' : ''}
+                                ${this.escapeHTML(username)}
+                                ${isVerified ? '<i class="fas fa-check-circle verified-badge" title="Verified Contributor"></i>' : ''}
                             </div>
                             <div class="comment-date">${formattedDate}</div>
                         </div>
                     </div>
                 </div>
                 <div class="comment-rating">
-                    ${this.generateStarsHTML(comment.rating)}
+                    ${this.generateStarsHTML(rating)}
                 </div>
                 <div class="comment-content">
-                    ${comment.review ? this.escapeHTML(comment.review) : '<em>No written review</em>'}
+                    ${reviewText ? this.escapeHTML(reviewText) : '<em>No written review</em>'}
                 </div>
                 <div class="comment-actions">
                     <button class="comment-action" data-comment-id="${comment.id}" data-action="like">
                         <i class="far fa-thumbs-up"></i> Helpful
-                        <span class="like-count">${comment.likes_count || 0}</span>
+                        <span class="like-count">${likesCount}</span>
                     </button>
-                    ${this.isAuthenticated && currentUserId === comment.user.id ? `
+                    ${this.isAuthenticated && currentUserId === userId ? `
                         <button class="comment-action" data-comment-id="${comment.id}" data-action="edit">
                             <i class="far fa-edit"></i> Edit
                         </button>
@@ -561,7 +667,8 @@ class RecipeRatingSystem {
         }
         
         try {
-            const response = await fetch(`${this.baseUrl}/comments/${commentId}/like/`, {
+            console.log(`Liking review at: ${this.baseUrl}/reviews/${commentId}/like/`);
+            const response = await fetch(`${this.baseUrl}/reviews/${commentId}/like/`, {
                 method: 'POST',
                 headers: this.getHeaders()
             });
@@ -571,6 +678,7 @@ class RecipeRatingSystem {
             }
             
             const data = await response.json();
+            console.log('Like review response:', data);
             
             // Update like count in UI
             const likeCount = buttonElement.querySelector('.like-count');
@@ -605,8 +713,9 @@ class RecipeRatingSystem {
     async deleteComment(commentId) {
         if (confirm('Are you sure you want to delete your review? This action cannot be undone.')) {
             try {
-                const response = await fetch(`${this.baseUrl}/comments/${commentId}/`, {
-                    method: 'DELETE',
+                console.log(`Deleting review at: ${this.baseUrl}/reviews/${commentId}/delete/`);
+                const response = await fetch(`${this.baseUrl}/reviews/${commentId}/delete/`, {
+                    method: 'POST', // Using POST instead of DELETE as some API frameworks handle it better
                     headers: this.getHeaders()
                 });
                 
@@ -719,12 +828,58 @@ class RecipeRatingSystem {
         if (!toast) {
             toast = document.createElement('div');
             toast.id = 'toast';
+            
+            // Add default styling if not already in CSS
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.right = '20px';
+            toast.style.minWidth = '250px';
+            toast.style.padding = '15px 20px';
+            toast.style.borderRadius = '8px';
+            toast.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+            toast.style.zIndex = '10000';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            toast.style.transition = 'all 0.3s ease-in-out';
+            
             document.body.appendChild(toast);
         }
         
         // Clear previous classes and add new ones
         toast.className = 'toast';
         toast.classList.add(`toast-${type}`);
+        
+        // Set colors based on type
+        let backgroundColor, color, borderColor;
+        
+        switch (type) {
+            case 'success':
+                backgroundColor = '#e8f5e9';
+                color = '#2e7d32';
+                borderColor = '#a5d6a7';
+                break;
+            case 'error':
+                backgroundColor = '#ffebee';
+                color = '#c62828';
+                borderColor = '#ef9a9a';
+                break;
+            case 'warning':
+                backgroundColor = '#fff8e1';
+                color = '#ff8f00';
+                borderColor = '#ffe082';
+                break;
+            default: // info
+                backgroundColor = '#e3f2fd';
+                color = '#1565c0';
+                borderColor = '#90caf9';
+                break;
+        }
+        
+        toast.style.backgroundColor = backgroundColor;
+        toast.style.color = color;
+        toast.style.borderLeft = `4px solid ${borderColor}`;
         
         // Set icon based on type
         let icon = 'fas fa-info-circle';
@@ -733,14 +888,16 @@ class RecipeRatingSystem {
         if (type === 'warning') icon = 'fas fa-exclamation-triangle';
         
         // Set content
-        toast.innerHTML = `<div class="toast-icon"><i class="${icon}"></i></div><div class="toast-message">${message}</div>`;
+        toast.innerHTML = `<div class="toast-icon" style="margin-right:12px;font-size:20px;"><i class="${icon}"></i></div><div class="toast-message">${message}</div>`;
         
         // Show the toast
-        toast.classList.add('show');
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
         
         // Hide the toast after a delay
         setTimeout(() => {
-            toast.classList.remove('show');
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
         }, 4000);
     }
 }
