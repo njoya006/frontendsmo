@@ -1492,12 +1492,25 @@
     <div class="toast" id="toast"></div>
 
     <!-- Scripts -->
+    <!-- Base dependencies -->
     <script src="utils.js"></script>
     <script src="enhanced-recipe-api.js"></script>
     <script src="ingredient-parser.js"></script>
+    
+    <!-- Core dependencies and utilities first -->
+    <script src="utils.js"></script>
+    <script src="ingredient-parser.js"></script>
+    <script src="enhanced-recipe-api.js"></script>
+    
+    <!-- Recipe feature scripts -->
     <script src="recipe-analytics.js"></script>
-    <script src="recipe-rating.js"></script>
     <script src="recipe-detail.js"></script>
+    
+    <!-- Rating system (load after recipe-detail.js) -->
+    <script src="recipe-rating.js"></script>
+    
+    <!-- Initialize with error handling -->
+    <script src="recipe-detail-loader.js"></script>
     <script>
         // --- Global Page Transition Animation: Blur, Colorful, Enhanced Logo & Dots ---
         function animatePageTransition(href) {

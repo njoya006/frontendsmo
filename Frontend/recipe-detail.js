@@ -1,29 +1,63 @@
 // Enhanced Recipe Detail JavaScript
 class RecipeDetailManager {
     constructor() {
-        // Initialize ingredient parser
-        this.ingredientParser = new IngredientParser();
+        console.log('RecipeDetailManager: Constructor started');
+        this.debugInfo = {
+            initSteps: [],
+            errors: []
+        };
         
-        // Check if utils.js is loaded, use fallback if not
-        if (typeof RecipeAPI !== 'undefined') {
-            // Use production URL only
-            this.baseUrl = 'https://njoya.pythonanywhere.com';
-            this.recipeAPI = new RecipeAPI(this.baseUrl);
-            this.useAPI = true;
-            
-            console.log('RecipeAPI initialized with base URL:', this.recipeAPI.baseUrl);
-        } else {
-            console.warn('RecipeAPI not found. Using mock data for demonstration.');
-            this.useAPI = false;
-            this.baseUrl = 'https://njoya.pythonanywhere.com';
-        }
+        this.logStep('Constructor started');
         
         this.currentRecipe = null;
         this.recipeId = null;
         this.isOwner = false;
         
-        this.initializeElements();
-        this.loadRecipe();
+        // Initialize ingredient parser if available
+        try {
+            if (typeof IngredientParser === 'undefined') {
+                throw new Error('IngredientParser class is not defined. Make sure ingredient-parser.js is loaded.');
+            }
+            this.ingredientParser = new IngredientParser();
+            this.logStep('Ingredient parser initialized');
+        } catch (error) {
+            this.logError('IngredientParser initialization failed', error);
+            this.ingredientParser = {
+                // Basic fallback for ingredient parser
+                parseIngredients: ingredients => {
+                    console.warn('Using fallback ingredient parser');
+                    return Array.isArray(ingredients) ? ingredients : [ingredients];
+                }
+            };
+        }
+        
+        // Check if utils.js is loaded, use fallback if not
+        try {
+            if (typeof RecipeAPI === 'undefined') {
+                throw new Error('RecipeAPI class is not defined. Make sure utils.js is loaded.');
+            }
+            
+            // Use production URL only
+            this.baseUrl = 'https://njoya.pythonanywhere.com';
+            this.recipeAPI = new RecipeAPI(this.baseUrl);
+            this.useAPI = true;
+            
+            this.logStep(`RecipeAPI initialized with base URL: ${this.baseUrl}`);
+        } catch (error) {
+            this.logError('RecipeAPI initialization failed', error);
+            this.useAPI = false;
+            this.baseUrl = 'https://njoya.pythonanywhere.com';
+        }
+        
+        try {
+            this.logStep('Initializing elements');
+            this.initializeElements();
+            this.logStep('Elements initialized, loading recipe');
+            this.loadRecipe();
+        } catch (error) {
+            this.logError('Critical initialization error', error);
+            this.showFatalError(error);
+        }
     }
 
     initializeElements() {
@@ -61,7 +95,113 @@ class RecipeDetailManager {
         this.recipeId = urlParams.get('id') || '1';
         console.log('Recipe ID from URL:', this.recipeId);
     }
+    
+    // Show loading spinner
+    showLoading() {
+        console.log('Showing loading spinner');
+        if (this.loadingSpinner) {
+            this.loadingSpinner.style.display = 'flex';
+        }
+        if (this.globalOverlay) {
+            this.globalOverlay.style.display = 'flex';
+        }
+        if (this.recipeContent) {
+            this.recipeContent.style.display = 'none';
+        }
+        if (this.errorState) {
+            this.errorState.style.display = 'none';
+        }
+    }
+    
+    // Hide loading spinner
+    hideLoading() {
+        console.log('Hiding loading spinner');
+        if (this.loadingSpinner) {
+            this.loadingSpinner.style.display = 'none';
+        }
+        if (this.globalOverlay) {
+            this.globalOverlay.style.display = 'none';
+        }
+    }
 
+    // Show error state
+    showError(message) {
+        console.error('Error:', message);
+        if (this.errorState) {
+            this.errorState.style.display = 'flex';
+        }
+        if (this.errorMessage) {
+            this.errorMessage.textContent = message;
+        }
+        if (this.recipeContent) {
+            this.recipeContent.style.display = 'none';
+        }
+        this.hideLoading();
+    }
+
+    // Helper methods for logging and debugging
+    logStep(step) {
+        console.log(`📝 RecipeDetailManager: ${step}`);
+        this.debugInfo.initSteps.push({
+            step: step,
+            timestamp: new Date().toISOString()
+        });
+    }
+    
+    logError(context, error) {
+        console.error(`❌ RecipeDetailManager Error (${context}):`, error);
+        this.debugInfo.errors.push({
+            context: context,
+            message: error.message || String(error),
+            stack: error.stack,
+            timestamp: new Date().toISOString()
+        });
+    }
+    
+    showFatalError(error) {
+        console.error('Fatal error in RecipeDetailManager:', error);
+        
+        // Create error container
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fatal-error';
+        errorDiv.style.margin = '50px auto';
+        errorDiv.style.padding = '30px';
+        errorDiv.style.maxWidth = '800px';
+        errorDiv.style.backgroundColor = '#ffebee';
+        errorDiv.style.border = '2px solid #f44336';
+        errorDiv.style.borderRadius = '8px';
+        errorDiv.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
+        
+        // Add error info
+        errorDiv.innerHTML = `
+            <h2 style="color:#d32f2f;margin-bottom:20px">Recipe Loading Error</h2>
+            <p style="font-size:16px;line-height:1.6;margin-bottom:15px">
+                We encountered a problem loading this recipe. Our team has been notified.
+            </p>
+            <div style="background:#f5f5f5;padding:15px;border-radius:4px;margin:20px 0;">
+                <p><strong>Error:</strong> ${error.message || 'Unknown error'}</p>
+            </div>
+            <details style="margin:15px 0;">
+                <summary style="cursor:pointer;color:#1976d2;padding:8px 0;">Technical Details</summary>
+                <pre style="background:#f8f8f8;padding:15px;margin-top:10px;overflow:auto;max-height:200px;font-size:13px;">${JSON.stringify(this.debugInfo, null, 2)}</pre>
+            </details>
+            <div style="margin-top:25px;">
+                <button onclick="location.reload()" style="padding:10px 24px;background:#2196F3;color:white;border:none;border-radius:4px;cursor:pointer;margin-right:10px;font-size:14px;">Reload Page</button>
+                <button onclick="window.location.href='Recipes.html'" style="padding:10px 24px;background:#757575;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;">Back to Recipes</button>
+            </div>
+        `;
+        
+        // Add to page
+        const container = document.getElementById('recipeDetailContainer') || document.body;
+        
+        // Hide other elements
+        if (this.loadingSpinner) this.loadingSpinner.style.display = 'none';
+        if (this.recipeContent) this.recipeContent.style.display = 'none';
+        if (this.errorState) this.errorState.style.display = 'none';
+        
+        container.prepend(errorDiv);
+    }
+    
     async loadRecipe() {
         if (!this.recipeId) {
             console.log('No recipe ID provided, showing default recipe');

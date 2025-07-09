@@ -23,21 +23,39 @@ class RecipeRatingSystem {
         
         // Initialize when document is ready
         document.addEventListener('DOMContentLoaded', () => {
-            this.initializeElements();
-            this.setupEventListeners();
-            
-            // Get recipe ID from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            this.recipeId = urlParams.get('id');
-            
-            if (this.recipeId) {
-                // Check API endpoints to see what's available
-                this.discoverAPIEndpoints();
+            try {
+                console.log('Initializing Recipe Rating System');
+                this.initializeElements();
+                this.setupEventListeners();
                 
-                // Load ratings and reviews
-                this.loadRatingsAndReviews();
-            } else {
-                console.error('No recipe ID found in URL');
+                // Get recipe ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                this.recipeId = urlParams.get('id');
+                
+                if (this.recipeId) {
+                    console.log('Recipe ID found:', this.recipeId);
+                    
+                    // Start non-critical operations with delays to not block page loading
+                    setTimeout(() => {
+                        try {
+                            this.discoverAPIEndpoints();
+                        } catch(err) {
+                            console.warn('API endpoint discovery failed:', err);
+                        }
+                    }, 500);
+                    
+                    setTimeout(() => {
+                        try {
+                            this.loadRatingsAndReviews();
+                        } catch(err) {
+                            console.warn('Loading ratings failed:', err);
+                        }
+                    }, 800);
+                } else {
+                    console.error('No recipe ID found in URL');
+                }
+            } catch (error) {
+                console.error('Recipe Rating System initialization failed:', error);
             }
         });
     }
@@ -902,5 +920,11 @@ class RecipeRatingSystem {
     }
 }
 
-// Initialize the rating system
-const recipeRatingSystem = new RecipeRatingSystem();
+// Initialize the rating system with error handling
+try {
+    console.log('Initializing Recipe Rating System');
+    const recipeRatingSystem = new RecipeRatingSystem();
+    window.recipeRatingSystem = recipeRatingSystem; // Make it available globally
+} catch (error) {
+    console.error('Failed to initialize Recipe Rating System:', error);
+}
