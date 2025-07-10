@@ -545,16 +545,13 @@ class RecipeRatingSystem {
                 
                 if (result && result.success) {
                     console.log('Enhanced API review submission successful:', result);
-                    
                     // Show success message
                     this.showSuccess('Your review has been published!');
-                    
                     // Clear the form
                     this.reviewText.value = '';
                     if (this.charCount) this.charCount.textContent = '0';
-                    
-                    // Reload comments to include the new review
-                    await this.loadComments(true);
+                    // Reload ratings and comments to include the new review
+                    await this.loadRatingsAndReviews();
                     return;
                 } else {
                     console.warn('Enhanced API review submission returned non-success:', result);
@@ -601,13 +598,11 @@ class RecipeRatingSystem {
             if (success) {
                 // Show success message
                 this.showSuccess('Your review has been published!');
-                
                 // Clear the form
                 this.reviewText.value = '';
                 if (this.charCount) this.charCount.textContent = '0';
-                
-                // Reload comments to include the new review
-                await this.loadComments(true);
+                // Reload ratings and comments to include the new review
+                await this.loadRatingsAndReviews();
             } else {
                 throw new Error('All review submission endpoints failed');
             }
