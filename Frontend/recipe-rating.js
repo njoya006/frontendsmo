@@ -544,6 +544,9 @@ class RecipeRatingSystem {
             return;
         }
         
+        // Show immediate feedback to the user
+        this.showInfo('Submitting your review...');
+        
         const reviewText = this.reviewText.value.trim();
         
         try {
@@ -698,8 +701,20 @@ class RecipeRatingSystem {
                 }
                 
                 // Update comment count
+                const commentCount = data.count || (data.results ? data.results.length : 0);
                 if (this.commentCount) {
-                    this.commentCount.textContent = data.count || 0;
+                    this.commentCount.textContent = commentCount;
+                    
+                    // Also update reviews count in any other places it might appear
+                    const reviewCountElements = document.querySelectorAll('.review-count, .rating-count');
+                    reviewCountElements.forEach(el => {
+                        // Only update if it's specifically showing review/comment count
+                        if (el.classList.contains('review-count') || 
+                            el.closest('.rating-summary-reviews') || 
+                            el.getAttribute('data-count-type') === 'reviews') {
+                            el.textContent = commentCount;
+                        }
+                    });
                 }
             } else {
                 throw new Error('All comment endpoints failed');
@@ -980,23 +995,46 @@ class RecipeRatingSystem {
     
     // Format a date for display
     formatDate(date) {
-        const now = new Date();
-        const diffMs = now - date;
-        const diffSecs = Math.floor(diffMs / 1000);
-        const diffMins = Math.floor(diffSecs / 60);
-        const diffHours = Math.floor(diffMins / 60);
-        const diffDays = Math.floor(diffHours / 24);
-        
-        if (diffDays > 30) {
-            return date.toLocaleDateString();
-        } else if (diffDays > 0) {
-            return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-        } else if (diffHours > 0) {
-            return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-        } else if (diffMins > 0) {
-            return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-        } else {
-            return 'Just now';
+        try {
+            // Ensure we have a valid date object
+            if (!(date instanceof Date) || isNaN(date.getTime())) {
+                console.warn('Invalid date provided for formatting:', date);
+                return 'Recently';
+            }
+            
+            const now = new Date();
+            const diffMs = now - date;
+            
+            // Handle future dates (can happen with time zone issues)
+            if (diffMs < 0) {
+                console.warn('Future date detected:', date);
+                return 'Just now';
+            }
+            
+            const diffSecs = Math.floor(diffMs / 1000);
+            const diffMins = Math.floor(diffSecs / 60);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            
+            if (diffDays > 30) {
+                // Format date with month and day
+                const options = { month: 'short', day: 'numeric' };
+                if (date.getFullYear() !== now.getFullYear()) {
+                    options.year = 'numeric';
+                }
+                return date.toLocaleDateString(undefined, options);
+            } else if (diffDays > 0) {
+                return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            } else if (diffHours > 0) {
+                return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            } else if (diffMins > 0) {
+                return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+            } else {
+                return 'Just now';
+            }
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'Recently';
         }
     }
     

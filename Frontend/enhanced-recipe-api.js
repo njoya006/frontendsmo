@@ -63,6 +63,9 @@ class EnhancedRecipeAPI {
             reviews: {}
         };
         
+        // For tracking user-submitted reviews before they appear in the API
+        this.recentlySubmittedReview = null;
+        
         // Initialize mock data
         this.initializeMockData();
         
@@ -481,11 +484,20 @@ class EnhancedRecipeAPI {
     // Get recipe reviews with fallbacks
     async getRecipeReviews(recipeId, page = 1) {
         console.log(`💬 Getting reviews for recipe ID: ${recipeId}, page: ${page}`);
+        
+        // Check if we have a cached recently submitted review to include
+        const hasRecentSubmission = this.recentlySubmittedReview && 
+                                    this.recentlySubmittedReview.recipe_id === recipeId &&
+                                    (Date.now() - this.recentlySubmittedReview.timestamp) < 60000; // Within last minute
+        
         // Try to fetch from real API
         try {
             if (this.apiStatus.isAvailable) {
                 const endpoint = this.getBestEndpoint('reviews', recipeId);
-                const url = `${this.baseUrl}${endpoint}?page=${page}&page_size=5`;
+                // Force cache refresh by adding timestamp to URL if we have a recent submission
+                const cacheParam = hasRecentSubmission ? `&_nocache=${Date.now()}` : '';
+                const url = `${this.baseUrl}${endpoint}?page=${page}&page_size=5${cacheParam}`;
+                
                 console.log(`🔍 Fetching reviews from: ${url}`);
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -504,6 +516,14 @@ class EnhancedRecipeAPI {
                     // Only return if data is valid and not mock
                     if (data && Array.isArray(data.results)) {
                         console.log('✅ Reviews data received from API:', data);
+                        
+                        // If API returns zero reviews but we have a recent submission, inject it
+                        if (data.results.length === 0 && hasRecentSubmission) {
+                            console.log('⚠️ API returned no reviews but we have a recent submission, adding it to results');
+                            data.results.push(this.recentlySubmittedReview.data);
+                            data.count = 1;
+                        }
+                        
                         return data;
                     }
                 } else {
@@ -513,6 +533,18 @@ class EnhancedRecipeAPI {
         } catch (e) {
             console.error('❌ Error fetching reviews:', e);
         }
+        
+        // If we're online but API failed, and we have a recent submission, return it
+        if (this.isOnline() && hasRecentSubmission) {
+            console.log('🔄 Using recently submitted review as fallback');
+            return {
+                count: 1,
+                next: null,
+                previous: null,
+                results: [this.recentlySubmittedReview.data]
+            };
+        }
+        
         // Fallback to empty if online, mock only if offline
         if (!this.isOnline()) {
             console.log('🔄 Using fallback mock reviews data (offline mode)');
@@ -651,6 +683,14 @@ class EnhancedRecipeAPI {
                         if (response.ok) {
                             const data = await response.json();
                             console.log('✅ Review submitted successfully:', data);
+                            
+                            // Store this review in memory for immediate display
+                            this.recentlySubmittedReview = {
+                                recipe_id: recipeId,
+                                timestamp: Date.now(),
+                                data: data
+                            };
+                            
                             return { success: true, data };
                         }
                         
@@ -664,18 +704,33 @@ class EnhancedRecipeAPI {
             console.error('❌ Error submitting review:', e);
         }
         
-        // Return mock success response
+        // Create mock response with proper user data
         console.log('🔄 Using mock review submission response');
+        const mockData = { 
+            id: 'mock-' + Date.now(),
+            rating: rating,
+            review: reviewText,
+            recipe_id: recipeId,
+            created_at: new Date().toISOString(),
+            message: 'Review saved offline. Will sync when connectivity is restored.',
+            // Add user data from token if possible
+            user: this.getCurrentUser() || {
+                id: 'local-user',
+                username: 'You',
+                is_verified: true
+            }
+        };
+        
+        // Store this review in memory for immediate display
+        this.recentlySubmittedReview = {
+            recipe_id: recipeId,
+            timestamp: Date.now(),
+            data: mockData
+        };
+        
         return {
             success: true, 
-            data: { 
-                id: 'mock-' + Date.now(),
-                rating: rating,
-                review: reviewText,
-                recipe_id: recipeId,
-                created_at: new Date().toISOString(),
-                message: 'Review saved offline. Will sync when connectivity is restored.'
-            }
+            data: mockData
         };
     }
     
@@ -861,6 +916,46 @@ class EnhancedRecipeAPI {
         }
     }
 
+    // Get current user info from token
+    getCurrentUser() {
+        try {
+            const token = this.getAuthToken();
+            if (!token) return null;
+            
+            // Try to get user info from localStorage if available
+            if (typeof localStorage !== 'undefined') {
+                const userInfo = localStorage.getItem('userInfo');
+                if (userInfo) {
+                    try {
+                        return JSON.parse(userInfo);
+                    } catch (e) {
+                        console.warn('Failed to parse user info from localStorage');
+                    }
+                }
+                
+                // If we have a username stored, use that
+                const username = localStorage.getItem('username');
+                if (username) {
+                    return {
+                        id: 'local-user',
+                        username: username,
+                        is_verified: true
+                    };
+                }
+            }
+            
+            // Default user info when logged in but details unknown
+            return {
+                id: 'current-user',
+                username: 'You',
+                is_verified: true
+            };
+        } catch (e) {
+            console.warn('Error getting current user info:', e);
+            return null;
+        }
+    }
+    
     // Get diagnostic info (useful for debugging)
     getDiagnosticInfo() {
         return {
