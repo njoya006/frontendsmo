@@ -409,12 +409,9 @@ class EnhancedRecipeAPI {
             if (this.apiStatus.isAvailable) {
                 const endpoint = this.getBestEndpoint('ratings', recipeId);
                 const url = `${this.baseUrl}${endpoint}`;
-                
                 console.log(`🔍 Fetching ratings from: ${url}`);
-                
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-                
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: { 
@@ -424,13 +421,14 @@ class EnhancedRecipeAPI {
                     signal: controller.signal,
                     cache: 'no-cache'
                 });
-                
                 clearTimeout(timeoutId);
-                
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ Ratings data received from API:', data);
-                    return data;
+                    // Only return if data is valid and not mock
+                    if (data && typeof data.average_rating !== 'undefined') {
+                        console.log('✅ Ratings data received from API:', data);
+                        return data;
+                    }
                 } else {
                     console.warn(`⚠️ Ratings API returned error: ${response.status} ${response.statusText}`);
                 }
@@ -438,32 +436,36 @@ class EnhancedRecipeAPI {
         } catch (e) {
             console.error('❌ Error fetching ratings:', e);
         }
-        
-        // Fallback to mock ratings
-        console.log('🔄 Using fallback mock ratings data');
-        return this.mockData.ratings[recipeId] || {
-            average_rating: 4.0,
-            total_ratings: 10,
-            distribution: { 1: 0, 2: 1, 3: 2, 4: 4, 5: 3 },
-            total_reviews: 5
-        };
+        // Fallback to empty if online, mock only if offline
+        if (!navigator.onLine) {
+            console.log('🔄 Using fallback mock ratings data (offline mode)');
+            return this.mockData.ratings[recipeId] || {
+                average_rating: 4.0,
+                total_ratings: 10,
+                distribution: { 1: 0, 2: 1, 3: 2, 4: 4, 5: 3 },
+                total_reviews: 5
+            };
+        } else {
+            return {
+                average_rating: 0,
+                total_ratings: 0,
+                distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+                total_reviews: 0
+            };
+        }
     }
     
     // Get recipe reviews with fallbacks
     async getRecipeReviews(recipeId, page = 1) {
         console.log(`💬 Getting reviews for recipe ID: ${recipeId}, page: ${page}`);
-        
         // Try to fetch from real API
         try {
             if (this.apiStatus.isAvailable) {
                 const endpoint = this.getBestEndpoint('reviews', recipeId);
                 const url = `${this.baseUrl}${endpoint}?page=${page}&page_size=5`;
-                
                 console.log(`🔍 Fetching reviews from: ${url}`);
-                
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-                
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: { 
@@ -473,13 +475,14 @@ class EnhancedRecipeAPI {
                     signal: controller.signal,
                     cache: 'no-cache'
                 });
-                
                 clearTimeout(timeoutId);
-                
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ Reviews data received from API:', data);
-                    return data;
+                    // Only return if data is valid and not mock
+                    if (data && Array.isArray(data.results)) {
+                        console.log('✅ Reviews data received from API:', data);
+                        return data;
+                    }
                 } else {
                     console.warn(`⚠️ Reviews API returned error: ${response.status} ${response.statusText}`);
                 }
@@ -487,14 +490,23 @@ class EnhancedRecipeAPI {
         } catch (e) {
             console.error('❌ Error fetching reviews:', e);
         }
-        
-        // Fallback to mock reviews
-        console.log('🔄 Using fallback mock reviews data');
-        return this.mockData.reviews[recipeId] || {
-            count: 5,
-            next: null,
-            previous: null,
-            results: [
+        // Fallback to empty if online, mock only if offline
+        if (!navigator.onLine) {
+            console.log('🔄 Using fallback mock reviews data (offline mode)');
+            return this.mockData.reviews[recipeId] || {
+                count: 0,
+                next: null,
+                previous: null,
+                results: []
+            };
+        } else {
+            return {
+                count: 0,
+                next: null,
+                previous: null,
+                results: []
+            };
+        }
                 {
                     id: "r1",
                     user: {
