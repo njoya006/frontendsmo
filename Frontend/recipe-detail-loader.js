@@ -13,18 +13,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    // Check if API is accessible
+    // Check if API is accessible (optional health check)
     try {
         console.log('🔍 Testing API connectivity...');
-        const apiTest = await fetch('https://njoya.pythonanywhere.com/api/healthcheck/', { 
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // Shorter timeout
+        
+        const apiTest = await fetch('https://njoya.pythonanywhere.com/api/', { 
             method: 'GET',
-            mode: 'no-cors',
-            cache: 'no-cache',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal,
+            cache: 'no-cache'
         });
+        
+        clearTimeout(timeoutId);
         console.log(`🌐 API connection test completed with status: ${apiTest.status}`);
     } catch (apiError) {
-        console.warn('⚠️ API connectivity test failed:', apiError);
+        console.warn('⚠️ API connectivity test failed:', apiError.message);
         // Continue anyway, individual requests will handle their own errors
     }
     
