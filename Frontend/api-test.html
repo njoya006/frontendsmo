@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced API Test</title>
+</head>
+<body>
+    <h1>Enhanced Recipe API Test</h1>
+    <div id="status">Testing API...</div>
+    <div id="result"></div>
+
+    <script src="enhanced-recipe-api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusElement = document.getElementById('status');
+            const resultElement = document.getElementById('result');
+            
+            // Check if enhancedRecipeAPI is available
+            setTimeout(() => {
+                if (window.enhancedRecipeAPI) {
+                    statusElement.textContent = "✅ Enhanced API loaded successfully";
+                    statusElement.style.color = "green";
+                    
+                    // Check mock data initialization
+                    if (window.enhancedRecipeAPI.mockData && 
+                        window.enhancedRecipeAPI.mockData.recipes && 
+                        Object.keys(window.enhancedRecipeAPI.mockData.recipes).length > 0) {
+                        
+                        resultElement.innerHTML = `
+                            <h3>Mock Data Status: ✅ Initialized</h3>
+                            <p>Number of recipes: ${Object.keys(window.enhancedRecipeAPI.mockData.recipes).length}</p>
+                            <pre>${JSON.stringify(Object.keys(window.enhancedRecipeAPI.mockData.recipes), null, 2)}</pre>
+                            <h4>Sample Recipe:</h4>
+                            <pre>${JSON.stringify(window.enhancedRecipeAPI.mockData.recipes["1"], null, 2)}</pre>
+                        `;
+                    } else {
+                        resultElement.innerHTML = `
+                            <h3>Mock Data Status: ❌ Not initialized properly</h3>
+                            <p>Mock data appears to be empty or not properly initialized.</p>
+                            <pre>${JSON.stringify(window.enhancedRecipeAPI.mockData, null, 2)}</pre>
+                        `;
+                        resultElement.style.color = "red";
+                    }
+                } else {
+                    statusElement.textContent = "❌ Enhanced API not loaded";
+                    statusElement.style.color = "red";
+                    resultElement.textContent = "The window.enhancedRecipeAPI object is not available. Check console for errors.";
+                    resultElement.style.color = "red";
+                }
+            }, 1000); // Give time for API to initialize
+        });
+    </script>
+</body>
+</html>

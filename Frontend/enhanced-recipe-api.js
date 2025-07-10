@@ -1175,3 +1175,7 @@ class EnhancedRecipeAPI {
 // Usage example (in your app code):
 // const api = new EnhancedRecipeAPI('https://your-api-base-url.com');
 // api.getRecipe('1').then(recipe => console.log('Recipe:', recipe));
+
+// Create the global enhancedRecipeAPI instance automatically when the script is loaded
+window.enhancedRecipeAPI = new EnhancedRecipeAPI('https://njoya.pythonanywhere.com');
+console.log('📦 Enhanced Recipe API initialized', window.enhancedRecipeAPI);
