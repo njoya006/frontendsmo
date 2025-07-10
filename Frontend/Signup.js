@@ -83,18 +83,76 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
         // Send data to backend
         (async () => {
             try {
+                // Try using enhanced API first if available
+                if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.register === 'function') {
+                    console.log('Using enhanced API for registration');
+                    const result = await window.enhancedRecipeAPI.register({
+                        username: name,
+                        email: email,
+                        password: password
+                    });
+                    
+                    if (result.success) {
+                        // Success
+                        signupForm.innerHTML = `
+                            <div style="text-align: center; padding: 2rem;">
+                                <div style="color: #4CAF50; font-size: 4rem; margin-bottom: 1rem;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <h2 style="color: #4CAF50; margin-bottom: 1rem;">Registration Successful!</h2>
+                                <p style="margin-bottom: 2rem;">Your account has been created successfully. You can now log in.</p>
+                                <a href="Login.html" style="background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                                    <i class="fas fa-sign-in-alt"></i> Go to Login
+                                </a>
+                            </div>
+                        `;
+                        return;
+                    } else {
+                        // Handle specific error types
+                        let errorMessage = 'Registration failed. Please try again.';
+                        if (result.error === 'CORS_ERROR') {
+                            errorMessage = 'Server configuration issue. Please try again later or contact support.';
+                        } else if (result.error === 'NETWORK_ERROR') {
+                            errorMessage = 'Network connection failed. Please check your internet connection.';
+                        } else if (result.details) {
+                            try {
+                                const errorData = JSON.parse(result.details);
+                                if (errorData.email) {
+                                    errorMessage = 'Email already exists. Please use a different email.';
+                                } else if (errorData.username) {
+                                    errorMessage = 'Username already exists. Please choose a different username.';
+                                }
+                            } catch (e) {
+                                // Use default error message
+                            }
+                        }
+                        showError(errorMessage);
+                        return;
+                    }
+                }
+                
+                // Fallback to direct fetch with improved CORS handling
+                console.log('Using direct fetch for registration');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
                 const response = await fetch(`${API_BASE_URL}api/users/register/`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
+                    signal: controller.signal,
+                    credentials: 'omit', // Don't send credentials to avoid CORS issues
+                    mode: 'cors',
                     body: JSON.stringify({
                         username: name, // changed from 'name' to 'username'
                         email: email,
                         password: password
                     })
                 });
-
+                
+                clearTimeout(timeoutId);
                 const data = await response.json();
 
                 if (!response.ok) {
@@ -119,8 +177,23 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
                 alert('Account created successfully! Redirecting to dashboard...');
                 window.location.href = 'DashBoard.html';
             } catch (error) {
-                alert('Network error. Please try again later.');
-                console.error(error);
+                console.error('Registration error:', error);
+                
+                let errorMessage = 'Network error. Please try again later.';
+                
+                // Handle specific error types
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Registration request timed out. Please try again.';
+                } else if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
+                    errorMessage = 'Server configuration issue. Please contact support.';
+                    console.error('CORS Error - Backend needs CORS configuration for:', window.location.origin);
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = 'Network connection failed. Please check your internet connection.';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Cannot reach server. Please check your connection or try again later.';
+                }
+                
+                showError(errorMessage);
             }
         })();
     });

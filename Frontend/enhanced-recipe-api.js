@@ -647,6 +647,162 @@ class EnhancedRecipeAPI {
         };
     }
     
+    // CORS-aware fetch wrapper
+    async corsAwareFetch(url, options = {}) {
+        // Default headers that work better with CORS
+        const defaultHeaders = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        };
+        
+        // Merge headers
+        const headers = { ...defaultHeaders, ...(options.headers || {}) };
+        
+        // Prepare fetch options
+        const fetchOptions = {
+            ...options,
+            headers,
+            credentials: 'omit', // Don't send credentials for CORS
+            mode: 'cors' // Explicitly set CORS mode
+        };
+        
+        try {
+            console.log(`🌐 CORS-aware fetch to: ${url}`);
+            const response = await fetch(url, fetchOptions);
+            return response;
+        } catch (error) {
+            console.warn(`⚠️ CORS fetch failed for ${url}:`, error.message);
+            
+            // If CORS fails, try with simpler options
+            if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
+                console.log('🔄 Trying simplified CORS request...');
+                try {
+                    const simplifiedOptions = {
+                        method: options.method || 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        mode: 'cors',
+                        credentials: 'omit'
+                    };
+                    
+                    // For POST requests, try without body first
+                    if (options.method === 'POST' && options.body) {
+                        console.log('⚠️ CORS POST failed, this suggests backend CORS configuration issues');
+                    }
+                    
+                    const fallbackResponse = await fetch(url, simplifiedOptions);
+                    return fallbackResponse;
+                } catch (fallbackError) {
+                    console.error('❌ All CORS attempts failed:', fallbackError.message);
+                    throw new Error(`CORS_ERROR: ${fallbackError.message}`);
+                }
+            }
+            throw error;
+        }
+    }
+    
+    // Login method with CORS handling
+    async login(email, password) {
+        console.log(`🔐 Attempting login for: ${email}`);
+        
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const response = await this.corsAwareFetch(`${this.baseUrl}/api/users/login/`, {
+                method: 'POST',
+                signal: controller.signal,
+                body: JSON.stringify({ email, password })
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Login successful:', data);
+                return { success: true, data };
+            } else {
+                const errorData = await response.text();
+                console.warn(`⚠️ Login failed: ${response.status} - ${errorData}`);
+                return { 
+                    success: false, 
+                    error: `Login failed: ${response.status}`,
+                    details: errorData 
+                };
+            }
+        } catch (error) {
+            console.error('❌ Login error:', error);
+            
+            // Check if it's a CORS error
+            if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
+                return {
+                    success: false,
+                    error: 'CORS_ERROR',
+                    message: 'Backend CORS configuration issue. Please contact support.',
+                    details: error.message
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'NETWORK_ERROR',
+                message: 'Network connection failed. Please check your internet connection.',
+                details: error.message
+            };
+        }
+    }
+    
+    // Register method with CORS handling
+    async register(userData) {
+        console.log(`📝 Attempting registration for: ${userData.email}`);
+        
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const response = await this.corsAwareFetch(`${this.baseUrl}/api/users/register/`, {
+                method: 'POST',
+                signal: controller.signal,
+                body: JSON.stringify(userData)
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Registration successful:', data);
+                return { success: true, data };
+            } else {
+                const errorData = await response.text();
+                console.warn(`⚠️ Registration failed: ${response.status} - ${errorData}`);
+                return { 
+                    success: false, 
+                    error: `Registration failed: ${response.status}`,
+                    details: errorData 
+                };
+            }
+        } catch (error) {
+            console.error('❌ Registration error:', error);
+            
+            if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
+                return {
+                    success: false,
+                    error: 'CORS_ERROR',
+                    message: 'Backend CORS configuration issue. Please contact support.',
+                    details: error.message
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'NETWORK_ERROR',
+                message: 'Network connection failed. Please check your internet connection.',
+                details: error.message
+            };
+        }
+    }
+
     // Get diagnostic info (useful for debugging)
     getDiagnosticInfo() {
         return {
