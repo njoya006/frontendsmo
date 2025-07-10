@@ -635,7 +635,18 @@ class RecipeDetailManager {
     }
 
     renderRecipe(recipe) {
-        console.log('🎨 Rendering recipe:', recipe.title || recipe.name);
+        // Defensive: check for error object or invalid recipe
+        if (!recipe || recipe.detail) {
+            console.error('Recipe not found or invalid recipe object:', recipe?.detail || recipe);
+            if (this.errorState) {
+                this.errorState.classList.remove('hidden');
+                this.recipeContent.classList.add('hidden');
+                if (this.errorMessage) {
+                    this.errorMessage.textContent = recipe?.detail || 'Recipe not found.';
+                }
+            }
+            return;
+        }
         
         // Set hero image
         if (this.heroImage && recipe.image) {
@@ -658,11 +669,15 @@ class RecipeDetailManager {
         }
         
         // Render ingredients
-        this.renderIngredients(recipe.ingredients || []);
+        if (typeof this.renderIngredients === 'function') {
+            this.renderIngredients(recipe.ingredients || []);
+        }
         
-        // Render instructions - try multiple field names and prioritize actual instructions
+        // Render instructions
         const instructionsData = this.extractInstructions(recipe);
-        this.renderInstructions(instructionsData);
+        if (typeof this.renderInstructions === 'function') {
+            this.renderInstructions(instructionsData);
+        }
         
         // Render analytics buttons and stats
         this.renderAnalytics(recipe);
