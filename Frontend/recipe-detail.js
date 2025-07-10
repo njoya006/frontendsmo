@@ -669,14 +669,18 @@ class RecipeDetailManager {
         }
         
         // Render ingredients
+        // Defensive check for renderIngredients
         if (typeof this.renderIngredients === 'function') {
             this.renderIngredients(recipe.ingredients || []);
+        } else {
+            console.error('renderIngredients method not available');
         }
-        
-        // Render instructions
+        // Defensive check for renderInstructions
         const instructionsData = this.extractInstructions(recipe);
         if (typeof this.renderInstructions === 'function') {
             this.renderInstructions(instructionsData);
+        } else {
+            console.error('renderInstructions method not available');
         }
         
         // Render analytics buttons and stats
