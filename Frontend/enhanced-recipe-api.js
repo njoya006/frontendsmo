@@ -647,57 +647,83 @@ class EnhancedRecipeAPI {
         };
     }
     
-    // CORS-aware fetch wrapper
+    // CORS-aware fetch wrapper with enhanced fallback strategies
     async corsAwareFetch(url, options = {}) {
         // Default headers that work better with CORS
         const defaultHeaders = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Accept': 'application/json'
         };
+        
+        // Only add Content-Type for POST requests with body
+        if (options.method === 'POST' && options.body) {
+            defaultHeaders['Content-Type'] = 'application/json';
+        }
         
         // Merge headers
         const headers = { ...defaultHeaders, ...(options.headers || {}) };
         
-        // Prepare fetch options
-        const fetchOptions = {
-            ...options,
-            headers,
-            credentials: 'omit', // Don't send credentials for CORS
-            mode: 'cors' // Explicitly set CORS mode
-        };
-        
+        // First attempt: Full CORS request
         try {
             console.log(`🌐 CORS-aware fetch to: ${url}`);
+            
+            const fetchOptions = {
+                ...options,
+                headers,
+                credentials: 'omit', // Don't send credentials for CORS
+                mode: 'cors' // Explicitly set CORS mode
+            };
+            
             const response = await fetch(url, fetchOptions);
-            return response;
+            
+            // If we get here, the request worked
+            if (response.ok || response.status >= 400) {
+                // Even error responses are valid if we got past CORS
+                return response;
+            }
+            
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            
         } catch (error) {
             console.warn(`⚠️ CORS fetch failed for ${url}:`, error.message);
             
-            // If CORS fails, try with simpler options
-            if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
-                console.log('🔄 Trying simplified CORS request...');
+            // Check if it's specifically a CORS preflight error
+            if (error.message.includes('CORS') || 
+                error.message.includes('Cross-Origin') || 
+                error.message.includes('preflight') ||
+                error.message.includes('Access-Control-Allow-Origin')) {
+                
+                console.log('🔄 CORS preflight failed - trying simplified request...');
+                
+                // For POST requests that fail CORS, we can't really work around it
+                // since the browser blocks the request before it even gets sent
+                if (options.method === 'POST') {
+                    console.error('❌ POST request blocked by CORS - backend CORS configuration required');
+                    throw new Error('CORS_POST_BLOCKED: Backend must configure CORS headers for POST requests');
+                }
+                
+                // For GET requests, try a simpler approach
                 try {
                     const simplifiedOptions = {
-                        method: options.method || 'GET',
+                        method: 'GET',
                         headers: {
                             'Accept': 'application/json'
                         },
                         mode: 'cors',
-                        credentials: 'omit'
+                        credentials: 'omit',
+                        cache: 'no-cache'
                     };
                     
-                    // For POST requests, try without body first
-                    if (options.method === 'POST' && options.body) {
-                        console.log('⚠️ CORS POST failed, this suggests backend CORS configuration issues');
-                    }
-                    
                     const fallbackResponse = await fetch(url, simplifiedOptions);
+                    console.log('✅ Simplified CORS request succeeded');
                     return fallbackResponse;
+                    
                 } catch (fallbackError) {
                     console.error('❌ All CORS attempts failed:', fallbackError.message);
                     throw new Error(`CORS_ERROR: ${fallbackError.message}`);
                 }
             }
+            
+            // If it's not a CORS error, re-throw the original error
             throw error;
         }
     }

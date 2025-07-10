@@ -160,75 +160,15 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             console.log('Attempting login...');
             
-            // Try using enhanced API first if available
-            if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.login === 'function') {
-                console.log('Using enhanced API for login');
-                const result = await window.enhancedRecipeAPI.login(email, password);
-                
-                if (result.success) {
-                    // Store the authentication token
-                    if (result.data.token) {
-                        localStorage.setItem('authToken', result.data.token);
-                        localStorage.setItem('user_id', result.data.user?.id || '');
-                        localStorage.setItem('username', result.data.user?.username || email);
-                        console.log('Authentication token stored successfully');
-                    }
-                    
-                    showToast('Login successful! Redirecting...', 'success');
-                    
-                    // Enhanced success animation
-                    const container = document.querySelector('.container');
-                    const body = document.body;
-                    
-                    // Add success visual feedback
-                    loginButton.innerHTML = '<i class="fas fa-check"></i> Success!';
-                    loginButton.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
-                    
-                    setTimeout(() => {
-                        container.style.transition = 'all 0.7s cubic-bezier(0.23, 1, 0.32, 1)';
-                        body.style.transition = 'all 0.7s cubic-bezier(0.23, 1, 0.32, 1)';
-                        container.style.opacity = '0';
-                        container.style.transform = 'scale(0.95)';
-                        body.style.opacity = '0';
-                    }, 800);
-                    
-                    setTimeout(() => {
-                        window.location.href = 'DashBoard.html';
-                    }, 1500);
-                    return;
-                } else {
-                    // Handle specific error types
-                    if (result.error === 'CORS_ERROR') {
-                        showToast('Server configuration issue. Please try again later or contact support.', 'error');
-                        console.error('CORS Error Details:', result.details);
-                    } else if (result.error === 'NETWORK_ERROR') {
-                        showToast('Network connection failed. Please check your internet connection.', 'error');
-                    } else {
-                        showToast('Login failed. Please check your credentials.', 'error');
-                    }
-                    shakeForm();
-                    return;
-                }
-            }
-            
-            // Fallback to direct fetch with improved CORS handling
-            console.log('Using direct fetch for login');
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-            
             const response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                signal: controller.signal,
-                credentials: 'omit', // Don't send credentials to avoid CORS issues
-                mode: 'cors',
                 body: JSON.stringify({ email, password })
             });
             
-            clearTimeout(timeoutId);
             console.log('Response status:', response.status);
             
             const data = await response.json();
@@ -236,8 +176,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Store the authentication token
                 if (data.token) {
                     localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('user_id', data.user?.id || '');
-                    localStorage.setItem('username', data.user?.username || email);
                     console.log('Authentication token stored successfully');
                 } else {
                     console.warn('No token received in login response:', data);
@@ -287,16 +225,8 @@ document.addEventListener('DOMContentLoaded', function () {
             
             let errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
             
-            // Handle specific error types
-            if (err.name === 'AbortError') {
-                errorMessage = 'Login request timed out. Please try again.';
-            } else if (err.message.includes('CORS') || err.message.includes('Cross-Origin')) {
-                errorMessage = 'Server configuration issue. Please contact support.';
-                console.error('CORS Error - Backend needs CORS configuration for:', window.location.origin);
-            } else if (err.name === 'TypeError' && err.message.includes('fetch')) {
+            if (err.name === 'TypeError' && err.message.includes('fetch')) {
                 errorMessage = 'Network connection failed. Please check your internet connection.';
-            } else if (err.message.includes('Failed to fetch')) {
-                errorMessage = 'Cannot reach server. Please check your connection or try again later.';
             }
             
             showToast(errorMessage, 'error');
