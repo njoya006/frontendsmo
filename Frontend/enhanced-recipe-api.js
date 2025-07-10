@@ -66,6 +66,19 @@ class EnhancedRecipeAPI {
         // For tracking user-submitted reviews before they appear in the API
         this.recentlySubmittedReview = null;
         
+        // Cache and rate limiting settings
+        this.cacheSettings = {
+            reviewsExpiry: 5 * 60 * 1000, // 5 minutes in ms
+            ratingsExpiry: 10 * 60 * 1000, // 10 minutes in ms
+            recipeExpiry: 60 * 60 * 1000   // 1 hour in ms
+        };
+        
+        // Rate limiting and backoff tracking
+        this.rateLimits = {
+            endpoints: {},
+            globalBackoff: null
+        };
+        
         // Initialize mock data
         this.initializeMockData();
         
@@ -490,9 +503,39 @@ class EnhancedRecipeAPI {
                                     this.recentlySubmittedReview.recipe_id === recipeId &&
                                     (Date.now() - this.recentlySubmittedReview.timestamp) < 60000; // Within last minute
         
-        // Try to fetch from real API
+        // Check for cached reviews to avoid rate limiting
+        const cacheKey = `recipe_reviews_${recipeId}_${page}`;
+        const cachedReviews = this.getCachedData(cacheKey);
+        
+        // Endpoint path for rate limit checking
+        const endpointPath = `/api/recipes/${recipeId}/reviews`;
+        
+        // Check if this endpoint is currently rate limited
+        const rateLimitInfo = this.shouldApplyRateLimit(endpointPath);
+        if (rateLimitInfo.limited) {
+            console.warn(`⚠️ Rate limit active for ${endpointPath}: ${rateLimitInfo.reason}`);
+            
+            // Show user-friendly message in console
+            const limitMessage = this.formatRateLimitMessage(rateLimitInfo);
+            console.log(`ℹ️ ${limitMessage}`);
+            
+            // Check if we have cached data we can use
+            if (cachedReviews) {
+                console.log('🔄 Using cached reviews due to active rate limiting');
+                return cachedReviews.data;
+            }
+        }
+        
+        // Use fresh cache if available and not specifically looking for a recent submission
+        if (cachedReviews && !hasRecentSubmission && 
+            (Date.now() - cachedReviews.timestamp) < this.cacheSettings.reviewsExpiry) {
+            console.log('🔄 Using cached reviews (within expiry period)');
+            return cachedReviews.data;
+        }
+        
+        // Try to fetch from real API if we're not rate-limited
         try {
-            if (this.apiStatus.isAvailable) {
+            if (this.apiStatus.isAvailable && !rateLimitInfo.limited) {
                 const endpoint = this.getBestEndpoint('reviews', recipeId);
                 // Force cache refresh by adding timestamp to URL if we have a recent submission
                 const cacheParam = hasRecentSubmission ? `&_nocache=${Date.now()}` : '';
@@ -511,6 +554,7 @@ class EnhancedRecipeAPI {
                     cache: 'no-cache'
                 });
                 clearTimeout(timeoutId);
+                
                 if (response.ok) {
                     const data = await response.json();
                     // Only return if data is valid and not mock
@@ -524,10 +568,54 @@ class EnhancedRecipeAPI {
                             data.count = 1;
                         }
                         
+                        // Cache the successful response with proper expiry
+                        this.setCachedData(cacheKey, data, this.cacheSettings.reviewsExpiry);
+                        
+                        // Reset rate limit counter for this endpoint on success
+                        this.resetRateLimitFor(endpointPath);
+                        
                         return data;
+                    }
+                } else if (response.status === 429) {
+                    // Enhanced rate limiting handling with exponential backoff
+                    console.warn('⚠️ Rate limit exceeded (429) for reviews API.');
+                    
+                    // Get retry time from header or default
+                    const retryAfter = response.headers.get('Retry-After');
+                    const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : null;
+                    
+                    // Apply the rate limit with exponential backoff
+                    const limitInfo = this.applyRateLimit(endpointPath, retrySeconds);
+                    
+                    // Generate user-friendly message
+                    const limitMessage = this.formatRateLimitMessage(limitInfo);
+                    console.log(`ℹ️ ${limitMessage}`);
+                    
+                    // Store for UI feedback
+                    this.apiStatus.rateLimited = {
+                        endpoint: 'reviews',
+                        timestamp: Date.now(),
+                        retryAfter: limitInfo.retryAfter,
+                        retryMessage: limitMessage,
+                        until: limitInfo.until
+                    };
+                    
+                    // Check if we have any cached data we can use (even expired)
+                    const oldCache = this.getCachedData(cacheKey, true); // Allow expired cache
+                    if (oldCache) {
+                        console.log('🔄 Using cached reviews due to rate limiting');
+                        return oldCache.data;
                     }
                 } else {
                     console.warn(`⚠️ Reviews API returned error: ${response.status} ${response.statusText}`);
+                    
+                    // Only track non-429 errors as actual API errors
+                    this.apiStatus.serverErrors.push({
+                        endpoint: url,
+                        status: response.status,
+                        statusText: response.statusText,
+                        timestamp: new Date().toISOString()
+                    });
                 }
             }
         } catch (e) {
@@ -543,6 +631,13 @@ class EnhancedRecipeAPI {
                 previous: null,
                 results: [this.recentlySubmittedReview.data]
             };
+        }
+        
+        // Check for expired cache as a fallback
+        const expiredCache = this.getCachedData(cacheKey, true);
+        if (expiredCache) {
+            console.log('🔄 Using expired cache as fallback');
+            return expiredCache.data;
         }
         
         // Fallback to empty if online, mock only if offline
@@ -645,6 +740,49 @@ class EnhancedRecipeAPI {
     async submitReview(recipeId, rating, reviewText) {
         console.log(`💬 Submitting review for recipe ID: ${recipeId}`);
         
+        // Base endpoint path for rate limit checking
+        const baseEndpointPath = `/api/recipes/${recipeId}/reviews`;
+        
+        // Check if this endpoint is currently rate limited
+        const rateLimitInfo = this.shouldApplyRateLimit(baseEndpointPath);
+        if (rateLimitInfo.limited) {
+            console.warn(`⚠️ Rate limit active for reviews: ${rateLimitInfo.reason}`);
+            
+            // Show user-friendly message in console
+            const limitMessage = this.formatRateLimitMessage(rateLimitInfo);
+            console.log(`ℹ️ ${limitMessage}`);
+            
+            // Create a rate limited response
+            const rateLimitedResponse = {
+                success: false,
+                error: "rate_limited",
+                message: limitMessage,
+                retryAfter: rateLimitInfo.retryAfter
+            };
+            
+            // Even with rate limit, store the review locally so we can show it immediately
+            const mockData = this.createLocalReview(recipeId, rating, reviewText);
+            
+            // Mark as pending submission
+            mockData.pending = true;
+            mockData.pendingReason = 'rate_limited';
+            
+            // Store this review in memory for immediate display
+            this.recentlySubmittedReview = {
+                recipe_id: recipeId,
+                timestamp: Date.now(),
+                data: mockData,
+                pendingSubmission: true
+            };
+            
+            // Return both the mockData for UI and the error info
+            return {
+                success: true,
+                data: mockData,
+                limitInfo: rateLimitedResponse
+            };
+        }
+        
         // Try to submit to real API
         try {
             if (this.apiStatus.isAvailable) {
@@ -691,7 +829,50 @@ class EnhancedRecipeAPI {
                                 data: data
                             };
                             
+                            // Clear rate limit counter on successful submission
+                            this.resetRateLimitFor(baseEndpointPath);
+                            
+                            // Clear cache for this recipe's reviews to ensure fresh data
+                            this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
+                            
                             return { success: true, data };
+                        } else if (response.status === 429) {
+                            // Enhanced rate limiting handling with exponential backoff
+                            console.warn('⚠️ Rate limit exceeded (429) when submitting review.');
+                            
+                            // Get retry time from header or default
+                            const retryAfter = response.headers.get('Retry-After');
+                            const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : null;
+                            
+                            // Apply the rate limit with exponential backoff
+                            const limitInfo = this.applyRateLimit(baseEndpointPath, retrySeconds);
+                            
+                            // Generate user-friendly message
+                            const limitMessage = this.formatRateLimitMessage(limitInfo);
+                            console.log(`ℹ️ ${limitMessage}`);
+                            
+                            // Create a rate limited mock data for UI display
+                            const mockData = this.createLocalReview(recipeId, rating, reviewText);
+                            mockData.pending = true;
+                            mockData.pendingReason = 'rate_limited';
+                            
+                            // Store this review in memory for immediate display
+                            this.recentlySubmittedReview = {
+                                recipe_id: recipeId,
+                                timestamp: Date.now(),
+                                data: mockData,
+                                pendingSubmission: true
+                            };
+                            
+                            return {
+                                success: true, 
+                                data: mockData,
+                                limitInfo: {
+                                    limited: true,
+                                    message: limitMessage,
+                                    retryAfter: limitInfo.retryAfter
+                                }
+                            };
                         }
                         
                         console.warn(`⚠️ Review submission to ${endpoint} failed: ${response.status}`);
@@ -704,22 +885,9 @@ class EnhancedRecipeAPI {
             console.error('❌ Error submitting review:', e);
         }
         
-        // Create mock response with proper user data
-        console.log('🔄 Using mock review submission response');
-        const mockData = { 
-            id: 'mock-' + Date.now(),
-            rating: rating,
-            review: reviewText,
-            recipe_id: recipeId,
-            created_at: new Date().toISOString(),
-            message: 'Review saved offline. Will sync when connectivity is restored.',
-            // Add user data from token if possible
-            user: this.getCurrentUser() || {
-                id: 'local-user',
-                username: 'You',
-                is_verified: true
-            }
-        };
+        // Create mock response with proper user data if all API attempts fail
+        console.log('🔄 Using local review submission response');
+        const mockData = this.createLocalReview(recipeId, rating, reviewText);
         
         // Store this review in memory for immediate display
         this.recentlySubmittedReview = {
@@ -731,6 +899,25 @@ class EnhancedRecipeAPI {
         return {
             success: true, 
             data: mockData
+        };
+    }
+    
+    // Helper to create consistent local review objects
+    createLocalReview(recipeId, rating, reviewText) {
+        return { 
+            id: 'local-' + Date.now(),
+            rating: rating,
+            review: reviewText,
+            recipe_id: recipeId,
+            created_at: new Date().toISOString(),
+            message: 'Review saved locally. Will sync when connectivity is restored.',
+            likes_count: 0,
+            // Add user data from token if possible
+            user: this.getCurrentUser() || {
+                id: 'local-user',
+                username: 'You',
+                is_verified: true
+            }
         };
     }
     
@@ -749,233 +936,242 @@ class EnhancedRecipeAPI {
         // Merge headers
         const headers = { ...defaultHeaders, ...(options.headers || {}) };
         
-        // First attempt: Full CORS request
-        try {
-            console.log(`🌐 CORS-aware fetch to: ${url}`);
-            
-            const fetchOptions = {
-                ...options,
-                headers,
-                credentials: 'omit', // Don't send credentials for CORS
-                mode: 'cors' // Explicitly set CORS mode
-            };
-            
-            const response = await fetch(url, fetchOptions);
-            
-            // If we get here, the request worked
-            if (response.ok || response.status >= 400) {
-                // Even error responses are valid if we got past CORS
-                return response;
-            }
-            
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            
-        } catch (error) {
-            console.warn(`⚠️ CORS fetch failed for ${url}:`, error.message);
-            
-            // Check if it's specifically a CORS preflight error
-            if (error.message.includes('CORS') || 
-                error.message.includes('Cross-Origin') || 
-                error.message.includes('preflight') ||
-                error.message.includes('Access-Control-Allow-Origin')) {
+        // Retry logic with exponential backoff
+        const maxRetries = 3;
+        let retryCount = 0;
+        let backoffDelay = 1000; // Start with 1 second
+        
+        while (retryCount < maxRetries) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: headers
+                });
                 
-                console.log('🔄 CORS preflight failed - trying simplified request...');
-                
-                // For POST requests that fail CORS, we can't really work around it
-                // since the browser blocks the request before it even gets sent
-                if (options.method === 'POST') {
-                    console.error('❌ POST request blocked by CORS - backend CORS configuration required');
-                    throw new Error('CORS_POST_BLOCKED: Backend must configure CORS headers for POST requests');
+                // If response is OK, return it
+                if (response.ok) {
+                    return response;
                 }
                 
-                // For GET requests, try a simpler approach
-                try {
-                    const simplifiedOptions = {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        },
-                        mode: 'cors',
-                        credentials: 'omit',
-                        cache: 'no-cache'
-                    };
-                    
-                    const fallbackResponse = await fetch(url, simplifiedOptions);
-                    console.log('✅ Simplified CORS request succeeded');
-                    return fallbackResponse;
-                    
-                } catch (fallbackError) {
-                    console.error('❌ All CORS attempts failed:', fallbackError.message);
-                    throw new Error(`CORS_ERROR: ${fallbackError.message}`);
+                // Handle specific HTTP errors as needed
+                if (response.status === 404) {
+                    console.warn('⚠️ Resource not found (404):', url);
+                    return null;
+                } else if (response.status === 429) {
+                    // Rate limit exceeded, apply backoff
+                    const retryAfter = response.headers.get('Retry-After');
+                    backoffDelay = retryAfter ? Math.min(retryAfter * 1000, 30000) : backoffDelay * 2; // Exponential backoff, max 30s
+                    console.warn(`⚠️ Rate limit exceeded (429), retrying after ${backoffDelay}ms`);
+                } else {
+                    console.error(`❌ HTTP error ${response.status}: ${response.statusText}`);
                 }
+            } catch (e) {
+                console.error('❌ Fetch error:', e);
             }
             
-            // If it's not a CORS error, re-throw the original error
-            throw error;
+            retryCount++;
+            await this.sleep(backoffDelay);
         }
+        
+        // If we exhaust retries, return null or handle as needed
+        return null;
     }
     
-    // Login method with CORS handling
-    async login(email, password) {
-        console.log(`🔐 Attempting login for: ${email}`);
-        
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-            
-            const response = await this.corsAwareFetch(`${this.baseUrl}/api/users/login/`, {
-                method: 'POST',
-                signal: controller.signal,
-                body: JSON.stringify({ email, password })
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Login successful:', data);
-                return { success: true, data };
-            } else {
-                const errorData = await response.text();
-                console.warn(`⚠️ Login failed: ${response.status} - ${errorData}`);
-                return { 
-                    success: false, 
-                    error: `Login failed: ${response.status}`,
-                    details: errorData 
-                };
-            }
-        } catch (error) {
-            console.error('❌ Login error:', error);
-            
-            // Check if it's a CORS error
-            if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
-                return {
-                    success: false,
-                    error: 'CORS_ERROR',
-                    message: 'Backend CORS configuration issue. Please contact support.',
-                    details: error.message
-                };
-            }
-            
-            return {
-                success: false,
-                error: 'NETWORK_ERROR',
-                message: 'Network connection failed. Please check your internet connection.',
-                details: error.message
-            };
-        }
+    // Sleep utility for delaying actions (promisified setTimeout)
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
     
-    // Register method with CORS handling
-    async register(userData) {
-        console.log(`📝 Attempting registration for: ${userData.email}`);
-        
+    // Cache management system
+    getCachedData(key, allowExpired = false) {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-            
-            const response = await this.corsAwareFetch(`${this.baseUrl}/api/users/register/`, {
-                method: 'POST',
-                signal: controller.signal,
-                body: JSON.stringify(userData)
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Registration successful:', data);
-                return { success: true, data };
-            } else {
-                const errorData = await response.text();
-                console.warn(`⚠️ Registration failed: ${response.status} - ${errorData}`);
-                return { 
-                    success: false, 
-                    error: `Registration failed: ${response.status}`,
-                    details: errorData 
-                };
+            if (typeof localStorage === 'undefined') {
+                return null;
             }
+            
+            const cacheKey = `chopsmo_cache_${key}`;
+            const cachedItem = localStorage.getItem(cacheKey);
+            
+            if (!cachedItem) {
+                return null;
+            }
+            
+            const cached = JSON.parse(cachedItem);
+            const now = Date.now();
+            const isExpired = (now - cached.timestamp) > cached.expiresIn;
+            
+            // Return the cached data if it's not expired or if we specifically allow expired data
+            if (!isExpired || allowExpired) {
+                return cached;
+            }
+            
+            return null;
         } catch (error) {
-            console.error('❌ Registration error:', error);
-            
-            if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
-                return {
-                    success: false,
-                    error: 'CORS_ERROR',
-                    message: 'Backend CORS configuration issue. Please contact support.',
-                    details: error.message
-                };
-            }
-            
-            return {
-                success: false,
-                error: 'NETWORK_ERROR',
-                message: 'Network connection failed. Please check your internet connection.',
-                details: error.message
-            };
-        }
-    }
-
-    // Get current user info from token
-    getCurrentUser() {
-        try {
-            const token = this.getAuthToken();
-            if (!token) return null;
-            
-            // Try to get user info from localStorage if available
-            if (typeof localStorage !== 'undefined') {
-                const userInfo = localStorage.getItem('userInfo');
-                if (userInfo) {
-                    try {
-                        return JSON.parse(userInfo);
-                    } catch (e) {
-                        console.warn('Failed to parse user info from localStorage');
-                    }
-                }
-                
-                // If we have a username stored, use that
-                const username = localStorage.getItem('username');
-                if (username) {
-                    return {
-                        id: 'local-user',
-                        username: username,
-                        is_verified: true
-                    };
-                }
-            }
-            
-            // Default user info when logged in but details unknown
-            return {
-                id: 'current-user',
-                username: 'You',
-                is_verified: true
-            };
-        } catch (e) {
-            console.warn('Error getting current user info:', e);
+            console.warn('Cache retrieval error:', error);
             return null;
         }
     }
     
-    // Get diagnostic info (useful for debugging)
-    getDiagnosticInfo() {
-        return {
-            baseUrl: this.baseUrl,
-            apiStatus: this.apiStatus,
-            endpointPatterns: this.endpointPatterns,
-            serverErrors: this.apiStatus.serverErrors,
-            mockDataStats: {
-                recipes: Object.keys(this.mockData.recipes).length,
-                ratings: Object.keys(this.mockData.ratings).length,
-                reviews: Object.keys(this.mockData.reviews).length
+    setCachedData(key, data, expiresIn = null) {
+        try {
+            if (typeof localStorage === 'undefined') {
+                return false;
             }
+            
+            const cacheKey = `chopsmo_cache_${key}`;
+            const cacheObject = {
+                data: data,
+                timestamp: Date.now(),
+                expiresIn: expiresIn || this.cacheSettings.reviewsExpiry // Default to reviews expiry
+            };
+            
+            localStorage.setItem(cacheKey, JSON.stringify(cacheObject));
+            return true;
+        } catch (error) {
+            console.warn('Cache storage error:', error);
+            return false;
+        }
+    }
+    
+    clearCacheByPattern(pattern) {
+        try {
+            if (typeof localStorage === 'undefined') {
+                return;
+            }
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('chopsmo_cache_') && key.includes(pattern)) {
+                    localStorage.removeItem(key);
+                }
+            }
+        } catch (error) {
+            console.warn('Cache clear error:', error);
+        }
+    }
+    
+    // Rate limiting and exponential backoff management
+    shouldApplyRateLimit(endpoint) {
+        const now = Date.now();
+        
+        // Check if there's a global backoff period active
+        if (this.rateLimits.globalBackoff && now < this.rateLimits.globalBackoff.until) {
+            return {
+                limited: true,
+                retryAfter: Math.ceil((this.rateLimits.globalBackoff.until - now) / 1000),
+                reason: 'Global rate limit active'
+            };
+        }
+        
+        // Check endpoint-specific rate limit
+        const endpointLimit = this.rateLimits.endpoints[endpoint];
+        if (endpointLimit && now < endpointLimit.until) {
+            return {
+                limited: true,
+                retryAfter: Math.ceil((endpointLimit.until - now) / 1000),
+                reason: `Endpoint "${endpoint}" rate limited`
+            };
+        }
+        
+        return { limited: false };
+    }
+    
+    applyRateLimit(endpoint, retryAfter = null) {
+        const now = Date.now();
+        let endpointConfig = this.rateLimits.endpoints[endpoint];
+        
+        if (!endpointConfig) {
+            endpointConfig = this.rateLimits.endpoints[endpoint] = {
+                count: 0,
+                firstHit: now,
+                backoffFactor: 1,
+                until: 0
+            };
+        }
+        
+        // Increment hit counter
+        endpointConfig.count++;
+        
+        // Calculate exponential backoff
+        let backoffTime;
+        
+        if (retryAfter && !isNaN(retryAfter)) {
+            // Use server-provided retry time if available
+            backoffTime = retryAfter * 1000;
+        } else {
+            // Apply exponential backoff algorithm
+            // Base: 5 seconds, doubled each consecutive failure, max 30 minutes
+            const baseBackoff = 5000; // 5 seconds
+            backoffTime = Math.min(
+                baseBackoff * Math.pow(2, endpointConfig.backoffFactor - 1),
+                30 * 60 * 1000 // 30 minutes max
+            );
+            endpointConfig.backoffFactor++;
+        }
+        
+        // Set the backoff period
+        endpointConfig.until = now + backoffTime;
+        
+        // If we've hit the rate limit multiple times in a short period,
+        // apply a global backoff to all API calls
+        if (endpointConfig.count >= 3 && (now - endpointConfig.firstHit) < 60000) {
+            console.warn('🛑 Multiple rate limits detected, applying global backoff');
+            this.rateLimits.globalBackoff = {
+                until: now + (backoffTime * 2), // Longer global backoff
+                reason: `Multiple rate limits on ${endpoint}`
+            };
+        }
+        
+        return {
+            limited: true,
+            retryAfter: Math.ceil(backoffTime / 1000),
+            until: endpointConfig.until,
+            globalUntil: this.rateLimits.globalBackoff ? this.rateLimits.globalBackoff.until : null
         };
+    }
+    
+    resetRateLimitFor(endpoint) {
+        if (this.rateLimits.endpoints[endpoint]) {
+            this.rateLimits.endpoints[endpoint].count = 0;
+            this.rateLimits.endpoints[endpoint].backoffFactor = 1;
+            this.rateLimits.endpoints[endpoint].until = 0;
+        }
+    }
+    
+    formatRateLimitMessage(limitInfo) {
+        if (!limitInfo.limited) return '';
+        
+        const seconds = limitInfo.retryAfter;
+        let timeStr = '';
+        
+        if (seconds < 60) {
+            timeStr = `${seconds} seconds`;
+        } else if (seconds < 3600) {
+            timeStr = `${Math.ceil(seconds / 60)} minutes`;
+        } else {
+            timeStr = `${Math.ceil(seconds / 3600)} hours`;
+        }
+        
+        return `Rate limit exceeded. Please try again in ${timeStr}.`;
+    }
+    
+    getCurrentUser() {
+        try {
+            if (typeof localStorage === 'undefined') {
+                return null;
+            }
+            
+            const userData = localStorage.getItem('userData');
+            if (!userData) return null;
+            
+            return JSON.parse(userData);
+        } catch (error) {
+            console.warn('Error getting current user data:', error);
+            return null;
+        }
     }
 }
 
-// Make available globally
-window.enhancedRecipeAPI = new EnhancedRecipeAPI();
-
-// Export for modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = EnhancedRecipeAPI;
-}
+// Usage example (in your app code):
+// const api = new EnhancedRecipeAPI('https://your-api-base-url.com');
+// api.getRecipe('1').then(recipe => console.log('Recipe:', recipe));

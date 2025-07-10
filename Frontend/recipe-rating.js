@@ -557,11 +557,20 @@ class RecipeRatingSystem {
                 
                 if (result && result.success) {
                     console.log('Enhanced API review submission successful:', result);
-                    // Show success message
-                    this.showSuccess('Your review has been published!');
+                    
+                    // Check if we're rate limited but still have local data
+                    if (result.limitInfo && result.limitInfo.limited) {
+                        // Show rate limit message but still show the review locally
+                        this.showWarning(`Your review is saved locally. ${result.limitInfo.message}`);
+                    } else {
+                        // Show regular success message
+                        this.showSuccess('Your review has been published!');
+                    }
+                    
                     // Clear the form
                     this.reviewText.value = '';
                     if (this.charCount) this.charCount.textContent = '0';
+                    
                     // Reload ratings and comments to include the new review
                     await this.loadRatingsAndReviews();
                     return;
@@ -640,6 +649,20 @@ class RecipeRatingSystem {
             // First try using the enhanced API if available
             if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.getRecipeReviews === 'function') {
                 console.log('Using enhanced API for fetching reviews');
+                
+                // Check for rate limit info before fetching
+                if (window.enhancedRecipeAPI.apiStatus && window.enhancedRecipeAPI.apiStatus.rateLimited) {
+                    const rateLimited = window.enhancedRecipeAPI.apiStatus.rateLimited;
+                    const now = Date.now();
+                    
+                    // If rate limit is still active and we're not loading the first page
+                    if (rateLimited.until && now < rateLimited.until && this.currentPage > 1) {
+                        // Show warning about rate limit for pagination only
+                        this.showWarning(`Rate limit active. Please wait before loading more reviews. ${rateLimited.retryMessage || ''}`);
+                        return;
+                    }
+                }
+                
                 const data = await window.enhancedRecipeAPI.getRecipeReviews(this.recipeId, this.currentPage);
                 
                 console.log('Enhanced API reviews data:', data);
@@ -656,6 +679,16 @@ class RecipeRatingSystem {
                 // Update comment count
                 if (this.commentCount) {
                     this.commentCount.textContent = data.count || 0;
+                }
+                
+                // Check if this data came from cache due to rate limiting
+                if (window.enhancedRecipeAPI.apiStatus && 
+                    window.enhancedRecipeAPI.apiStatus.rateLimited &&
+                    window.enhancedRecipeAPI.apiStatus.rateLimited.timestamp > Date.now() - 5000) {
+                    // Show warning about rate limiting
+                    const message = window.enhancedRecipeAPI.apiStatus.rateLimited.retryMessage || 
+                                   'Rate limit reached. Using cached data.';
+                    this.showWarning(message);
                 }
                 
                 return;
@@ -1077,6 +1110,11 @@ class RecipeRatingSystem {
         this.showToast(message, 'info');
     }
     
+    // Show warning toast
+    showWarning(message) {
+        this.showToast(message, 'warning');
+    }
+    
     // Show toast notification
     showToast(message, type = 'info') {
         // Find toast element or create one if needed
@@ -1123,9 +1161,9 @@ class RecipeRatingSystem {
                 borderColor = '#ef9a9a';
                 break;
             case 'warning':
-                backgroundColor = '#fff8e1';
-                color = '#ff8f00';
-                borderColor = '#ffe082';
+                backgroundColor = '#fff3e0';
+                color = '#e65100';
+                borderColor = '#ffcc80';
                 break;
             default: // info
                 backgroundColor = '#e3f2fd';
