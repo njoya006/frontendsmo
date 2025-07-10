@@ -19,16 +19,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000); // Shorter timeout
-        
-        const apiTest = await fetch('https://njoya.pythonanywhere.com/api/', { 
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
-            signal: controller.signal,
-            cache: 'no-cache'
-        });
-        
-        clearTimeout(timeoutId);
-        console.log(`🌐 API connection test completed with status: ${apiTest.status}`);
+        let apiTest;
+        try {
+            apiTest = await fetch('https://njoya.pythonanywhere.com/api/', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                signal: controller.signal,
+                cache: 'no-cache'
+            });
+            clearTimeout(timeoutId);
+            if (apiTest.status === 404) {
+                console.warn('🌐 API root endpoint /api/ returned 404 (Not Found). This is expected if the backend does not define a root API route.');
+            } else {
+                console.log(`🌐 API connection test completed with status: ${apiTest.status}`);
+            }
+        } catch (apiTestError) {
+            clearTimeout(timeoutId);
+            throw apiTestError;
+        }
     } catch (apiError) {
         console.warn('⚠️ API connectivity test failed:', apiError.message);
         // Continue anyway, individual requests will handle their own errors
