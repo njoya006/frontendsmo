@@ -749,6 +749,7 @@ class RecipeDetailManager {
         // Show content
         if (this.recipeContent) {
             this.recipeContent.classList.remove('hidden');
+            this.recipeContent.style.display = 'block'; // Ensure content is visible
         }
         
         console.log('✅ Recipe rendered successfully');
