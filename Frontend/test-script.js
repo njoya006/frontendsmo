@@ -1,4 +1,4 @@
-// ChopSmo Enhanced Recipe API (Professional Placeholder)
+﻿// ChopSmo Enhanced Recipe API (Professional Placeholder)
 // This file prevents 404 errors and provides a basic API interface for the frontend.
 // Replace with real implementation as needed.
 
@@ -189,7 +189,7 @@ class EnhancedRecipeAPI {
     
     // Check if the API is available and which endpoints respond
     async checkApiStatus() {
-        console.log('📡 Checking API status...');
+        console.log('ðŸ“¡ Checking API status...');
         
         try {
             // First try a basic endpoint that should exist with proper timeout handling
@@ -205,7 +205,7 @@ class EnhancedRecipeAPI {
                 signal: controller.signal,
                 cache: 'no-cache'
             }).catch((error) => {
-                console.warn('📡 API connection failed:', error.message);
+                console.warn('ðŸ“¡ API connection failed:', error.message);
                 return { ok: false, status: 0, error: error.message };
             });
             
@@ -215,17 +215,17 @@ class EnhancedRecipeAPI {
             this.apiStatus.lastChecked = new Date().toISOString();
             
             // Log API status
-            console.log(`📡 API base status: ${this.apiStatus.isAvailable ? 'Available ✅' : 'Unavailable ❌'}`);
+            console.log(`ðŸ“¡ API base status: ${this.apiStatus.isAvailable ? 'Available âœ…' : 'Unavailable âŒ'}`);
             
             // If we couldn't connect at all, don't try more endpoints
             if (!this.apiStatus.isAvailable) {
-                console.warn('⚠️ API appears to be unavailable - will use mock data');
+                console.warn('âš ï¸ API appears to be unavailable - will use mock data');
                 this.apiStatus.error = basicTest.error || 'Connection failed';
                 return false;
             }
             
             // Only test endpoint patterns if basic connection worked
-            console.log('🔍 API connected - discovering available endpoints...');
+            console.log('ðŸ” API connected - discovering available endpoints...');
             this.backendAvailable = true;
             
             // Test common endpoint patterns with limited scope to avoid overwhelming the server
@@ -233,7 +233,7 @@ class EnhancedRecipeAPI {
             
             return true;
         } catch (error) {
-            console.error('📡 API status check failed:', error);
+            console.error('ðŸ“¡ API status check failed:', error);
             this.apiStatus.isAvailable = false;
             this.apiStatus.error = error.message;
             this.apiStatus.serverErrors.push({
@@ -266,7 +266,7 @@ class EnhancedRecipeAPI {
             const url = `${this.baseUrl}${endpoint}`;
             
             try {
-                console.log(`🔍 Testing endpoint: ${url}`);
+                console.log(`ðŸ” Testing endpoint: ${url}`);
                 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -291,14 +291,14 @@ class EnhancedRecipeAPI {
                 };
                 
                 if (response.ok) {
-                    console.log(`✅ Endpoint ${endpoint} is available`);
+                    console.log(`âœ… Endpoint ${endpoint} is available`);
                     // Store the working endpoint pattern for this category
                     this.endpointPatterns[category].working = pattern;
                 } else {
-                    console.log(`❌ Endpoint ${endpoint} returned ${response.status}`);
+                    console.log(`âŒ Endpoint ${endpoint} returned ${response.status}`);
                 }
             } catch (error) {
-                console.log(`❌ Endpoint ${endpoint} error: ${error.message}`);
+                console.log(`âŒ Endpoint ${endpoint} error: ${error.message}`);
                 this.apiStatus.endpoints[endpoint] = {
                     status: 'error',
                     working: false,
@@ -324,7 +324,7 @@ class EnhancedRecipeAPI {
 
     // Enhanced recipe fetching with smart fallbacks
     async getRecipe(recipeId) {
-        console.log(`🍽️ Getting recipe with ID: ${recipeId}`);
+        console.log(`ðŸ½ï¸ Getting recipe with ID: ${recipeId}`);
         
         // Try to fetch from the real API endpoint
         try {
@@ -338,7 +338,7 @@ class EnhancedRecipeAPI {
                 const endpoint = this.getBestEndpoint('recipe', recipeId);
                 const url = `${this.baseUrl}${endpoint}`;
                 
-                console.log(`🔍 Fetching recipe from: ${url}`);
+                console.log(`ðŸ” Fetching recipe from: ${url}`);
                 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -357,7 +357,7 @@ class EnhancedRecipeAPI {
                 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ Recipe data received from API:', data);
+                    console.log('âœ… Recipe data received from API:', data);
                     
                     // Cache this successful response in mock data for future offline use
                     if (data && data.id) {
@@ -366,7 +366,7 @@ class EnhancedRecipeAPI {
                     
                     return data;
                 } else {
-                    console.warn(`⚠️ API returned error: ${response.status} ${response.statusText}`);
+                    console.warn(`âš ï¸ API returned error: ${response.status} ${response.statusText}`);
                     // Log server error for diagnostics
                     this.apiStatus.serverErrors.push({
                         endpoint: url,
@@ -376,10 +376,10 @@ class EnhancedRecipeAPI {
                     });
                 }
             } else {
-                console.warn('⚠️ API unavailable, using mock data');
+                console.warn('âš ï¸ API unavailable, using mock data');
             }
         } catch (e) {
-            console.error('❌ Error fetching recipe:', e);
+            console.error('âŒ Error fetching recipe:', e);
             // Log client error for diagnostics
             this.apiStatus.serverErrors.push({
                 error: e.message,
@@ -390,12 +390,12 @@ class EnhancedRecipeAPI {
         
         // Try to get recipe from our mock data cache
         if (this.mockData.recipes[recipeId]) {
-            console.log('🔄 Using cached mock recipe data');
+            console.log('ðŸ”„ Using cached mock recipe data');
             return this.mockData.recipes[recipeId];
         }
         
         // Last resort fallback mock recipe
-        console.log('🔄 Using fallback mock recipe data');
+        console.log('ðŸ”„ Using fallback mock recipe data');
         return {
             id: recipeId,
             title: 'Demo Recipe',
@@ -425,14 +425,14 @@ class EnhancedRecipeAPI {
     
     // Get recipe ratings with fallbacks
     async getRecipeRatings(recipeId) {
-        console.log(`⭐ Getting ratings for recipe ID: ${recipeId}`);
+        console.log(`â­ Getting ratings for recipe ID: ${recipeId}`);
         
         // Try to fetch from real API
         try {
             if (this.apiStatus.isAvailable) {
                 const endpoint = this.getBestEndpoint('ratings', recipeId);
                 const url = `${this.baseUrl}${endpoint}`;
-                console.log(`🔍 Fetching ratings from: ${url}`);
+                console.log(`ðŸ” Fetching ratings from: ${url}`);
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const response = await fetch(url, {
@@ -449,19 +449,19 @@ class EnhancedRecipeAPI {
                     const data = await response.json();
                     // Only return if data is valid and not mock
                     if (data && typeof data.average_rating !== 'undefined') {
-                        console.log('✅ Ratings data received from API:', data);
+                        console.log('âœ… Ratings data received from API:', data);
                         return data;
                     }
                 } else {
-                    console.warn(`⚠️ Ratings API returned error: ${response.status} ${response.statusText}`);
+                    console.warn(`âš ï¸ Ratings API returned error: ${response.status} ${response.statusText}`);
                 }
             }
         } catch (e) {
-            console.error('❌ Error fetching ratings:', e);
+            console.error('âŒ Error fetching ratings:', e);
         }
         // Fallback to empty if online, mock only if offline
         if (!this.isOnline()) {
-            console.log('🔄 Using fallback mock ratings data (offline mode)');
+            console.log('ðŸ”„ Using fallback mock ratings data (offline mode)');
             return this.mockData.ratings[recipeId] || {
                 average_rating: 4.0,
                 total_ratings: 10,
@@ -480,13 +480,13 @@ class EnhancedRecipeAPI {
     
     // Get recipe reviews with fallbacks
     async getRecipeReviews(recipeId, page = 1) {
-        console.log(`💬 Getting reviews for recipe ID: ${recipeId}, page: ${page}`);
+        console.log(`ðŸ’¬ Getting reviews for recipe ID: ${recipeId}, page: ${page}`);
         // Try to fetch from real API
         try {
             if (this.apiStatus.isAvailable) {
                 const endpoint = this.getBestEndpoint('reviews', recipeId);
                 const url = `${this.baseUrl}${endpoint}?page=${page}&page_size=5`;
-                console.log(`🔍 Fetching reviews from: ${url}`);
+                console.log(`ðŸ” Fetching reviews from: ${url}`);
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const response = await fetch(url, {
@@ -503,19 +503,19 @@ class EnhancedRecipeAPI {
                     const data = await response.json();
                     // Only return if data is valid and not mock
                     if (data && Array.isArray(data.results)) {
-                        console.log('✅ Reviews data received from API:', data);
+                        console.log('âœ… Reviews data received from API:', data);
                         return data;
                     }
                 } else {
-                    console.warn(`⚠️ Reviews API returned error: ${response.status} ${response.statusText}`);
+                    console.warn(`âš ï¸ Reviews API returned error: ${response.status} ${response.statusText}`);
                 }
             }
         } catch (e) {
-            console.error('❌ Error fetching reviews:', e);
+            console.error('âŒ Error fetching reviews:', e);
         }
         // Fallback to empty if online, mock only if offline
         if (!this.isOnline()) {
-            console.log('🔄 Using fallback mock reviews data (offline mode)');
+            console.log('ðŸ”„ Using fallback mock reviews data (offline mode)');
             return this.mockData.reviews[recipeId] || {
                 count: 0,
                 next: null,
@@ -546,7 +546,7 @@ class EnhancedRecipeAPI {
     
     // Submit user rating with fallbacks
     async submitRating(recipeId, rating) {
-        console.log(`⭐ Submitting rating ${rating} for recipe ID: ${recipeId}`);
+        console.log(`â­ Submitting rating ${rating} for recipe ID: ${recipeId}`);
         
         // Try to submit to real API
         try {
@@ -561,7 +561,7 @@ class EnhancedRecipeAPI {
                 for (const endpoint of endpoints) {
                     try {
                         const url = `${this.baseUrl}${endpoint}`;
-                        console.log(`🔍 Trying to submit rating to: ${url}`);
+                        console.log(`ðŸ” Trying to submit rating to: ${url}`);
                         
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -584,22 +584,22 @@ class EnhancedRecipeAPI {
                         
                         if (response.ok) {
                             const data = await response.json();
-                            console.log('✅ Rating submitted successfully:', data);
+                            console.log('âœ… Rating submitted successfully:', data);
                             return { success: true, data };
                         }
                         
-                        console.warn(`⚠️ Rating submission to ${endpoint} failed: ${response.status}`);
+                        console.warn(`âš ï¸ Rating submission to ${endpoint} failed: ${response.status}`);
                     } catch (endpointError) {
-                        console.warn(`⚠️ Error with endpoint ${endpoint}:`, endpointError.message);
+                        console.warn(`âš ï¸ Error with endpoint ${endpoint}:`, endpointError.message);
                     }
                 }
             }
         } catch (e) {
-            console.error('❌ Error submitting rating:', e);
+            console.error('âŒ Error submitting rating:', e);
         }
         
         // Return mock success response
-        console.log('🔄 Using mock rating submission response');
+        console.log('ðŸ”„ Using mock rating submission response');
         return {
             success: true, 
             data: { 
@@ -611,7 +611,7 @@ class EnhancedRecipeAPI {
     
     // Submit user review with fallbacks
     async submitReview(recipeId, rating, reviewText) {
-        console.log(`💬 Submitting review for recipe ID: ${recipeId}`);
+        console.log(`ðŸ’¬ Submitting review for recipe ID: ${recipeId}`);
         
         // Try to submit to real API
         try {
@@ -626,7 +626,7 @@ class EnhancedRecipeAPI {
                 for (const endpoint of endpoints) {
                     try {
                         const url = `${this.baseUrl}${endpoint}`;
-                        console.log(`🔍 Trying to submit review to: ${url}`);
+                        console.log(`ðŸ” Trying to submit review to: ${url}`);
                         
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -650,22 +650,22 @@ class EnhancedRecipeAPI {
                         
                         if (response.ok) {
                             const data = await response.json();
-                            console.log('✅ Review submitted successfully:', data);
+                            console.log('âœ… Review submitted successfully:', data);
                             return { success: true, data };
                         }
                         
-                        console.warn(`⚠️ Review submission to ${endpoint} failed: ${response.status}`);
+                        console.warn(`âš ï¸ Review submission to ${endpoint} failed: ${response.status}`);
                     } catch (endpointError) {
-                        console.warn(`⚠️ Error with endpoint ${endpoint}:`, endpointError.message);
+                        console.warn(`âš ï¸ Error with endpoint ${endpoint}:`, endpointError.message);
                     }
                 }
             }
         } catch (e) {
-            console.error('❌ Error submitting review:', e);
+            console.error('âŒ Error submitting review:', e);
         }
         
         // Return mock success response
-        console.log('🔄 Using mock review submission response');
+        console.log('ðŸ”„ Using mock review submission response');
         return {
             success: true, 
             data: { 
@@ -696,7 +696,7 @@ class EnhancedRecipeAPI {
         
         // First attempt: Full CORS request
         try {
-            console.log(`🌐 CORS-aware fetch to: ${url}`);
+            console.log(`ðŸŒ CORS-aware fetch to: ${url}`);
             
             const fetchOptions = {
                 ...options,
@@ -716,7 +716,7 @@ class EnhancedRecipeAPI {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             
         } catch (error) {
-            console.warn(`⚠️ CORS fetch failed for ${url}:`, error.message);
+            console.warn(`âš ï¸ CORS fetch failed for ${url}:`, error.message);
             
             // Check if it's specifically a CORS preflight error
             if (error.message.includes('CORS') || 
@@ -724,12 +724,12 @@ class EnhancedRecipeAPI {
                 error.message.includes('preflight') ||
                 error.message.includes('Access-Control-Allow-Origin')) {
                 
-                console.log('🔄 CORS preflight failed - trying simplified request...');
+                console.log('ðŸ”„ CORS preflight failed - trying simplified request...');
                 
                 // For POST requests that fail CORS, we can't really work around it
                 // since the browser blocks the request before it even gets sent
                 if (options.method === 'POST') {
-                    console.error('❌ POST request blocked by CORS - backend CORS configuration required');
+                    console.error('âŒ POST request blocked by CORS - backend CORS configuration required');
                     throw new Error('CORS_POST_BLOCKED: Backend must configure CORS headers for POST requests');
                 }
                 
@@ -746,11 +746,11 @@ class EnhancedRecipeAPI {
                     };
                     
                     const fallbackResponse = await fetch(url, simplifiedOptions);
-                    console.log('✅ Simplified CORS request succeeded');
+                    console.log('âœ… Simplified CORS request succeeded');
                     return fallbackResponse;
                     
                 } catch (fallbackError) {
-                    console.error('❌ All CORS attempts failed:', fallbackError.message);
+                    console.error('âŒ All CORS attempts failed:', fallbackError.message);
                     throw new Error(`CORS_ERROR: ${fallbackError.message}`);
                 }
             }
@@ -762,7 +762,7 @@ class EnhancedRecipeAPI {
     
     // Login method with CORS handling
     async login(email, password) {
-        console.log(`🔐 Attempting login for: ${email}`);
+        console.log(`ðŸ” Attempting login for: ${email}`);
         
         try {
             const controller = new AbortController();
@@ -778,11 +778,11 @@ class EnhancedRecipeAPI {
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Login successful:', data);
+                console.log('âœ… Login successful:', data);
                 return { success: true, data };
             } else {
                 const errorData = await response.text();
-                console.warn(`⚠️ Login failed: ${response.status} - ${errorData}`);
+                console.warn(`âš ï¸ Login failed: ${response.status} - ${errorData}`);
                 return { 
                     success: false, 
                     error: `Login failed: ${response.status}`,
@@ -790,7 +790,7 @@ class EnhancedRecipeAPI {
                 };
             }
         } catch (error) {
-            console.error('❌ Login error:', error);
+            console.error('âŒ Login error:', error);
             
             // Check if it's a CORS error
             if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
@@ -813,7 +813,7 @@ class EnhancedRecipeAPI {
     
     // Register method with CORS handling
     async register(userData) {
-        console.log(`📝 Attempting registration for: ${userData.email}`);
+        console.log(`ðŸ“ Attempting registration for: ${userData.email}`);
         
         try {
             const controller = new AbortController();
@@ -829,11 +829,11 @@ class EnhancedRecipeAPI {
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Registration successful:', data);
+                console.log('âœ… Registration successful:', data);
                 return { success: true, data };
             } else {
                 const errorData = await response.text();
-                console.warn(`⚠️ Registration failed: ${response.status} - ${errorData}`);
+                console.warn(`âš ï¸ Registration failed: ${response.status} - ${errorData}`);
                 return { 
                     success: false, 
                     error: `Registration failed: ${response.status}`,
@@ -841,7 +841,7 @@ class EnhancedRecipeAPI {
                 };
             }
         } catch (error) {
-            console.error('❌ Registration error:', error);
+            console.error('âŒ Registration error:', error);
             
             if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
                 return {
@@ -884,3 +884,4 @@ window.enhancedRecipeAPI = new EnhancedRecipeAPI();
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = EnhancedRecipeAPI;
 }
+

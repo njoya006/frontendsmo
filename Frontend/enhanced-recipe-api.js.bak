@@ -6,23 +6,13 @@ class EnhancedRecipeAPI {
     constructor(baseUrl) {
         this.baseUrl = baseUrl || 'https://njoya.pythonanywhere.com';
         
-        // Safe auth token getter
+        // Add safe auth token getter
         this.getAuthToken = () => {
             try {
                 return typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') || '' : '';
             } catch (e) {
                 console.warn('localStorage access error:', e);
                 return '';
-            }
-        };
-        
-        // Safe online status checker
-        this.isOnline = () => {
-            try {
-                return typeof navigator !== 'undefined' && navigator.onLine;
-            } catch (e) {
-                console.warn('Navigator access error:', e);
-                return true; // Assume online by default
             }
         };
         
@@ -67,13 +57,11 @@ class EnhancedRecipeAPI {
         this.initializeMockData();
         
         // Perform background API status check with delay to not block page loading
-        if (typeof setTimeout !== 'undefined') {
-            setTimeout(() => {
-                this.checkApiStatus().catch(error => {
-                    console.warn('Background API status check failed:', error);
-                });
-            }, 2000); // Increased delay
-        }
+        setTimeout(() => {
+            this.checkApiStatus().catch(error => {
+                console.warn('Background API status check failed:', error);
+            });
+        }, 2000); // Increased delay
     }
     
     // Initialize mock data for offline use
@@ -460,7 +448,7 @@ class EnhancedRecipeAPI {
             console.error('❌ Error fetching ratings:', e);
         }
         // Fallback to empty if online, mock only if offline
-        if (!this.isOnline()) {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
             console.log('🔄 Using fallback mock ratings data (offline mode)');
             return this.mockData.ratings[recipeId] || {
                 average_rating: 4.0,
@@ -514,7 +502,7 @@ class EnhancedRecipeAPI {
             console.error('❌ Error fetching reviews:', e);
         }
         // Fallback to empty if online, mock only if offline
-        if (!this.isOnline()) {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
             console.log('🔄 Using fallback mock reviews data (offline mode)');
             return this.mockData.reviews[recipeId] || {
                 count: 0,
@@ -571,7 +559,7 @@ class EnhancedRecipeAPI {
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Accept': 'application/json',
-                                'Authorization': `Token ${this.getAuthToken()}` 
+                                'Authorization': `Token ${localStorage.getItem('authToken') || ''}` 
                             },
                             signal: controller.signal,
                             body: JSON.stringify({
@@ -636,7 +624,7 @@ class EnhancedRecipeAPI {
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Accept': 'application/json',
-                                'Authorization': `Token ${this.getAuthToken()}` 
+                                'Authorization': `Token ${localStorage.getItem('authToken') || ''}` 
                             },
                             signal: controller.signal,
                             body: JSON.stringify({
