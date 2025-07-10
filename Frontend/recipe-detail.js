@@ -1,5 +1,54 @@
 // Enhanced Recipe Detail JavaScript
 class RecipeDetailManager {
+    // Render ingredients list in the UI
+    renderIngredients(ingredients) {
+        if (!this.ingredientsList) return;
+        this.ingredientsList.innerHTML = '';
+        if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
+            this.ingredientsList.innerHTML = '<li class="ingredient-item">No ingredients available.</li>';
+            return;
+        }
+        ingredients.forEach(ing => {
+            let name = ing.ingredient_name || ing.name || ing;
+            let qty = ing.quantity || '';
+            let unit = ing.unit || '';
+            let prep = ing.preparation || '';
+            this.ingredientsList.innerHTML += `
+                <li class="ingredient-item">
+                    <span class="ingredient-name">${name}</span>
+                    <span class="ingredient-quantity">${qty} ${unit}</span>
+                    ${prep ? `<span class="ingredient-preparation">${prep}</span>` : ''}
+                </li>
+            `;
+        });
+    }
+
+    // Render instructions in the UI
+    renderInstructions(instructions) {
+        if (!this.instructionsList) return;
+        this.instructionsList.innerHTML = '';
+        if (!instructions || (Array.isArray(instructions) && instructions.length === 0) || (typeof instructions === 'string' && !instructions.trim())) {
+            this.instructionsList.innerHTML = '<li class="instruction-item">No instructions available.</li>';
+            return;
+        }
+        let steps = Array.isArray(instructions) ? instructions : instructions.split(/\n|\r|\d+\./).filter(s => s.trim());
+        steps.forEach((step, idx) => {
+            this.instructionsList.innerHTML += `
+                <li class="instruction-item"><span class="instruction-text">${step.trim()}</span></li>
+            `;
+        });
+    }
+
+    // Render analytics (placeholder)
+    renderAnalytics(recipe) {
+        if (!this.recipeStats) return;
+        // Example: show servings, time, calories if available
+        const stats = [];
+        if (recipe.servings) stats.push(`<span><i class='fas fa-users'></i> ${recipe.servings} servings</span>`);
+        if (recipe.time || recipe.cooking_time) stats.push(`<span><i class='fas fa-clock'></i> ${recipe.time || recipe.cooking_time} min</span>`);
+        if (recipe.calories) stats.push(`<span><i class='fas fa-fire'></i> ${recipe.calories} kcal</span>`);
+        this.recipeStats.innerHTML = stats.join(' ');
+    }
     constructor() {
         console.log('RecipeDetailManager: Constructor started');
         this.debugInfo = {
