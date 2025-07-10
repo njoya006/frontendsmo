@@ -684,10 +684,18 @@ class RecipeDetailManager {
         }
         
         // Render analytics buttons and stats
-        this.renderAnalytics(recipe);
-        
-        // Update social features UI
-        this.updateSocialUI(recipe);
+        // Defensive check for renderAnalytics
+        if (typeof this.renderAnalytics === 'function') {
+            this.renderAnalytics(recipe);
+        } else {
+            console.error('renderAnalytics method not available');
+        }
+        // Defensive check for updateSocialUI
+        if (typeof this.updateSocialUI === 'function') {
+            this.updateSocialUI(recipe);
+        } else {
+            console.error('updateSocialUI method not available');
+        }
         
         // Show content
         if (this.recipeContent) {
