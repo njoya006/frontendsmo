@@ -161,15 +161,29 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Attempting login...');
             
             // First try with standard headers and credentials
-            let response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
-                method: 'POST',
-                credentials: 'include',  // Important for cookies/sessions
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
+            let response;
+            try {
+                response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+                    method: 'POST',
+                    credentials: 'include',  // Important for cookies/sessions
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+            } catch (corsError) {
+                console.log('CORS error detected, trying fallback approach...');
+                // Fallback: try without credentials for CORS-restricted environments
+                response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+            }
             
             console.log('Response status:', response.status);
             
@@ -225,11 +239,11 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (err) {
             console.error('Login error:', err);
             
-            let errorMessage = 'Unable to connect to server.';
+            let errorMessage = 'Connection failed.';
             
             if (err.name === 'TypeError' && err.message.includes('fetch')) {
                 if (err.message.includes('CORS') || window.location.hostname.includes('vercel.app')) {
-                    errorMessage = 'CORS Error: Backend server needs to allow requests from this domain. Please contact the administrator to add "' + window.location.origin + '" to the CORS allowed origins.';
+                    errorMessage = '🔧 Backend Configuration Issue: The server needs to be updated to allow login from this website. Please contact support or try again later.';
                 } else {
                     errorMessage = 'Network connection failed. Please check your internet connection.';
                 }

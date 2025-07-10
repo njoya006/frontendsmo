@@ -83,18 +83,35 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
         // Send data to backend
         (async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}api/users/register/`, {
-                    method: 'POST',
-                    credentials: 'include',  // Important for cookies/sessions
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: name, // changed from 'name' to 'username'
-                        email: email,
-                        password: password
-                    })
-                });
+                let response;
+                try {
+                    response = await fetch(`${API_BASE_URL}api/users/register/`, {
+                        method: 'POST',
+                        credentials: 'include',  // Important for cookies/sessions
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: name, // changed from 'name' to 'username'
+                            email: email,
+                            password: password
+                        })
+                    });
+                } catch (corsError) {
+                    console.log('CORS error detected, trying fallback approach...');
+                    // Fallback: try without credentials for CORS-restricted environments
+                    response = await fetch(`${API_BASE_URL}api/users/register/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: name, // changed from 'name' to 'username'
+                            email: email,
+                            password: password
+                        })
+                    });
+                }
 
                 const data = await response.json();
 
@@ -120,11 +137,11 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
                 alert('Account created successfully! Redirecting to dashboard...');
                 window.location.href = 'DashBoard.html';
             } catch (error) {
-                let errorMessage = 'Network error. Please try again later.';
+                let errorMessage = 'Registration failed.';
                 
                 if (error.name === 'TypeError' && error.message.includes('fetch')) {
                     if (error.message.includes('CORS') || window.location.hostname.includes('vercel.app')) {
-                        errorMessage = 'CORS Error: Backend server needs to allow requests from this domain. Please contact the administrator to add "' + window.location.origin + '" to the CORS allowed origins.';
+                        errorMessage = '🔧 Backend Configuration Issue: The server needs to be updated to allow registration from this website. Please contact support or try again later.';
                     } else {
                         errorMessage = 'Network connection failed. Please check your internet connection.';
                     }
