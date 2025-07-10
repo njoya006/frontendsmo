@@ -139,6 +139,18 @@ class RecipeDetailManager {
         this.hideLoading();
     }
 
+    // Defensive image URL utility
+    getImageUrl(image) {
+        if (!image) return 'assets/default-recipe.jpg';
+        if (typeof image === 'string') {
+            if (image.startsWith('http')) return image;
+            if (image.startsWith('/')) return this.baseUrl + image;
+            // If just a filename, assume media path
+            return this.baseUrl + '/media/' + image;
+        }
+        return 'assets/default-recipe.jpg';
+    }
+
     // Helper methods for logging and debugging
     logStep(step) {
         console.log(`📝 RecipeDetailManager: ${step}`);
