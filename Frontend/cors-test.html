@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test - ChopSmo</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🌐 CORS Configuration Test</h1>
+    <p>This page tests the CORS configuration between your frontend and backend.</p>
+    
+    <div class="info test-result">
+        <strong>Current Origin:</strong> <span id="currentOrigin"></span>
+    </div>
+    
+    <button onclick="testCORS()">🧪 Test CORS Connection</button>
+    <button onclick="testLogin()">🔐 Test Login Endpoint</button>
+    <button onclick="clearResults()">🧹 Clear Results</button>
+    
+    <div id="results"></div>
+
+    <script>
+        // Display current origin
+        document.getElementById('currentOrigin').textContent = window.location.origin;
+        
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function testCORS() {
+            addResult('🔄 Testing CORS configuration...', 'info');
+            
+            try {
+                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    addResult(`✅ CORS is working! Status: ${response.status}`, 'success');
+                    const data = await response.json();
+                    addResult(`<strong>Response Preview:</strong><pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>`, 'success');
+                } else {
+                    addResult(`⚠️ CORS connection successful but server returned status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                console.error('CORS test error:', error);
+                if (error.message.includes('CORS')) {
+                    addResult(`❌ CORS Error: ${error.message}<br><br><strong>Solution:</strong> Add "${window.location.origin}" to CORS_ALLOWED_ORIGINS in the backend settings.`, 'error');
+                } else {
+                    addResult(`❌ Network Error: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        async function testLogin() {
+            addResult('🔐 Testing login endpoint...', 'info');
+            
+            try {
+                const response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+                    method: 'OPTIONS',  // Preflight request
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                addResult(`✅ Login endpoint CORS preflight successful! Status: ${response.status}`, 'success');
+                
+                // Show CORS headers if available
+                const corsHeaders = {};
+                response.headers.forEach((value, key) => {
+                    if (key.toLowerCase().includes('access-control')) {
+                        corsHeaders[key] = value;
+                    }
+                });
+                
+                if (Object.keys(corsHeaders).length > 0) {
+                    addResult(`<strong>CORS Headers:</strong><pre>${JSON.stringify(corsHeaders, null, 2)}</pre>`, 'info');
+                } else {
+                    addResult('⚠️ No CORS headers found in response', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Login endpoint test error:', error);
+                if (error.message.includes('CORS')) {
+                    addResult(`❌ Login endpoint CORS Error: ${error.message}<br><br><strong>Backend needs to:</strong><br>1. Add "${window.location.origin}" to CORS_ALLOWED_ORIGINS<br>2. Remove CORS_ALLOW_ALL_ORIGINS = True<br>3. Reload the web app on PythonAnywhere`, 'error');
+                } else {
+                    addResult(`❌ Login endpoint error: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        // Auto-run basic test on page load
+        setTimeout(testCORS, 1000);
+    </script>
+</body>
+</html>

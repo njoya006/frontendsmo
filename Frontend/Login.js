@@ -160,8 +160,10 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             console.log('Attempting login...');
             
-            const response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+            // First try with standard headers and credentials
+            let response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
                 method: 'POST',
+                credentials: 'include',  // Important for cookies/sessions
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
@@ -223,10 +225,14 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (err) {
             console.error('Login error:', err);
             
-            let errorMessage = 'Unable to connect to server. Please check your internet connection and try again.';
+            let errorMessage = 'Unable to connect to server.';
             
             if (err.name === 'TypeError' && err.message.includes('fetch')) {
-                errorMessage = 'Network connection failed. Please check your internet connection.';
+                if (err.message.includes('CORS') || window.location.hostname.includes('vercel.app')) {
+                    errorMessage = 'CORS Error: Backend server needs to allow requests from this domain. Please contact the administrator to add "' + window.location.origin + '" to the CORS allowed origins.';
+                } else {
+                    errorMessage = 'Network connection failed. Please check your internet connection.';
+                }
             }
             
             showToast(errorMessage, 'error');

@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
             try {
                 const response = await fetch(`${API_BASE_URL}api/users/register/`, {
                     method: 'POST',
+                    credentials: 'include',  // Important for cookies/sessions
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -119,7 +120,17 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
                 alert('Account created successfully! Redirecting to dashboard...');
                 window.location.href = 'DashBoard.html';
             } catch (error) {
-                alert('Network error. Please try again later.');
+                let errorMessage = 'Network error. Please try again later.';
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    if (error.message.includes('CORS') || window.location.hostname.includes('vercel.app')) {
+                        errorMessage = 'CORS Error: Backend server needs to allow requests from this domain. Please contact the administrator to add "' + window.location.origin + '" to the CORS allowed origins.';
+                    } else {
+                        errorMessage = 'Network connection failed. Please check your internet connection.';
+                    }
+                }
+                
+                alert(errorMessage);
                 console.error(error);
             }
         })();
