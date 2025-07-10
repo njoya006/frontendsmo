@@ -281,13 +281,22 @@ class RecipeRatingSystem {
         } catch (error) {
             console.error('Failed to fetch recipe ratings:', error);
             
-            // Return reasonable mock data
-            return {
-                average_rating: 4.2,
-                total_ratings: 15,
-                distribution: {1: 0, 2: 1, 3: 2, 4: 5, 5: 7},
-                total_reviews: 8
-            };
+            // Only return mock data if offline, otherwise show zero/empty
+            if (!navigator.onLine) {
+                return {
+                    average_rating: 4.2,
+                    total_ratings: 15,
+                    distribution: {1: 0, 2: 1, 3: 2, 4: 5, 5: 7},
+                    total_reviews: 8
+                };
+            } else {
+                return {
+                    average_rating: 0,
+                    total_ratings: 0,
+                    distribution: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+                    total_reviews: 0
+                };
+            }
         }
     }
     
@@ -699,10 +708,9 @@ class RecipeRatingSystem {
         } catch (error) {
             console.error('Failed to load comments:', error);
             
-            // If no comments are loaded yet, show mock data in offline mode
-            if (this.currentPage === 1 && (!this.commentsContainer || this.commentsContainer.children.length === 0)) {
-                console.log('Using mock comments data as fallback');
-                
+            // If no comments are loaded yet, show mock data ONLY in offline mode
+            if (!navigator.onLine && this.currentPage === 1 && (!this.commentsContainer || this.commentsContainer.children.length === 0)) {
+                console.log('Using mock comments data as fallback (offline mode)');
                 // Generate mock comments
                 const mockComments = [
                     {
@@ -730,20 +738,16 @@ class RecipeRatingSystem {
                         created_at: new Date(Date.now() - 172800000).toISOString() // 2 days ago
                     }
                 ];
-                
                 this.displayComments(mockComments);
-                
                 // No pagination for mock data
                 this.hasMoreComments = false;
                 if (this.loadMoreContainer) {
                     this.loadMoreContainer.style.display = 'none';
                 }
-                
                 // Update count
                 if (this.commentCount) {
                     this.commentCount.textContent = mockComments.length;
                 }
-                
                 // Show info toast
                 this.showInfo('Showing demo reviews while offline');
                 return;
