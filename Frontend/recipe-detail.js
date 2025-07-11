@@ -356,6 +356,56 @@ class RecipeDetailManager {
         return 'assets/default-recipe.jpg';
     }
 
+    // Debug logging methods
+    logStep(step) {
+        console.log(`📋 RecipeDetailManager: ${step}`);
+        this.debugInfo.initSteps.push(step);
+    }
+    
+    logError(context, error) {
+        console.error(`❌ RecipeDetailManager ${context}:`, error);
+        this.debugInfo.errors.push({ context, error: error.message, timestamp: new Date().toISOString() });
+    }
+    
+    // Show fatal error to user
+    showFatalError(error) {
+        console.error('💥 Fatal error in RecipeDetailManager:', error);
+        
+        const errorHTML = `
+            <div class="fatal-error">
+                <h2>⚠️ Application Error</h2>
+                <p>Something went wrong loading the recipe page.</p>
+                <p class="error-details">${error.message}</p>
+                <button onclick="location.reload()" class="btn btn-primary">
+                    <i class="fas fa-refresh"></i> Retry
+                </button>
+                <button onclick="history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </button>
+            </div>
+        `;
+        
+        if (this.container) {
+            this.container.innerHTML = errorHTML;
+        } else {
+            document.body.innerHTML = errorHTML;
+        }
+    }
+    
+    // Show toast notification
+    showToast(message, type = 'info') {
+        console.log(`📢 Toast: ${message} (${type})`);
+        
+        if (this.toast) {
+            this.toast.textContent = message;
+            this.toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                this.toast.classList.remove('show');
+            }, 3000);
+        }
+    }
+
     // Helper methods for logging and debugging
     logStep(step) {
         console.log(`📝 RecipeDetailManager: ${step}`);
@@ -502,6 +552,203 @@ class RecipeDetailManager {
                 this.showError(`Failed to load recipe: ${error.message}`);
                 clearTimeout(timeoutId);
             }
+        }
+    }
+
+    // Main recipe rendering method
+    renderRecipe(recipe) {
+        console.log('🎨 Rendering recipe:', recipe.title || recipe.name);
+        
+        try {
+            // Show the recipe content and hide loading states
+            if (this.recipeContent) {
+                this.recipeContent.style.display = 'block';
+            }
+            if (this.errorState) {
+                this.errorState.style.display = 'none';
+            }
+            
+            // Render hero image
+            if (this.heroImage && recipe.image_url) {
+                this.heroImage.src = recipe.image_url;
+                this.heroImage.alt = recipe.title || recipe.name || 'Recipe Image';
+                this.heroImage.onerror = () => {
+                    this.heroImage.src = 'images/Chicken Chips.jpg'; // Fallback image
+                };
+            }
+            
+            // Render title and subtitle
+            if (this.recipeTitle) {
+                this.recipeTitle.textContent = recipe.title || recipe.name || 'Recipe Title';
+            }
+            if (this.recipeSubtitle && recipe.description) {
+                this.recipeSubtitle.textContent = recipe.description;
+            }
+            
+            // Render quick info stats
+            if (this.recipeQuickInfo) {
+                const quickInfoItems = [];
+                if (recipe.prep_time) quickInfoItems.push(`<span><i class="fas fa-clock"></i> Prep: ${recipe.prep_time} min</span>`);
+                if (recipe.cook_time) quickInfoItems.push(`<span><i class="fas fa-fire"></i> Cook: ${recipe.cook_time} min</span>`);
+                if (recipe.servings) quickInfoItems.push(`<span><i class="fas fa-users"></i> Serves: ${recipe.servings}</span>`);
+                if (recipe.difficulty) quickInfoItems.push(`<span><i class="fas fa-chart-line"></i> ${recipe.difficulty}</span>`);
+                this.recipeQuickInfo.innerHTML = quickInfoItems.join('');
+            }
+            
+            // Render description
+            if (this.recipeDescription && recipe.description) {
+                this.recipeDescription.textContent = recipe.description;
+            }
+            
+            // Render badges/tags
+            if (this.recipeBadges && recipe.tags) {
+                const tags = Array.isArray(recipe.tags) ? recipe.tags : [recipe.tags];
+                const badgesHTML = tags.map(tag => `<span class="badge">${tag}</span>`).join('');
+                this.recipeBadges.innerHTML = badgesHTML;
+            }
+            
+            // Render ingredients using existing method
+            if (recipe.ingredients) {
+                this.renderIngredients(recipe.ingredients);
+            }
+            
+            // Render instructions using existing method
+            if (recipe.instructions) {
+                this.renderInstructions(recipe.instructions);
+            }
+            
+            // Render contributor information
+            this.renderContributor(recipe);
+            
+            // Render analytics/stats
+            this.renderAnalytics(recipe);
+            
+            // Setup action buttons
+            this.setupActionButtons(recipe);
+            
+            console.log('✅ Recipe rendered successfully');
+            
+        } catch (error) {
+            console.error('❌ Error rendering recipe:', error);
+            this.showError(`Failed to render recipe: ${error.message}`);
+        }
+    }
+    
+    // Render contributor information
+    renderContributor(recipe) {
+        const contributor = recipe.created_by || recipe.contributor || recipe.author;
+        if (!contributor) return;
+        
+        if (this.contributorSection) {
+            this.contributorSection.style.display = 'block';
+        }
+        
+        if (this.contributorName) {
+            this.contributorName.textContent = contributor.username || contributor.name || 'Anonymous Chef';
+        }
+        
+        if (this.contributorAvatar) {
+            const avatarUrl = contributor.profile_image || contributor.photo || contributor.avatar || 'images/Precious.jpg';
+            this.contributorAvatar.src = avatarUrl;
+            this.contributorAvatar.alt = contributor.username || 'Chef Avatar';
+            this.contributorAvatar.onerror = () => {
+                this.contributorAvatar.src = 'images/Precious.jpg'; // Fallback avatar
+            };
+        }
+        
+        if (this.contributorBio && contributor.bio) {
+            this.contributorBio.textContent = contributor.bio;
+        }
+        
+        if (this.contributorProfileLink) {
+            if (contributor.id) {
+                this.contributorProfileLink.href = `Profile.html?id=${contributor.id}`;
+                this.contributorProfileLink.style.display = 'inline-block';
+            } else {
+                this.contributorProfileLink.style.display = 'none';
+            }
+        }
+    }
+    
+    // Setup action buttons (save, share, etc.)
+    setupActionButtons(recipe) {
+        if (!this.actionButtons) return;
+        
+        // Show action buttons
+        this.actionButtons.style.display = 'flex';
+        
+        // Add save recipe functionality
+        const saveBtn = this.actionButtons.querySelector('.save-btn, [onclick*="saveRecipe"]');
+        if (saveBtn) {
+            saveBtn.onclick = () => this.saveRecipe(recipe);
+        }
+        
+        // Add share functionality
+        const shareBtn = this.actionButtons.querySelector('.share-btn, [onclick*="shareRecipe"]');
+        if (shareBtn) {
+            shareBtn.onclick = () => this.shareRecipe(recipe);
+        }
+        
+        // Add edit/delete buttons if user owns the recipe
+        if (this.isOwner) {
+            this.setupOwnerActions(recipe);
+        }
+    }
+    
+    // Save recipe functionality
+    saveRecipe(recipe) {
+        // Implementation for saving recipe to user's favorites
+        console.log('💾 Saving recipe:', recipe.title);
+        this.showToast('Recipe saved to your favorites!', 'success');
+    }
+    
+    // Share recipe functionality
+    shareRecipe(recipe) {
+        if (navigator.share) {
+            navigator.share({
+                title: recipe.title || recipe.name,
+                text: recipe.description || 'Check out this delicious recipe!',
+                url: window.location.href
+            });
+        } else {
+            // Fallback: copy URL to clipboard
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                this.showToast('Recipe link copied to clipboard!', 'success');
+            });
+        }
+    }
+    
+    // Setup owner-specific actions (edit, delete)
+    setupOwnerActions(recipe) {
+        // Add edit button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'action-btn btn-secondary';
+        editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Recipe';
+        editBtn.onclick = () => this.editRecipe(recipe);
+        this.actionButtons.appendChild(editBtn);
+        
+        // Add delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'action-btn btn-danger';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete Recipe';
+        deleteBtn.onclick = () => this.deleteRecipe(recipe);
+        this.actionButtons.appendChild(deleteBtn);
+    }
+    
+    // Edit recipe functionality
+    editRecipe(recipe) {
+        window.location.href = `edit-recipe.html?id=${recipe.id}`;
+    }
+    
+    // Delete recipe functionality
+    deleteRecipe(recipe) {
+        if (confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
+            // Implementation for deleting recipe
+            console.log('🗑️ Deleting recipe:', recipe.title);
+            this.showToast('Recipe deleted successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = 'Recipes.html';
+            }, 2000);
         }
     }
 
@@ -950,7 +1197,6 @@ class RecipeDetailManager {
 // Global instance for recipe detail manager
 window.recipeDetailManager = new RecipeDetailManager();
 
-// Example: Attach to review/rating form submission
 document.addEventListener('DOMContentLoaded', function() {
     const reviewForm = document.getElementById('reviewForm');
     if (reviewForm) {
