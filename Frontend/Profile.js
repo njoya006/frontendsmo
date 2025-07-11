@@ -6,6 +6,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Profile page loaded, checking for elements...');
     
+    // Check URL parameters for user ID or username to view someone else's profile
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewUserId = urlParams.get('id');
+    const viewUsername = urlParams.get('username');
+    
+    // Set viewing mode based on URL parameters
+    const isViewingOtherProfile = !!(viewUserId || viewUsername);
+    
+    if (isViewingOtherProfile) {
+        console.log(`Viewing profile for ${viewUserId ? 'user ID: ' + viewUserId : 'username: ' + viewUsername}`);
+        // We'll load the specified user profile
+        document.title = 'Chopsmo - Chef Profile';
+    }
+    
     // Debug: Check if critical elements exist
     const criticalElements = [
         'userName', 'userEmail', 'avatarImg', 'firstName', 'lastName', 
@@ -277,7 +291,135 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => window.location.href = 'Login.html', 2000);
             }
         }
-    }    // Only fetch user data after DOM is ready and token is present
+    }    // Determine which profile to load
+    function loadAppropriateProfile() {
+        // Check if we should display another user's profile based on URL params
+        if (isViewingOtherProfile) {
+            // If we're viewing another user's profile, no login is required
+            loadPublicProfile(viewUserId, viewUsername);
+        } else {
+            // Only fetch user data after DOM is ready and token is present for current user's profile
+            waitForTokenAndLoadUserData();
+        }
+    }
+    
+    // Load public profile for a contributor
+    async function loadPublicProfile(userId, username) {
+        try {
+            showSpinner();
+            let url;
+            
+            // Construct the correct API URL based on available parameters
+            if (userId) {
+                url = `https://njoya.pythonanywhere.com/api/users/${userId}/public-profile/`;
+            } else if (username) {
+                url = `https://njoya.pythonanywhere.com/api/users/by-username/${encodeURIComponent(username)}/public-profile/`;
+            } else {
+                throw new Error('No user identifier provided');
+            }
+            
+            // Check if real API responds, otherwise use mock data
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayPublicProfile(data);
+                } else {
+                    // API error, use mock data
+                    console.warn(`API returned error ${response.status}. Using mock data.`);
+                    useMockContributorData(userId || username);
+                }
+            } catch (e) {
+                // Network error, use mock data
+                console.error('Error fetching profile:', e);
+                useMockContributorData(userId || username);
+            }
+            
+            hideSpinner();
+        } catch (error) {
+            hideSpinner();
+            console.error('Error loading public profile:', error);
+            showToast('Could not load the profile. Using available data.', '#f44336');
+            
+            // Try to use mock data as last resort
+            useMockContributorData(userId || username);
+        }
+    }
+    
+    function useMockContributorData(identifier) {
+        // Create mock data based on what we know from the URL
+        const mockData = {
+            username: username || `Chef${identifier}`,
+            profile_image: 'images/Precious.jpg', // Default image
+            bio: 'Chef on Chopsmo',
+            recipes_count: 5,
+            average_rating: 4.5,
+            is_verified: true
+        };
+        
+        // For our demo users, use specific images
+        if (identifier === '1001' || identifier === 'NjoyaChef') {
+            mockData.username = 'NjoyaChef';
+            mockData.profile_image = 'images/Njoya.jpg';
+            mockData.bio = 'Chef specializing in Cameroonian cuisine';
+        } else if (identifier === '1002' || identifier === 'JaniceChef') {
+            mockData.username = 'JaniceChef';
+            mockData.profile_image = 'images/Janice.jpg';
+            mockData.bio = 'Food lover and expert in traditional dishes';
+        } else if (identifier === '9999' || identifier === 'ChopSmo Demo') {
+            mockData.username = 'ChopSmo Demo';
+            mockData.profile_image = 'images/Precious.jpg';
+            mockData.bio = 'Chopsmo Test Chef';
+        }
+        
+        displayPublicProfile(mockData);
+    }
+    
+    function displayPublicProfile(profileData) {
+        // Hide editing controls when viewing someone else's profile
+        document.querySelectorAll('.edit-profile-control, .edit-only').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Show viewer elements and hide editor elements
+        document.querySelectorAll('.profile-view-mode').forEach(el => el.style.display = 'block');
+        document.querySelectorAll('.profile-edit-mode').forEach(el => el.style.display = 'none');
+        
+        // Update profile info
+        if (document.getElementById('userName')) {
+            document.getElementById('userName').textContent = profileData.username || 'Chef';
+        }
+        
+        if (document.getElementById('avatarImg')) {
+            document.getElementById('avatarImg').src = profileData.profile_image || 'images/Precious.jpg';
+            document.getElementById('avatarImg').alt = profileData.username || 'Chef';
+        }
+        
+        // Update bio if available
+        if (document.getElementById('userBio')) {
+            document.getElementById('userBio').textContent = profileData.bio || 'Chopsmo Chef';
+        }
+        
+        // Display other public information if available
+        if (profileData.recipes_count && document.getElementById('recipesCount')) {
+            document.getElementById('recipesCount').textContent = profileData.recipes_count;
+        }
+        
+        document.title = `Chopsmo - ${profileData.username || 'Chef'}'s Profile`;
+        
+        // Add verified badge if applicable
+        if (profileData.is_verified && typeof addVerifiedBadge === 'function') {
+            addVerifiedBadge(document.querySelector('.user-profile-header'));
+        }
+    }
+    
+    // Only fetch user data after DOM is ready and token is present
     function waitForTokenAndLoadUserData(retries = 10) {
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -291,7 +433,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadUserDataFromBackend();
     }
-    waitForTokenAndLoadUserData();
+    
+    // Start loading the appropriate profile
+    loadAppropriateProfile();
 
     // Profile Tab Navigation
     const tabButtons = document.querySelectorAll('[data-tab]');

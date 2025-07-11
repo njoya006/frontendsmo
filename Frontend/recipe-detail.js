@@ -130,6 +130,7 @@ class RecipeDetailManager {
         
         // Contributor elements
         this.contributorSection = document.getElementById('contributorSection');
+        this.contributorLink = document.getElementById('contributorLink');
         this.contributorAvatar = document.getElementById('contributorAvatar');
         this.contributorName = document.getElementById('contributorName');
         this.contributorBio = document.getElementById('contributorBio');
@@ -763,9 +764,28 @@ class RecipeDetailManager {
                 this.contributorSection.classList.remove('hidden');
             }
             
+            // Set up the clickable contributor avatar
             if (this.contributorAvatar && recipe.created_by.profile_image) {
                 this.contributorAvatar.src = this.getImageUrl(recipe.created_by.profile_image);
                 this.contributorAvatar.alt = recipe.created_by.username || 'Contributor';
+            }
+            
+            // Set up the profile link
+            if (this.contributorLink) {
+                // If the user has an ID, link to their profile page
+                const userId = recipe.created_by.id || recipe.created_by.user_id;
+                if (userId) {
+                    this.contributorLink.href = `Profile.html?id=${userId}`;
+                    this.contributorLink.title = `View ${recipe.created_by.username || 'contributor'}'s profile`;
+                } else if (recipe.created_by.username) {
+                    // Fallback to username-based URL if ID is not available
+                    this.contributorLink.href = `Profile.html?username=${encodeURIComponent(recipe.created_by.username)}`;
+                    this.contributorLink.title = `View ${recipe.created_by.username}'s profile`;
+                } else {
+                    // No linkable info available
+                    this.contributorLink.removeAttribute('href');
+                    this.contributorLink.style.cursor = 'default';
+                }
             }
             
             if (this.contributorName) {

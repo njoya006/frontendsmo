@@ -395,6 +395,16 @@
             gap: 20px;
         }
 
+        #contributorLink {
+            display: block;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        
+        #contributorLink:hover {
+            transform: scale(1.05);
+        }
+
         .contributor-avatar {
             width: 70px;
             height: 70px;
@@ -1370,7 +1380,9 @@
                 <div class="contributor-section hidden" id="contributorSection">
                     <h3 class="section-title">Recipe by</h3>
                     <div class="contributor-info">
-                        <img class="contributor-avatar" id="contributorAvatar" src="assets/default-recipe.jpg" alt="Contributor">
+                        <a href="#" id="contributorLink">
+                            <img class="contributor-avatar" id="contributorAvatar" src="assets/default-recipe.jpg" alt="Contributor">
+                        </a>
                         <div class="contributor-details">
                             <h4 id="contributorName">Contributor Name</h4>
                             <p id="contributorBio">Contributor Bio</p>
