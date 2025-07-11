@@ -842,11 +842,17 @@ class RecipeDetailManager {
             console.log('🖼️ Setting hero image:', imageUrl);
             this.heroImage.src = imageUrl;
             this.heroImage.alt = recipe.title || recipe.name || 'Recipe image';
-            
-            // Add error handling for the image
-            this.heroImage.onerror = () => {
-                console.error('❌ Failed to load hero image:', imageUrl);
-                this.heroImage.src = 'assets/default-recipe.jpg';
+            // Professional error handler: fallback only once, then hide image
+            let triedFallback = false;
+            this.heroImage.onerror = function() {
+                if (!triedFallback) {
+                    triedFallback = true;
+                    console.error('❌ Failed to load hero image, trying local fallback:', imageUrl);
+                    this.src = 'assets/default-recipe.jpg';
+                } else {
+                    console.error('❌ Failed to load local fallback image, hiding hero image.');
+                    this.style.display = 'none';
+                }
             };
         }
         
