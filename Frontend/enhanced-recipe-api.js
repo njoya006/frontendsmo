@@ -730,9 +730,26 @@ class EnhancedRecipeAPI {
             console.error('❌ Error submitting rating:', e);
         }
         
-        // Return mock success response
+        // Return mock success response and update mock ratings
         console.log('🔄 Using mock rating submission response');
-        // Clear ratings cache for this recipe to force UI update
+        // Update mock ratings data
+        if (!this.mockData.ratings[recipeId]) {
+            this.mockData.ratings[recipeId] = {
+                average_rating: rating,
+                total_ratings: 1,
+                distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+                total_reviews: 0
+            };
+        }
+        const dist = this.mockData.ratings[recipeId].distribution;
+        dist[rating] = (dist[rating] || 0) + 1;
+        const totalRatings = Object.values(dist).reduce((a, b) => a + b, 0);
+        let sum = 0;
+        for (let star = 1; star <= 5; star++) {
+            sum += (dist[star] || 0) * star;
+        }
+        this.mockData.ratings[recipeId].average_rating = totalRatings ? (sum / totalRatings) : rating;
+        this.mockData.ratings[recipeId].total_ratings = totalRatings;
         this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
         return {
             success: true, 
@@ -870,7 +887,7 @@ class EnhancedRecipeAPI {
             message: lastError.message
         };
     }
-    // Create mock response with proper user data if all API attempts fail
+    // Create mock response and update mock reviews array/count
     console.log('🔄 Using local review submission response');
     const mockData = this.createLocalReview(recipeId, rating, reviewText);
     this.recentlySubmittedReview = {
@@ -878,6 +895,37 @@ class EnhancedRecipeAPI {
         timestamp: Date.now(),
         data: mockData
     };
+    // Update mock reviews array and count
+    if (!this.mockData.reviews[recipeId]) {
+        this.mockData.reviews[recipeId] = {
+            count: 0,
+            next: null,
+            previous: null,
+            results: []
+        };
+    }
+    this.mockData.reviews[recipeId].results.unshift(mockData); // Add to start
+    this.mockData.reviews[recipeId].count = this.mockData.reviews[recipeId].results.length;
+    // Also update ratings mock data
+    if (!this.mockData.ratings[recipeId]) {
+        this.mockData.ratings[recipeId] = {
+            average_rating: rating,
+            total_ratings: 1,
+            distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            total_reviews: 1
+        };
+    }
+    // Update distribution and recalculate average
+    const dist = this.mockData.ratings[recipeId].distribution;
+    dist[rating] = (dist[rating] || 0) + 1;
+    const totalRatings = Object.values(dist).reduce((a, b) => a + b, 0);
+    let sum = 0;
+    for (let star = 1; star <= 5; star++) {
+        sum += (dist[star] || 0) * star;
+    }
+    this.mockData.ratings[recipeId].average_rating = totalRatings ? (sum / totalRatings) : rating;
+    this.mockData.ratings[recipeId].total_ratings = totalRatings;
+    this.mockData.ratings[recipeId].total_reviews = this.mockData.reviews[recipeId].count;
     this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
     this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
     return {
