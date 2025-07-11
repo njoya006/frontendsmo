@@ -744,180 +744,147 @@ class EnhancedRecipeAPI {
     }
     
     // Submit user review with fallbacks
-    async submitReview(recipeId, rating, reviewText) {
-        console.log(`💬 Submitting review for recipe ID: ${recipeId}`);
-        
-        // Base endpoint path for rate limit checking
-        const baseEndpointPath = `/api/recipes/${recipeId}/reviews`;
-        
-        // Check if this endpoint is currently rate limited
-        const rateLimitInfo = this.shouldApplyRateLimit(baseEndpointPath);
-        if (rateLimitInfo.limited) {
-            console.warn(`⚠️ Rate limit active for reviews: ${rateLimitInfo.reason}`);
-            
-            // Show user-friendly message in console
-            const limitMessage = this.formatRateLimitMessage(rateLimitInfo);
-            console.log(`ℹ️ ${limitMessage}`);
-            
-            // Create a rate limited response
-            const rateLimitedResponse = {
-                success: false,
-                error: "rate_limited",
-                message: limitMessage,
-                retryAfter: rateLimitInfo.retryAfter
-            };
-            
-            // Even with rate limit, store the review locally so we can show it immediately
-            const mockData = this.createLocalReview(recipeId, rating, reviewText);
-            
-            // Mark as pending submission
-            mockData.pending = true;
-            mockData.pendingReason = 'rate_limited';
-            
-            // Store this review in memory for immediate display
-            this.recentlySubmittedReview = {
-                recipe_id: recipeId,
-                timestamp: Date.now(),
-                data: mockData,
-                pendingSubmission: true
-            };
-            // Clear reviews cache for this recipe to force UI update
-            this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
-            
-            // Return both the mockData for UI and the error info
-            return {
-                success: true,
-                data: mockData,
-                limitInfo: rateLimitedResponse
-            };
-        }
-        
-        // Try to submit to real API
-        try {
-            if (this.apiStatus.isAvailable) {
-                // Try common endpoint patterns for review submission
-                const endpoints = [
-                    `/api/recipes/${recipeId}/add-review/`,
-                    `/api/recipes/${recipeId}/reviews/`,
-                    `/api/reviews/`
-                ];
-                
-                for (const endpoint of endpoints) {
-                    try {
-                        const url = `${this.baseUrl}${endpoint}`;
-                        console.log(`🔍 Trying to submit review to: ${url}`);
-                        
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 8000);
-                        
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'Authorization': `Token ${this.getAuthToken()}` 
-                            },
-                            signal: controller.signal,
-                            body: JSON.stringify({
-                                rating: rating,
-                                review: reviewText,
-                                recipe_id: recipeId
-                            })
-                        });
-                        
-                        clearTimeout(timeoutId);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log('✅ Review submitted successfully:', data);
-                            
-                            // Store this review in memory for immediate display
-                            this.recentlySubmittedReview = {
-                                recipe_id: recipeId,
-                                timestamp: Date.now(),
-                                data: data
-                            };
-                            
-                            // Clear rate limit counter on successful submission
-                            this.resetRateLimitFor(baseEndpointPath);
-                            
-                            // Clear cache for this recipe's reviews to ensure fresh data
-                            this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
-                            // Also clear ratings cache to ensure rating bar updates
-                            this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
-                            
-                            return { success: true, data };
-                        } else if (response.status === 429) {
-                            // Enhanced rate limiting handling with exponential backoff
-                            console.warn('⚠️ Rate limit exceeded (429) when submitting review.');
-                            
-                            // Get retry time from header or default
-                            const retryAfter = response.headers.get('Retry-After');
-                            const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : null;
-                            
-                            // Apply the rate limit with exponential backoff
-                            const limitInfo = this.applyRateLimit(baseEndpointPath, retrySeconds);
-                            
-                            // Generate user-friendly message
-                            const limitMessage = this.formatRateLimitMessage(limitInfo);
-                            console.log(`ℹ️ ${limitMessage}`);
-                            
-                            // Create a mock review that will be displayed immediately
-                            const mockData = this.createLocalReview(recipeId, rating, reviewText);
-                            mockData.pending = true;
-                            mockData.pendingReason = 'rate_limited';
-                            
-                            // Store this review in memory for immediate display
-                            this.recentlySubmittedReview = {
-                                recipe_id: recipeId,
-                                timestamp: Date.now(),
-                                data: mockData,
-                                pendingSubmission: true
-                            };
-                            // Clear reviews cache for this recipe to force UI update
-                            this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
-                            // Also clear ratings cache to ensure rating bar updates
-                            this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
-                            
-                            return {
-                                success: false,
-                                error: "rate_limited",
-                                message: limitMessage,
-                                retryAfter: limitInfo.retryAfter,
-                                data: mockData // Still return the mock data for immediate display
-                            };
-                        }
-                        
-                        console.warn(`⚠️ Review submission to ${endpoint} failed: ${response.status}`);
-                    } catch (endpointError) {
-                        console.warn(`⚠️ Error with endpoint ${endpoint}:`, endpointError.message);
-                    }
-                }
-            }
-        } catch (e) {
-            console.error('❌ Error submitting review:', e);
-        }
-        
-        // Create mock response with proper user data if all API attempts fail
-        console.log('🔄 Using local review submission response');
+   async submitReview(recipeId, rating, reviewText) {
+    console.log(`💬 Submitting review for recipe ID: ${recipeId}`);
+    const baseEndpointPath = `/api/recipes/${recipeId}/reviews`;
+    const rateLimitInfo = this.shouldApplyRateLimit(baseEndpointPath);
+    if (rateLimitInfo.limited) {
+        const limitMessage = this.formatRateLimitMessage(rateLimitInfo);
+        console.warn(`⚠️ Rate limit active for reviews: ${rateLimitInfo.reason}`);
+        const rateLimitedResponse = {
+            success: false,
+            error: "rate_limited",
+            message: limitMessage,
+            retryAfter: rateLimitInfo.retryAfter
+        };
         const mockData = this.createLocalReview(recipeId, rating, reviewText);
-        
-        // Store this review in memory for immediate display
+        mockData.pending = true;
+        mockData.pendingReason = 'rate_limited';
         this.recentlySubmittedReview = {
             recipe_id: recipeId,
             timestamp: Date.now(),
-            data: mockData
+            data: mockData,
+            pendingSubmission: true
         };
-        // Clear reviews cache for this recipe to force UI update
         this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
-        // Also clear ratings cache to ensure rating bar updates
-        this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
-        
         return {
-            success: true, 
-            data: mockData
+            success: true,
+            data: mockData,
+            limitInfo: rateLimitedResponse
         };
     }
+
+    // Try to submit to real API, skipping 405 and handling 403
+    let lastError = null;
+    if (this.apiStatus.isAvailable) {
+        const endpoints = [
+            `/api/recipes/${recipeId}/add-review/`,
+            `/api/recipes/${recipeId}/reviews/`,
+            `/api/reviews/`
+        ];
+        for (const endpoint of endpoints) {
+            try {
+                const url = `${this.baseUrl}${endpoint}`;
+                console.log(`🔍 Trying to submit review to: ${url}`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Token ${this.getAuthToken()}`
+                    },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        rating: rating,
+                        review: reviewText,
+                        recipe_id: recipeId
+                    })
+                });
+                clearTimeout(timeoutId);
+                if (response.status === 405) {
+                    // Skip this endpoint and try next
+                    console.warn(`⏭️ Endpoint ${endpoint} returned 405, skipping.`);
+                    continue;
+                }
+                if (response.status === 403) {
+                    // Forbidden: show user-friendly message
+                    lastError = new Error('You are not authorized to submit a review. Please log in or check your authentication.');
+                    break;
+                }
+                if (response.status === 429) {
+                    // Enhanced rate limiting handling with exponential backoff
+                    console.warn('⚠️ Rate limit exceeded (429) when submitting review.');
+                    const retryAfter = response.headers.get('Retry-After');
+                    const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : null;
+                    const limitInfo = this.applyRateLimit(baseEndpointPath, retrySeconds);
+                    const limitMessage = this.formatRateLimitMessage(limitInfo);
+                    console.log(`ℹ️ ${limitMessage}`);
+                    const mockData = this.createLocalReview(recipeId, rating, reviewText);
+                    mockData.pending = true;
+                    mockData.pendingReason = 'rate_limited';
+                    this.recentlySubmittedReview = {
+                        recipe_id: recipeId,
+                        timestamp: Date.now(),
+                        data: mockData,
+                        pendingSubmission: true
+                    };
+                    this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
+                    this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
+                    return {
+                        success: false,
+                        error: "rate_limited",
+                        message: limitMessage,
+                        retryAfter: limitInfo.retryAfter,
+                        data: mockData
+                    };
+                }
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Review submitted successfully:', data);
+                    this.recentlySubmittedReview = {
+                        recipe_id: recipeId,
+                        timestamp: Date.now(),
+                        data: data
+                    };
+                    this.resetRateLimitFor(baseEndpointPath);
+                    this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
+                    this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
+                    return { success: true, data };
+                }
+                // Other error: save and try next
+                lastError = new Error(`Failed to submit review: ${response.status} ${response.statusText}`);
+                console.warn(`⚠️ Review submission to ${endpoint} failed: ${response.status}`);
+            } catch (endpointError) {
+                lastError = endpointError;
+                console.warn(`⚠️ Error with endpoint ${endpoint}:`, endpointError.message);
+            }
+        }
+    }
+    // If all endpoints failed and lastError is 403, show user-friendly message
+    if (lastError && lastError.message && lastError.message.includes('not authorized')) {
+        return {
+            success: false,
+            error: 'forbidden',
+            message: lastError.message
+        };
+    }
+    // Create mock response with proper user data if all API attempts fail
+    console.log('🔄 Using local review submission response');
+    const mockData = this.createLocalReview(recipeId, rating, reviewText);
+    this.recentlySubmittedReview = {
+        recipe_id: recipeId,
+        timestamp: Date.now(),
+        data: mockData
+    };
+    this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
+    this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
+    return {
+        success: true,
+        data: mockData
+    };
+}
     
     // Helper to create consistent local review objects
     createLocalReview(recipeId, rating, reviewText) {
