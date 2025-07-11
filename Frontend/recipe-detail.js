@@ -195,15 +195,18 @@ class RecipeDetailManager {
         if (typeof image === 'string') {
             // Full URL - use as is
             if (image.startsWith('http')) return image;
-            
-            // Path starting with slash - append to base URL
-            if (image.startsWith('/')) return this.baseUrl + image;
-            
-            // Check for local paths like 'images/file.jpg' - use directly
-            if (image.startsWith('images/') || image.startsWith('assets/')) {
-                return image; // These are relative to the HTML file
+
+            // If image is a local static asset, use directly
+            if (image.startsWith('/images/') || image.startsWith('/assets/')) {
+                return image;
             }
-            
+            if (image.startsWith('images/') || image.startsWith('assets/')) {
+                return image;
+            }
+
+            // Path starting with slash (not static asset) - append to base URL
+            if (image.startsWith('/')) return this.baseUrl + image;
+
             // If just a filename, assume media path
             return this.baseUrl + '/media/' + image;
         }
