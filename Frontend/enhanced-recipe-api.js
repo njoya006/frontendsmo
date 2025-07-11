@@ -715,6 +715,8 @@ class EnhancedRecipeAPI {
                         if (response.ok) {
                             const data = await response.json();
                             console.log('✅ Rating submitted successfully:', data);
+                            // After successful rating submission, clear ratings cache for this recipe
+                            this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
                             return { success: true, data };
                         }
                         
@@ -730,6 +732,8 @@ class EnhancedRecipeAPI {
         
         // Return mock success response
         console.log('🔄 Using mock rating submission response');
+        // Clear ratings cache for this recipe to force UI update
+        this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
         return {
             success: true, 
             data: { 
@@ -777,6 +781,8 @@ class EnhancedRecipeAPI {
                 data: mockData,
                 pendingSubmission: true
             };
+            // Clear reviews cache for this recipe to force UI update
+            this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
             
             // Return both the mockData for UI and the error info
             return {
@@ -837,6 +843,8 @@ class EnhancedRecipeAPI {
                             
                             // Clear cache for this recipe's reviews to ensure fresh data
                             this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
+                            // Also clear ratings cache to ensure rating bar updates
+                            this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
                             
                             return { success: true, data };
                         } else if (response.status === 429) {
@@ -866,6 +874,10 @@ class EnhancedRecipeAPI {
                                 data: mockData,
                                 pendingSubmission: true
                             };
+                            // Clear reviews cache for this recipe to force UI update
+                            this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
+                            // Also clear ratings cache to ensure rating bar updates
+                            this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
                             
                             return {
                                 success: false,
@@ -896,6 +908,10 @@ class EnhancedRecipeAPI {
             timestamp: Date.now(),
             data: mockData
         };
+        // Clear reviews cache for this recipe to force UI update
+        this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
+        // Also clear ratings cache to ensure rating bar updates
+        this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
         
         return {
             success: true, 

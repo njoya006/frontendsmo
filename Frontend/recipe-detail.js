@@ -1,3 +1,40 @@
+    // Reload ratings and reviews from API and update UI
+    async reloadRatingsAndReviews() {
+        if (!this.recipeId) return;
+        try {
+            // Use enhanced API if available
+            let ratingsData, reviewsData;
+            if (window.enhancedRecipeAPI) {
+                ratingsData = await window.enhancedRecipeAPI.getRatings(this.recipeId);
+                reviewsData = await window.enhancedRecipeAPI.getReviews(this.recipeId);
+            } else if (this.useAPI) {
+                ratingsData = await this.recipeAPI.getRatings(this.recipeId);
+                reviewsData = await this.recipeAPI.getReviews(this.recipeId);
+            } else {
+                // Fallback: skip update
+                return;
+            }
+            // Update rating bar
+            if (document.getElementById('ratingBar')) {
+                document.getElementById('ratingBar').value = ratingsData.average || 0;
+            }
+            // Update review count
+            if (document.getElementById('reviewCount')) {
+                document.getElementById('reviewCount').textContent = reviewsData.count || reviewsData.length || 0;
+            }
+            // Update comment count
+            if (document.getElementById('commentCount')) {
+                document.getElementById('commentCount').textContent = reviewsData.length || 0;
+            }
+            // Update review text (show latest review)
+            if (document.getElementById('latestReviewText')) {
+                const latest = Array.isArray(reviewsData) ? reviewsData[0] : (reviewsData.results ? reviewsData.results[0] : null);
+                document.getElementById('latestReviewText').textContent = latest ? latest.text || latest.comment || '' : 'No reviews yet.';
+            }
+        } catch (error) {
+            console.error('Failed to reload ratings/reviews:', error);
+        }
+    }
 // Enhanced Recipe Detail JavaScript
 class RecipeDetailManager {
     // Render ingredients list in the UI
@@ -40,6 +77,54 @@ class RecipeDetailManager {
     }
 
     // Render analytics (placeholder)
+    // Reload ratings and reviews from API and update UI
+    async reloadRatingsAndReviews() {
+        if (!this.recipeId) return;
+        try {
+            // Use enhanced API if available
+            let ratingsData, reviewsData;
+            if (window.enhancedRecipeAPI) {
+                ratingsData = await window.enhancedRecipeAPI.getRatings(this.recipeId);
+                reviewsData = await window.enhancedRecipeAPI.getReviews(this.recipeId);
+            } else if (this.useAPI) {
+                ratingsData = await this.recipeAPI.getRatings(this.recipeId);
+                reviewsData = await this.recipeAPI.getReviews(this.recipeId);
+            } else {
+                // Fallback: skip update
+                return;
+            }
+            // Update rating bar
+            if (document.getElementById('ratingBar')) {
+                document.getElementById('ratingBar').value = ratingsData.average || 0;
+            }
+            // Update review count
+            if (document.getElementById('reviewCount')) {
+                document.getElementById('reviewCount').textContent = reviewsData.count || reviewsData.length || 0;
+            }
+            // Update comment count
+            if (document.getElementById('commentCount')) {
+                document.getElementById('commentCount').textContent = reviewsData.length || 0;
+            }
+            // Update review text (show latest review)
+            if (document.getElementById('latestReviewText')) {
+                const latest = Array.isArray(reviewsData) ? reviewsData[0] : (reviewsData.results ? reviewsData.results[0] : null);
+                document.getElementById('latestReviewText').textContent = latest ? latest.text || latest.comment || '' : 'No reviews yet.';
+            }
+        } catch (error) {
+            console.error('Failed to reload ratings/reviews:', error);
+        }
+    }
+
+    // Submission handler: reload ratings/reviews after successful submit
+    async handleReviewSubmission(submitFn, ...args) {
+        try {
+            await submitFn(...args);
+            await this.reloadRatingsAndReviews();
+            this.showToast('Review submitted and UI updated!', 'success');
+        } catch (error) {
+            this.showToast('Failed to submit review: ' + error.message, 'error');
+        }
+    }
     renderAnalytics(recipe) {
         if (!this.recipeStats) return;
         // Example: show servings, time, calories if available
@@ -189,6 +274,16 @@ class RecipeDetailManager {
         this.hideLoading();
     }
 
+    // --- Submission handler: reload ratings/reviews after successful submit ---
+    async handleReviewSubmission(submitFn, ...args) {
+        try {
+            await submitFn(...args);
+            await this.reloadRatingsAndReviews();
+            this.showToast('Review submitted and UI updated!', 'success');
+        } catch (error) {
+            this.showToast('Failed to submit review: ' + error.message, 'error');
+        }
+    }
     // Defensive image URL utility with improved path handling
     getImageUrl(image) {
         if (!image) return 'assets/default-recipe.jpg';
@@ -869,3 +964,52 @@ class RecipeDetailManager {
 
 // Global instance for recipe detail manager
 window.recipeDetailManager = new RecipeDetailManager();
+
+// Example: Attach to review/rating form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const reviewForm = document.getElementById('reviewForm');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            // Get review text and rating value
+            const reviewText = document.getElementById('reviewInput')?.value || '';
+            const ratingValue = document.getElementById('ratingInput')?.value || 0;
+            // Submit using enhanced API if available
+            if (window.recipeDetailManager) {
+                await window.recipeDetailManager.handleReviewSubmission(
+                    async () => {
+                        if (window.enhancedRecipeAPI) {
+                            await window.enhancedRecipeAPI.submitReview(window.recipeDetailManager.recipeId, reviewText, ratingValue);
+                        } else if (window.recipeDetailManager.useAPI) {
+                            await window.recipeDetailManager.recipeAPI.submitReview(window.recipeDetailManager.recipeId, reviewText, ratingValue);
+                        }
+                    }
+                );
+            }
+        });
+    }
+});
+// Example: Attach to review/rating form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const reviewForm = document.getElementById('reviewForm');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            // Get review text and rating value
+            const reviewText = document.getElementById('reviewInput')?.value || '';
+            const ratingValue = document.getElementById('ratingInput')?.value || 0;
+            // Submit using enhanced API if available
+            if (window.recipeDetailManager) {
+                await window.recipeDetailManager.handleReviewSubmission(
+                    async () => {
+                        if (window.enhancedRecipeAPI) {
+                            await window.enhancedRecipeAPI.submitReview(window.recipeDetailManager.recipeId, reviewText, ratingValue);
+                        } else if (window.recipeDetailManager.useAPI) {
+                            await window.recipeDetailManager.recipeAPI.submitReview(window.recipeDetailManager.recipeId, reviewText, ratingValue);
+                        }
+                    }
+                );
+            }
+        });
+    }
+});
