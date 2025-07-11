@@ -806,14 +806,14 @@ class RecipeDetailManager {
             if (this.contributorSection) {
                 this.contributorSection.classList.remove('hidden');
             }
-            // Use contributor.photo for avatar - use no fallback if missing
+            // Only use contributor.photo for avatar. No fallback, no default image.
+            // If photo is missing, avatar will be hidden.
             const profileImage = recipe.contributor.photo || null;
             const displayName = recipe.contributor.username || 'Anonymous Chef';
             const bio = recipe.contributor.bio || 'Recipe contributor';
             const contributorId = recipe.contributor.id || '';
-            
-            console.log(`👨‍🍳 Contributor data: name=${displayName}, photo=${profileImage}, id=${contributorId}`);
-            
+            // Debug log for maintainers
+            console.log('👨‍🍳 Contributor data:', { name: displayName, photo: profileImage, id: contributorId });
             // Set avatar
             if (this.contributorAvatar) {
                 console.log('🔍 Setting contributor avatar with:', profileImage);
@@ -821,10 +821,8 @@ class RecipeDetailManager {
                     // Process the image URL
                     const finalImageUrl = this.getImageUrl(profileImage);
                     console.log('✅ Final contributor image URL:', finalImageUrl);
-                    
                     this.contributorAvatar.src = finalImageUrl;
                     this.contributorAvatar.alt = displayName;
-                    
                     // Improved error handler
                     this.contributorAvatar.onerror = function() {
                         console.error('❌ Failed to load contributor image:', this.src);
@@ -847,7 +845,7 @@ class RecipeDetailManager {
             // Set profile link
             if (this.contributorProfileLink) {
                 if (contributorId) {
-                    this.contributorProfileLink.href = `Profile.html?id=${encodeURIComponent(contributorId)}`;
+                    this.contributorProfileLink.href = 'Profile.html?id=' + encodeURIComponent(contributorId);
                     this.contributorProfileLink.target = '_blank';
                 } else {
                     this.contributorProfileLink.href = '#';
@@ -860,191 +858,14 @@ class RecipeDetailManager {
             }
         }
         
-        // Show content
+        // Show recipe content
         if (this.recipeContent) {
-            console.log('✅ Showing recipe content');
-            this.recipeContent.classList.remove('hidden');
-            this.recipeContent.style.display = 'block'; // Ensure content is visible
-        } else {
-            console.error('❌ recipeContent element not found');
+            this.recipeContent.style.display = 'block';
         }
         
-        // Ensure loading spinner is hidden
         this.hideLoading();
-        
-        console.log('🎉 Recipe rendered successfully');
-    }
-
-    // Update social features UI based on recipe data
-    updateSocialUI(recipe) {
-        if (!recipe) return;
-        
-        // Update like button state
-        const likeBtn = document.getElementById('likeBtn');
-        if (likeBtn) {
-            const likeCount = likeBtn.querySelector('#likeCount');
-            if (likeCount) {
-                likeCount.textContent = recipe.likes_count || 0;
-            }
-            
-            // Check if user has liked this recipe
-            if (recipe.is_liked) {
-                likeBtn.classList.add('liked');
-                const icon = likeBtn.querySelector('i');
-                if (icon) {
-                    icon.className = 'fas fa-thumbs-up';
-                }
-            }
-            
-            // Add event listener
-            likeBtn.addEventListener('click', () => {
-                this.toggleLikeRecipe();
-            });
-        }
-        
-        // Update comment button
-        const commentBtn = document.getElementById('commentBtn');
-        if (commentBtn) {
-            const commentCount = commentBtn.querySelector('#commentCount');
-            if (commentCount) {
-                commentCount.textContent = recipe.comments_count || 0;
-            }
-            
-            // Add event listener to scroll to comments section
-            commentBtn.addEventListener('click', () => {
-                const socialSection = document.getElementById('socialFeaturesSection');
-                if (socialSection) {
-                    socialSection.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        }
-        
-        // Update save button
-        const saveBtn = document.getElementById('saveBtn');
-        if (saveBtn) {
-            const saveCount = saveBtn.querySelector('#saveCount');
-            if (saveCount) {
-                saveCount.textContent = recipe.saves_count || 0;
-            }
-            
-            // Check if user has saved this recipe
-            if (recipe.is_saved) {
-                saveBtn.classList.add('saved');
-                const icon = saveBtn.querySelector('i');
-                if (icon) {
-                    icon.className = 'fas fa-heart';
-                }
-            }
-            
-            // Add event listener
-            saveBtn.addEventListener('click', () => {
-                this.toggleSaveRecipe();
-            });
-        }
-    }
-
-    // Toggle like status for the current recipe
-    async toggleLikeRecipe() {
-        if (!this.isAuthenticated()) {
-            this.showLoginPrompt('Please log in to like recipes');
-            return;
-        }
-        
-        try {
-            const response = await fetch(`${this.baseUrl}/api/recipes/${this.recipeId}/like/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Error toggling like: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            
-            // Update UI
-            const likeBtn = document.getElementById('likeBtn');
-            const likeCount = document.getElementById('likeCount');
-            
-            if (likeBtn && likeCount) {
-                likeCount.textContent = data.likes_count;
-                
-                const icon = likeBtn.querySelector('i');
-                if (data.is_liked) {
-                    likeBtn.classList.add('liked');
-                    if (icon) icon.className = 'fas fa-thumbs-up';
-                } else {
-                    likeBtn.classList.remove('liked');
-                    if (icon) icon.className = 'far fa-thumbs-up';
-                }
-            }
-            
-        } catch (error) {
-            console.error('Failed to toggle like:', error);
-            this.showToast('Failed to update like status', 'error');
-        }
-    }
-
-    // Toggle save status for the current recipe
-    async toggleSaveRecipe() {
-        if (!this.isAuthenticated()) {
-            this.showLoginPrompt('Please log in to save recipes');
-            return;
-        }
-        
-        try {
-            const response = await fetch(`${this.baseUrl}/api/recipes/${this.recipeId}/save/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Error toggling save: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            
-            // Update UI
-            const saveBtn = document.getElementById('saveBtn');
-            const saveCount = document.getElementById('saveCount');
-            
-            if (saveBtn && saveCount) {
-                saveCount.textContent = data.saves_count;
-                
-                const icon = saveBtn.querySelector('i');
-                if (data.is_saved) {
-                    saveBtn.classList.add('saved');
-                    if (icon) icon.className = 'fas fa-heart';
-                    this.showToast('Recipe saved to your collection', 'success');
-                } else {
-                    saveBtn.classList.remove('saved');
-                    if (icon) icon.className = 'far fa-heart';
-                    this.showToast('Recipe removed from your collection', 'info');
-                }
-            }
-            
-        } catch (error) {
-            console.error('Failed to toggle save:', error);
-            this.showToast('Failed to update saved status', 'error');
-        }
-    }
-
-    // Check if user is authenticated
-    isAuthenticated() {
-        return !!localStorage.getItem('authToken');
-    }
-
-    // Show login prompt
-    showLoginPrompt(message) {
-        this.showToast(message, 'warning');
-        setTimeout(() => {
-            window.location.href = `Login.html?redirect=${encodeURIComponent(window.location.href)}`;
-        }, 2000);
     }
 }
+
+// Global instance for recipe detail manager
+window.recipeDetailManager = new RecipeDetailManager();
