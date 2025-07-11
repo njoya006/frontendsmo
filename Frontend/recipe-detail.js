@@ -105,7 +105,7 @@ class RecipeDetailManager {
             this.loadRecipe();
         } catch (error) {
             this.logError('Critical initialization error', error);
-            this.showFatalError(error);
+            this
         }
     }
 
@@ -188,12 +188,21 @@ class RecipeDetailManager {
         this.hideLoading();
     }
 
-    // Defensive image URL utility
+    // Defensive image URL utility with improved path handling
     getImageUrl(image) {
         if (!image) return 'assets/default-recipe.jpg';
         if (typeof image === 'string') {
+            // Full URL - use as is
             if (image.startsWith('http')) return image;
+            
+            // Path starting with slash - append to base URL
             if (image.startsWith('/')) return this.baseUrl + image;
+            
+            // Check for local paths like 'images/file.jpg' - use directly
+            if (image.startsWith('images/') || image.startsWith('assets/')) {
+                return image; // These are relative to the HTML file
+            }
+            
             // If just a filename, assume media path
             return this.baseUrl + '/media/' + image;
         }
@@ -744,6 +753,33 @@ class RecipeDetailManager {
             this.updateSocialUI(recipe);
         } else {
             console.error('updateSocialUI method not available');
+        }
+        
+        // Update contributor information if available
+        if (recipe.created_by) {
+            console.log('✅ Updating contributor information:', recipe.created_by);
+            
+            if (this.contributorSection) {
+                this.contributorSection.classList.remove('hidden');
+            }
+            
+            if (this.contributorAvatar && recipe.created_by.profile_image) {
+                this.contributorAvatar.src = this.getImageUrl(recipe.created_by.profile_image);
+                this.contributorAvatar.alt = recipe.created_by.username || 'Contributor';
+            }
+            
+            if (this.contributorName) {
+                // Use full name if available, otherwise username
+                let displayName = recipe.created_by.username || 'Anonymous Chef';
+                if (recipe.created_by.first_name && recipe.created_by.last_name) {
+                    displayName = `${recipe.created_by.first_name} ${recipe.created_by.last_name}`;
+                }
+                this.contributorName.textContent = displayName;
+            }
+            
+            if (this.contributorBio) {
+                this.contributorBio.textContent = recipe.created_by.bio || 'Recipe contributor';
+            }
         }
         
         // Show content

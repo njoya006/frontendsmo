@@ -377,6 +377,16 @@
             padding: 25px;
             border-radius: 15px;
             margin-bottom: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        
+        .contributor-section .section-title {
+            color: var(--primary-dark);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
         }
 
         .contributor-info {
@@ -386,21 +396,24 @@
         }
 
         .contributor-avatar {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid var(--primary-color);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
 
         .contributor-details h4 {
             color: var(--dark-color);
             margin-bottom: 5px;
+            font-size: 1.1rem;
         }
 
         .contributor-details p {
             color: var(--gray-color);
             font-size: 0.9rem;
+            line-height: 1.4;
         }        /* Action Buttons */
         .action-buttons {
             display: grid;
@@ -1355,8 +1368,9 @@
 
                 <!-- Contributor Section -->
                 <div class="contributor-section hidden" id="contributorSection">
+                    <h3 class="section-title">Recipe by</h3>
                     <div class="contributor-info">
-                        <img class="contributor-avatar" id="contributorAvatar" src="" alt="Contributor">
+                        <img class="contributor-avatar" id="contributorAvatar" src="assets/default-recipe.jpg" alt="Contributor">
                         <div class="contributor-details">
                             <h4 id="contributorName">Contributor Name</h4>
                             <p id="contributorBio">Contributor Bio</p>

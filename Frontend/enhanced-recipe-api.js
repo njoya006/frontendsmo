@@ -434,7 +434,8 @@ class EnhancedRecipeAPI {
             tags: ['chicken', 'easy', 'quick'],
             created_by: {
                 username: 'ChopSmo Demo',
-                profile_image: ''
+                profile_image: 'images/Precious.jpg',
+                bio: 'Chopsmo Test Chef'
             }
         };
     }
