@@ -435,6 +435,7 @@ class EnhancedRecipeAPI {
             contributor: {
                 id: 9999,
                 username: 'ChopSmo Demo',
+                // Always use contributor.photo for frontend display. Fallback only if missing or invalid.
                 photo: '/images/Precious.jpg'
             }
         };
