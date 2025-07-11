@@ -121,7 +121,10 @@ class EnhancedRecipeAPI {
                 tags: ["traditional", "protein-rich", "lunch", "dinner"],
                 created_by: {
                     username: "NjoyaChef",
-                    profile_image: "images/Njoya.jpg"
+                    profile_image: "images/Njoya.jpg",
+                    first_name: "Njoya",
+                    last_name: "Chef",
+                    bio: "Traditional Cameroonian cuisine expert specializing in authentic ndole recipes."
                 }
             },
             {
@@ -146,7 +149,45 @@ class EnhancedRecipeAPI {
                 instructions: "1. Clean and chop eru and waterleaf.\n2. Heat palm oil in a pot.\n3. Add crayfish and stir briefly.\n4. Add fish and meat if using.\n5. Add chopped eru and waterleaf.\n6. Season with Maggi and salt.\n7. Cover and simmer for 30-40 minutes.\n8. Prepare garri by soaking in cold water.\n9. Serve eru with garri.",
                 difficulty: "Easy",
                 cuisine: "Cameroonian",
-                tags: ["traditional", "vegetable", "dinner"]
+                tags: ["traditional", "vegetable", "dinner"],
+                created_by: {
+                    username: "EruMaster",
+                    profile_image: "images/Nicole.jpg",
+                    first_name: "Nicole",
+                    last_name: "Mbong",
+                    bio: "Forest leaf specialist and expert in traditional Cameroonian leafy vegetables."
+                }
+            },
+            {
+                id: "3",
+                title: "Koki Beans",
+                description: "Steamed black-eyed pea pudding wrapped in banana leaves, a traditional Cameroonian delicacy.",
+                image_url: "images/Koki.jpg",
+                prep_time: 45,
+                cook_time: 90,
+                servings: 8,
+                ingredients: [
+                    { ingredient_name: "Black-eyed peas", quantity: "500", unit: "g" },
+                    { ingredient_name: "Palm oil", quantity: "1/2", unit: "cup" },
+                    { ingredient_name: "Onions", quantity: "2", unit: "large" },
+                    { ingredient_name: "Hot pepper", quantity: "2", unit: "pieces" },
+                    { ingredient_name: "Ginger", quantity: "1", unit: "tbsp" },
+                    { ingredient_name: "Garlic", quantity: "4", unit: "cloves" },
+                    { ingredient_name: "Crayfish", quantity: "3", unit: "tbsp" },
+                    { ingredient_name: "Salt", quantity: "2", unit: "tsp" },
+                    { ingredient_name: "Banana leaves", quantity: "10", unit: "pieces" }
+                ],
+                instructions: "1. Soak black-eyed peas overnight.\n2. Remove skins and blend with onions, pepper, ginger, and garlic.\n3. Mix in palm oil, crayfish, and salt.\n4. Wrap portions in banana leaves.\n5. Steam for 1.5 hours until firm.\n6. Serve hot as main dish or side.",
+                difficulty: "Hard",
+                cuisine: "Cameroonian",
+                tags: ["traditional", "protein-rich", "steamed", "special occasion"],
+                created_by: {
+                    username: "KokiQueen",
+                    profile_image: "images/Precious.jpg",
+                    first_name: "Precious",
+                    last_name: "Tambe",
+                    bio: "Master of traditional steamed dishes and banana leaf cooking techniques."
+                }
             }
         ];
         

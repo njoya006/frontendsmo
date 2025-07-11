@@ -78,42 +78,9 @@ class RecipeDetailManager {
     }
 
     // Render analytics (placeholder)
-    // Reload ratings and reviews from API and update UI
-    async reloadRatingsAndReviews() {
-        if (!this.recipeId) return;
-        try {
-            // Use enhanced API if available
-            let ratingsData, reviewsData;
-            if (window.enhancedRecipeAPI) {
-                ratingsData = await window.enhancedRecipeAPI.getRatings(this.recipeId);
-                reviewsData = await window.enhancedRecipeAPI.getReviews(this.recipeId);
-            } else if (this.useAPI) {
-                ratingsData = await this.recipeAPI.getRatings(this.recipeId);
-                reviewsData = await this.recipeAPI.getReviews(this.recipeId);
-            } else {
-                // Fallback: skip update
-                return;
-            }
-            // Update rating bar
-            if (document.getElementById('ratingBar')) {
-                document.getElementById('ratingBar').value = ratingsData.average || 0;
-            }
-            // Update review count
-            if (document.getElementById('reviewCount')) {
-                document.getElementById('reviewCount').textContent = reviewsData.count || reviewsData.length || 0;
-            }
-            // Update comment count
-            if (document.getElementById('commentCount')) {
-                document.getElementById('commentCount').textContent = reviewsData.length || 0;
-            }
-            // Update review text (show latest review)
-            if (document.getElementById('latestReviewText')) {
-                const latest = Array.isArray(reviewsData) ? reviewsData[0] : (reviewsData.results ? reviewsData.results[0] : null);
-                document.getElementById('latestReviewText').textContent = latest ? latest.text || latest.comment || '' : 'No reviews yet.';
-            }
-        } catch (error) {
-            console.error('Failed to reload ratings/reviews:', error);
-        }
+    renderAnalytics(recipe) {
+        // Placeholder for analytics rendering
+        console.log('📊 Analytics rendering placeholder');
     }
 
     // Submission handler: use returned data or reload ratings/reviews after successful submit
@@ -568,13 +535,34 @@ class RecipeDetailManager {
                 this.errorState.style.display = 'none';
             }
             
-            // Render hero image
-            if (this.heroImage && recipe.image_url) {
-                this.heroImage.src = recipe.image_url;
-                this.heroImage.alt = recipe.title || recipe.name || 'Recipe Image';
-                this.heroImage.onerror = () => {
-                    this.heroImage.src = 'images/Chicken Chips.jpg'; // Fallback image
-                };
+            // Render hero image with multiple field name support
+            if (this.heroImage) {
+                const imageUrl = recipe.image_url || recipe.image || recipe.photo || recipe.picture;
+                console.log('🖼️ Recipe image URL candidates:', {
+                    image_url: recipe.image_url,
+                    image: recipe.image,
+                    photo: recipe.photo,
+                    picture: recipe.picture,
+                    selected: imageUrl
+                });
+                
+                if (imageUrl) {
+                    console.log('✅ Loading recipe image:', imageUrl);
+                    this.heroImage.src = imageUrl;
+                    this.heroImage.alt = recipe.title || recipe.name || 'Recipe Image';
+                    this.heroImage.onerror = () => {
+                        console.warn('❌ Recipe image failed to load:', imageUrl);
+                        console.log('🔄 Using fallback image');
+                        this.heroImage.src = 'images/Chicken Chips.jpg'; // Fallback image
+                    };
+                    this.heroImage.onload = () => {
+                        console.log('✅ Recipe image loaded successfully:', imageUrl);
+                    };
+                } else {
+                    console.warn('⚠️ No recipe image URL found in recipe data');
+                    this.heroImage.src = 'images/Chicken Chips.jpg';
+                    this.heroImage.alt = 'Default Recipe Image';
+                }
             }
             
             // Render title and subtitle
@@ -637,27 +625,67 @@ class RecipeDetailManager {
     // Render contributor information
     renderContributor(recipe) {
         const contributor = recipe.created_by || recipe.contributor || recipe.author;
-        if (!contributor) return;
+        if (!contributor) {
+            console.log('⚠️ No contributor information found');
+            return;
+        }
+        
+        console.log('👤 Rendering contributor:', contributor);
         
         if (this.contributorSection) {
             this.contributorSection.style.display = 'block';
         }
         
         if (this.contributorName) {
-            this.contributorName.textContent = contributor.username || contributor.name || 'Anonymous Chef';
+            this.contributorName.textContent = contributor.username || contributor.name || contributor.first_name || 'Anonymous Chef';
         }
         
         if (this.contributorAvatar) {
-            const avatarUrl = contributor.profile_image || contributor.photo || contributor.avatar || 'images/Precious.jpg';
-            this.contributorAvatar.src = avatarUrl;
-            this.contributorAvatar.alt = contributor.username || 'Chef Avatar';
-            this.contributorAvatar.onerror = () => {
-                this.contributorAvatar.src = 'images/Precious.jpg'; // Fallback avatar
-            };
+            // Try multiple possible field names for avatar image
+            const avatarUrl = contributor.profile_image || contributor.photo || contributor.avatar || 
+                            contributor.image || contributor.profile_photo || contributor.picture;
+            
+            console.log('🖼️ Contributor avatar URL:', avatarUrl);
+            
+            if (avatarUrl) {
+                this.contributorAvatar.src = avatarUrl;
+                this.contributorAvatar.alt = contributor.username || contributor.name || 'Chef Avatar';
+                this.contributorAvatar.onerror = () => {
+                    console.warn('⚠️ Contributor avatar failed to load, using fallback');
+                    // Use a variety of fallback avatars based on contributor name
+                    const fallbackAvatars = [
+                        'images/Njoya.jpg',
+                        'images/Precious.jpg', 
+                        'images/Nicole.jpg',
+                        'images/Janice.jpg',
+                        'images/Pamela.jpg',
+                        'images/Bright.jpg'
+                    ];
+                    
+                    // Select fallback based on contributor name hash for consistency
+                    const name = contributor.username || contributor.name || 'default';
+                    const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+                    const fallbackIndex = hash % fallbackAvatars.length;
+                    this.contributorAvatar.src = fallbackAvatars[fallbackIndex];
+                };
+            } else {
+                console.warn('⚠️ No contributor avatar found, using default');
+                // Use different default avatars for variety
+                const defaultAvatars = ['images/Njoya.jpg', 'images/Precious.jpg', 'images/Nicole.jpg'];
+                const name = contributor.username || contributor.name || 'default';
+                const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+                const defaultIndex = hash % defaultAvatars.length;
+                this.contributorAvatar.src = defaultAvatars[defaultIndex];
+                this.contributorAvatar.alt = contributor.username || contributor.name || 'Chef Avatar';
+            }
         }
         
         if (this.contributorBio && contributor.bio) {
             this.contributorBio.textContent = contributor.bio;
+        } else if (this.contributorBio) {
+            // Add some generic bio text if none provided
+            const name = contributor.username || contributor.name || contributor.first_name || 'This chef';
+            this.contributorBio.textContent = `${name} loves creating delicious recipes and sharing them with the community.`;
         }
         
         if (this.contributorProfileLink) {
