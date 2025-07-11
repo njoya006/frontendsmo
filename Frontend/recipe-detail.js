@@ -6,11 +6,13 @@ class RecipeDetailManager {
     async reloadRatingsAndReviews() {
         if (!this.recipeId) return;
         try {
+            console.log('🔄 Reloading ratings and reviews for recipe:', this.recipeId);
+            
             // Use enhanced API if available
             let ratingsData, reviewsData;
             if (window.enhancedRecipeAPI) {
-                ratingsData = await window.enhancedRecipeAPI.getRatings(this.recipeId);
-                reviewsData = await window.enhancedRecipeAPI.getReviews(this.recipeId);
+                ratingsData = await window.enhancedRecipeAPI.getRecipeRatings(this.recipeId);
+                reviewsData = await window.enhancedRecipeAPI.getRecipeReviews(this.recipeId);
             } else if (this.useAPI) {
                 ratingsData = await this.recipeAPI.getRatings(this.recipeId);
                 reviewsData = await this.recipeAPI.getReviews(this.recipeId);
@@ -18,25 +20,44 @@ class RecipeDetailManager {
                 // Fallback: skip update
                 return;
             }
-            // Update rating bar
-            if (document.getElementById('ratingBar')) {
-                document.getElementById('ratingBar').value = ratingsData.average || 0;
+            
+            console.log('📊 Updated ratings data:', ratingsData);
+            console.log('💬 Updated reviews data:', reviewsData);
+            
+            // Update average rating display
+            const averageRatingValue = document.getElementById('averageRatingValue');
+            if (averageRatingValue && ratingsData) {
+                const avgRating = ratingsData.average_rating || ratingsData.average || 0;
+                averageRatingValue.textContent = avgRating.toFixed(1);
             }
-            // Update review count
-            if (document.getElementById('reviewCount')) {
-                document.getElementById('reviewCount').textContent = reviewsData.count || reviewsData.length || 0;
+            
+            // Update star display
+            const averageStarsDisplay = document.getElementById('averageStarsDisplay');
+            if (averageStarsDisplay && ratingsData) {
+                const avgRating = ratingsData.average_rating || ratingsData.average || 0;
+                this.updateStarsDisplay(averageStarsDisplay, avgRating);
             }
-            // Update comment count
-            if (document.getElementById('commentCount')) {
-                document.getElementById('commentCount').textContent = reviewsData.length || 0;
+            
+            // Update rating count
+            const ratingCount = document.getElementById('ratingCount');
+            if (ratingCount && ratingsData) {
+                const totalRatings = ratingsData.total_ratings || ratingsData.count || 0;
+                ratingCount.textContent = totalRatings;
             }
-            // Update review text (show latest review)
-            if (document.getElementById('latestReviewText')) {
-                const latest = Array.isArray(reviewsData) ? reviewsData[0] : (reviewsData.results ? reviewsData.results[0] : null);
-                document.getElementById('latestReviewText').textContent = latest ? latest.text || latest.comment || '' : 'No reviews yet.';
+            
+            // Update rating breakdown if element exists
+            const ratingBreakdown = document.getElementById('ratingBreakdown');
+            if (ratingBreakdown && ratingsData && ratingsData.distribution) {
+                this.updateRatingBreakdown(ratingBreakdown, ratingsData);
             }
+            
+            // Update reviews section if it exists
+            if (reviewsData && reviewsData.results) {
+                this.updateReviewsDisplay(reviewsData);
+            }
+            
         } catch (error) {
-            console.error('Failed to reload ratings/reviews:', error);
+            console.error('❌ Failed to reload ratings/reviews:', error);
         }
     }
     renderIngredients(ingredients) {
@@ -92,26 +113,28 @@ class RecipeDetailManager {
             if (result && result.success && (result.updatedReviews || result.updatedRatings)) {
                 console.log('✅ Using returned updated data from API submission');
                 
-                // Update UI with returned data instead of making new API calls
+                // Update ratings if returned
                 if (result.updatedRatings) {
-                    this.updateRatingsUI(result.updatedRatings);
+                    this.updateRatingsDisplayFromData(result.updatedRatings);
                 }
                 
+                // Update reviews if returned
                 if (result.updatedReviews) {
-                    this.updateReviewsUI(result.updatedReviews);
+                    this.updateReviewsDisplay(result.updatedReviews);
                 }
                 
-                this.showToast('Review submitted and UI updated!', 'success');
+                this.showToast('Review submitted successfully!', 'success');
             } else {
                 // Fallback: reload from API if no updated data was returned
-                console.log('⚡ Reloading data from API (no updated data returned)');
+                console.log('⚡ Reloading ratings and reviews from API (no updated data returned)');
                 await this.reloadRatingsAndReviews();
-                this.showToast('Review submitted and UI updated!', 'success');
+                this.showToast('Review submitted successfully!', 'success');
             }
         } catch (error) {
             this.showToast('Failed to submit review: ' + error.message, 'error');
         }
     }
+    
     renderAnalytics(recipe) {
         if (!this.recipeStats) return;
         // Example: show servings, time, calories if available
@@ -120,6 +143,9 @@ class RecipeDetailManager {
         if (recipe.time || recipe.cooking_time) stats.push(`<span><i class='fas fa-clock'></i> ${recipe.time || recipe.cooking_time} min</span>`);
         if (recipe.calories) stats.push(`<span><i class='fas fa-fire'></i> ${recipe.calories} kcal</span>`);
         this.recipeStats.innerHTML = stats.join(' ');
+        
+        // Load initial ratings and reviews data
+        this.reloadRatingsAndReviews();
     }
     constructor() {
         console.log('RecipeDetailManager: Constructor started');
@@ -1127,7 +1153,7 @@ class RecipeDetailManager {
             // If the submission returned updated data, use it directly
             if (result && result.success && result.updatedRatings) {
                 console.log('✅ Using returned updated ratings from API submission');
-                this.updateRatingsUI(result.updatedRatings);
+                this.updateRatingsDisplayFromData(result.updatedRatings);
                 this.showToast('Rating submitted successfully!', 'success');
             } else {
                 // Fallback: reload from API if no updated data was returned
@@ -1137,6 +1163,38 @@ class RecipeDetailManager {
             }
         } catch (error) {
             this.showToast('Failed to submit rating: ' + error.message, 'error');
+        }
+    }
+
+    // Helper method to update ratings display from API data
+    updateRatingsDisplayFromData(ratingsData) {
+        console.log('🎯 Updating ratings display with:', ratingsData);
+        
+        // Update average rating value
+        const averageRatingValue = document.getElementById('averageRatingValue');
+        if (averageRatingValue && ratingsData) {
+            const avgRating = ratingsData.average_rating || ratingsData.average || 0;
+            averageRatingValue.textContent = avgRating.toFixed(1);
+        }
+        
+        // Update star display
+        const averageStarsDisplay = document.getElementById('averageStarsDisplay');
+        if (averageStarsDisplay && ratingsData) {
+            const avgRating = ratingsData.average_rating || ratingsData.average || 0;
+            this.updateStarsDisplay(averageStarsDisplay, avgRating);
+        }
+        
+        // Update rating count
+        const ratingCount = document.getElementById('ratingCount');
+        if (ratingCount && ratingsData) {
+            const totalRatings = ratingsData.total_ratings || ratingsData.count || 0;
+            ratingCount.textContent = totalRatings;
+        }
+        
+        // Update rating breakdown if element exists
+        const ratingBreakdown = document.getElementById('ratingBreakdown');
+        if (ratingBreakdown && ratingsData && ratingsData.distribution) {
+            this.updateRatingBreakdown(ratingBreakdown, ratingsData);
         }
     }
 
@@ -1219,7 +1277,94 @@ class RecipeDetailManager {
         container.innerHTML = reviewsHTML;
     }
 
-    // ...existing code...
+    // Helper method to update star display
+    updateStarsDisplay(container, rating) {
+        const stars = container.querySelectorAll('i');
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        
+        stars.forEach((star, index) => {
+            if (index < fullStars) {
+                // Full star
+                star.className = 'fas fa-star';
+            } else if (index === fullStars && hasHalfStar) {
+                // Half star
+                star.className = 'fas fa-star-half-alt';
+            } else {
+                // Empty star
+                star.className = 'far fa-star';
+            }
+        });
+    }
+    
+    // Helper method to update rating breakdown
+    updateRatingBreakdown(container, ratingsData) {
+        const distribution = ratingsData.distribution || {};
+        const totalRatings = ratingsData.total_ratings || 0;
+        
+        let breakdownHTML = '';
+        for (let i = 5; i >= 1; i--) {
+            const count = distribution[i] || 0;
+            const percentage = totalRatings > 0 ? (count / totalRatings) * 100 : 0;
+            
+            breakdownHTML += `
+                <div class="rating-bar">
+                    <span class="rating-label">${i} star</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <span class="rating-count">${count}</span>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = breakdownHTML;
+    }
+    
+    // Helper method to update reviews display
+    updateReviewsDisplay(reviewsData) {
+        // Find reviews container (adjust selector as needed)
+        const reviewsContainer = document.getElementById('reviewsContainer') || 
+                                document.querySelector('.reviews-list') ||
+                                document.querySelector('.reviews');
+        
+        if (!reviewsContainer) {
+            console.warn('⚠️ Reviews container not found');
+            return;
+        }
+        
+        if (!reviewsData.results || reviewsData.results.length === 0) {
+            reviewsContainer.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review this recipe!</p>';
+            return;
+        }
+        
+        const reviewsHTML = reviewsData.results.map(review => {
+            const userName = review.user ? (review.user.username || review.user.name || 'Anonymous') : 'Anonymous';
+            const reviewDate = review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Recently';
+            const reviewText = review.review || review.comment || review.text || '';
+            const rating = review.rating || 0;
+            
+            // Generate stars for individual review
+            let starsHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                starsHTML += `<i class="${i <= rating ? 'fas' : 'far'} fa-star"></i>`;
+            }
+            
+            return `
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="reviewer-name">${userName}</span>
+                        <div class="review-rating">${starsHTML}</div>
+                        <span class="review-date">${reviewDate}</span>
+                    </div>
+                    ${reviewText ? `<div class="review-text">${reviewText}</div>` : ''}
+                    ${review.likes_count ? `<div class="review-likes">${review.likes_count} helpful</div>` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        reviewsContainer.innerHTML = reviewsHTML;
+    }
 }
 
 // Global instance for recipe detail manager

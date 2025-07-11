@@ -196,15 +196,32 @@ class EnhancedRecipeAPI {
             this.mockData.recipes[recipe.id] = recipe;
         });
         
-        // Sample ratings data
-        for (const id of Object.keys(this.mockData.recipes)) {
-            this.mockData.ratings[id] = {
-                average_rating: 4.5,
-                total_ratings: 24,
-                distribution: { 1: 0, 2: 1, 3: 3, 4: 12, 5: 8 },
-                total_reviews: 12
-            };
-        }
+        // Sample ratings data with variety for each recipe
+        const ratingsDataList = [
+            {
+                average_rating: 4.7,
+                total_ratings: 28,
+                distribution: { 1: 0, 2: 1, 3: 2, 4: 6, 5: 19 },
+                total_reviews: 15
+            },
+            {
+                average_rating: 4.3,
+                total_ratings: 22,
+                distribution: { 1: 1, 2: 1, 3: 4, 4: 10, 5: 6 },
+                total_reviews: 11
+            },
+            {
+                average_rating: 4.8,
+                total_ratings: 35,
+                distribution: { 1: 0, 2: 0, 3: 3, 4: 7, 5: 25 },
+                total_reviews: 18
+            }
+        ];
+        
+        const recipeIds = Object.keys(this.mockData.recipes);
+        recipeIds.forEach((id, index) => {
+            this.mockData.ratings[id] = ratingsDataList[index % ratingsDataList.length];
+        });
         
         // Sample reviews data
         for (const id of Object.keys(this.mockData.recipes)) {
