@@ -130,10 +130,10 @@ class RecipeDetailManager {
         
         // Contributor elements
         this.contributorSection = document.getElementById('contributorSection');
-        this.contributorLink = document.getElementById('contributorLink');
         this.contributorAvatar = document.getElementById('contributorAvatar');
         this.contributorName = document.getElementById('contributorName');
         this.contributorBio = document.getElementById('contributorBio');
+        this.contributorProfileLink = document.getElementById('contributorProfileLink');
         
         // Utility elements
         this.toast = document.getElementById('toast');
@@ -759,46 +759,40 @@ class RecipeDetailManager {
         // Update contributor information if available
         if (recipe.created_by) {
             console.log('✅ Updating contributor information:', recipe.created_by);
-            
             if (this.contributorSection) {
                 this.contributorSection.classList.remove('hidden');
             }
-            
-            // Set up the clickable contributor avatar
-            if (this.contributorAvatar && recipe.created_by.profile_image) {
-                this.contributorAvatar.src = this.getImageUrl(recipe.created_by.profile_image);
-                this.contributorAvatar.alt = recipe.created_by.username || 'Contributor';
+            // Defensive fallback for contributor info
+            const profileImage = recipe.created_by.profile_image || 'assets/default-recipe.jpg';
+            const displayName = (recipe.created_by.first_name && recipe.created_by.last_name)
+                ? `${recipe.created_by.first_name} ${recipe.created_by.last_name}`
+                : (recipe.created_by.username || 'Anonymous Chef');
+            const bio = recipe.created_by.bio || 'Recipe contributor';
+            const contributorId = recipe.created_by.id || '';
+            // Set avatar
+            if (this.contributorAvatar) {
+                this.contributorAvatar.src = this.getImageUrl(profileImage);
+                this.contributorAvatar.alt = displayName;
+                this.contributorAvatar.onerror = function() {
+                    this.src = 'assets/default-recipe.jpg';
+                };
             }
-            
-            // Set up the profile link
-            if (this.contributorLink) {
-                // If the user has an ID, link to their profile page
-                const userId = recipe.created_by.id || recipe.created_by.user_id;
-                if (userId) {
-                    this.contributorLink.href = `Profile.html?id=${userId}`;
-                    this.contributorLink.title = `View ${recipe.created_by.username || 'contributor'}'s profile`;
-                } else if (recipe.created_by.username) {
-                    // Fallback to username-based URL if ID is not available
-                    this.contributorLink.href = `Profile.html?username=${encodeURIComponent(recipe.created_by.username)}`;
-                    this.contributorLink.title = `View ${recipe.created_by.username}'s profile`;
-                } else {
-                    // No linkable info available
-                    this.contributorLink.removeAttribute('href');
-                    this.contributorLink.style.cursor = 'default';
-                }
-            }
-            
+            // Set name
             if (this.contributorName) {
-                // Use full name if available, otherwise username
-                let displayName = recipe.created_by.username || 'Anonymous Chef';
-                if (recipe.created_by.first_name && recipe.created_by.last_name) {
-                    displayName = `${recipe.created_by.first_name} ${recipe.created_by.last_name}`;
-                }
                 this.contributorName.textContent = displayName;
             }
-            
+            // Set bio
             if (this.contributorBio) {
-                this.contributorBio.textContent = recipe.created_by.bio || 'Recipe contributor';
+                this.contributorBio.textContent = bio;
+            }
+            // Set profile link
+            if (this.contributorProfileLink) {
+                if (contributorId) {
+                    this.contributorProfileLink.href = `Profile.html?id=${encodeURIComponent(contributorId)}`;
+                    this.contributorProfileLink.target = '_blank';
+                } else {
+                    this.contributorProfileLink.href = '#';
+                }
             }
         }
         

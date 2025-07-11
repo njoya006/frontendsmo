@@ -395,16 +395,6 @@
             gap: 20px;
         }
 
-        #contributorLink {
-            display: block;
-            transition: transform 0.2s ease;
-            cursor: pointer;
-        }
-        
-        #contributorLink:hover {
-            transform: scale(1.05);
-        }
-
         .contributor-avatar {
             width: 70px;
             height: 70px;
@@ -1380,14 +1370,59 @@
                 <div class="contributor-section hidden" id="contributorSection">
                     <h3 class="section-title">Recipe by</h3>
                     <div class="contributor-info">
-                        <a href="#" id="contributorLink">
-                            <img class="contributor-avatar" id="contributorAvatar" src="assets/default-recipe.jpg" alt="Contributor">
+                        <a id="contributorProfileLink" href="#" target="_blank" class="contributor-avatar-link">
+                            <img class="contributor-avatar" id="contributorAvatar" src="assets/default-recipe.jpg" alt="Contributor" onerror="this.src='assets/default-recipe.jpg'">
                         </a>
                         <div class="contributor-details">
                             <h4 id="contributorName">Contributor Name</h4>
                             <p id="contributorBio">Contributor Bio</p>
                         </div>
                     </div>
+                    <!-- Visual improvement: add subtle border and shadow -->
+                    <style>
+                        .contributor-section {
+                            border: 1px solid var(--border-color);
+                            background: var(--primary-light);
+                            border-radius: 14px;
+                            box-shadow: 0 2px 12px rgba(76,175,80,0.08);
+                            padding: 24px 20px;
+                            margin: 24px 0;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-start;
+                        }
+                        .contributor-info {
+                            display: flex;
+                            align-items: center;
+                            gap: 18px;
+                        }
+                        .contributor-avatar-link {
+                            display: block;
+                            border-radius: 50%;
+                            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+                            transition: box-shadow 0.2s;
+                        }
+                        .contributor-avatar-link:hover {
+                            box-shadow: 0 4px 16px rgba(44,62,80,0.18);
+                        }
+                        .contributor-avatar {
+                            width: 72px;
+                            height: 72px;
+                            border-radius: 50%;
+                            object-fit: cover;
+                            border: 2px solid var(--primary-color);
+                        }
+                        .contributor-details h4 {
+                            margin: 0 0 4px 0;
+                            font-size: 1.15rem;
+                            color: var(--primary-dark);
+                        }
+                        .contributor-details p {
+                            margin: 0;
+                            color: var(--gray-color);
+                            font-size: 0.98rem;
+                        }
+                    </style>
                 </div>
 
                 <!-- Description Section -->

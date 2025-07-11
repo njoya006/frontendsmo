@@ -120,10 +120,8 @@ class EnhancedRecipeAPI {
                 cuisine: "Cameroonian",
                 tags: ["traditional", "protein-rich", "lunch", "dinner"],
                 created_by: {
-                    id: "1001",
                     username: "NjoyaChef",
-                    profile_image: "images/Njoya.jpg",
-                    bio: "Chef specializing in Cameroonian cuisine"
+                    profile_image: "images/Njoya.jpg"
                 }
             },
             {
@@ -148,13 +146,7 @@ class EnhancedRecipeAPI {
                 instructions: "1. Clean and chop eru and waterleaf.\n2. Heat palm oil in a pot.\n3. Add crayfish and stir briefly.\n4. Add fish and meat if using.\n5. Add chopped eru and waterleaf.\n6. Season with Maggi and salt.\n7. Cover and simmer for 30-40 minutes.\n8. Prepare garri by soaking in cold water.\n9. Serve eru with garri.",
                 difficulty: "Easy",
                 cuisine: "Cameroonian",
-                tags: ["traditional", "vegetable", "dinner"],
-                created_by: {
-                    id: "1002",
-                    username: "JaniceChef",
-                    profile_image: "images/Janice.jpg",
-                    bio: "Food lover and expert in traditional dishes"
-                }
+                tags: ["traditional", "vegetable", "dinner"]
             }
         ];
         
