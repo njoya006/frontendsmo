@@ -1,3 +1,7 @@
+// Enhanced Recipe Detail JavaScript
+class RecipeDetailManager {
+    // Render ingredients list in the UI
+    // ...existing code...
     // Reload ratings and reviews from API and update UI
     async reloadRatingsAndReviews() {
         if (!this.recipeId) return;
@@ -35,9 +39,6 @@
             console.error('Failed to reload ratings/reviews:', error);
         }
     }
-// Enhanced Recipe Detail JavaScript
-class RecipeDetailManager {
-    // Render ingredients list in the UI
     renderIngredients(ingredients) {
         if (!this.ingredientsList) return;
         this.ingredientsList.innerHTML = '';
