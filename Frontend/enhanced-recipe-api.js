@@ -416,7 +416,7 @@ class EnhancedRecipeAPI {
             id: recipeId,
             title: 'Demo Recipe',
             description: 'This recipe is currently being shown in offline mode due to server connectivity issues.',
-            image_url: 'assets/default-recipe.jpg',
+            image_url: '/assets/default-recipe.jpg',
             prep_time: 30,
             cook_time: 20,
             servings: 4,
@@ -432,11 +432,10 @@ class EnhancedRecipeAPI {
             difficulty: 'Easy',
             cuisine: 'General',
             tags: ['chicken', 'easy', 'quick'],
-            created_by: {
-                id: '9999',
+            contributor: {
+                id: 9999,
                 username: 'ChopSmo Demo',
-                profile_image: 'images/Precious.jpg',
-                bio: 'Chopsmo Test Chef'
+                photo: '/images/Precious.jpg'
             }
         };
     }
