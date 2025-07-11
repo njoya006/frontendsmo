@@ -105,7 +105,7 @@ class RecipeDetailManager {
             this.loadRecipe();
         } catch (error) {
             this.logError('Critical initialization error', error);
-            this
+            this.showFatalError(error);
         }
     }
 
@@ -192,22 +192,50 @@ class RecipeDetailManager {
     // Defensive image URL utility with improved path handling
     getImageUrl(image) {
         if (!image) return 'assets/default-recipe.jpg';
+        
+        console.log('🔍 Processing image URL:', image);
+        
         if (typeof image === 'string') {
             // Full URL - use as is
-            if (image.startsWith('http')) return image;
+            if (image.startsWith('http')) {
+                console.log('✅ Using full URL:', image);
+                return image;
+            }
 
             // If image is a local static asset, use directly
             if (image.startsWith('/images/') || image.startsWith('/assets/')) {
-                return image;
+                const localPath = image.substring(1); // Remove leading slash
+                console.log('✅ Using local path (removing leading slash):', localPath);
+                return localPath;
             }
+            
             if (image.startsWith('images/') || image.startsWith('assets/')) {
+                console.log('✅ Using local path directly:', image);
                 return image;
             }
 
             // Path starting with slash (not static asset) - append to base URL
-            if (image.startsWith('/')) return this.baseUrl + image;
+            if (image.startsWith('/')) {
+                const apiPath = this.baseUrl + image;
+                console.log('✅ Using API path:', apiPath);
+                return apiPath;
+            }
 
-            // If just a filename, assume media path
+            // Check if it might be a server-relative path without leading slash
+            if (image.includes('/') && !image.startsWith('images/') && !image.startsWith('assets/')) {
+                // Could be a server path without leading slash - try both
+                const apiPath = this.baseUrl + '/' + image;
+                console.log('✅ Using likely API path with added slash:', apiPath);
+                return apiPath;
+            }
+
+            // If just a filename, check if it's in our images directory first
+            if (!image.includes('/')) {
+                console.log('✅ Treating as local image file in images directory:', 'images/' + image);
+                return 'images/' + image;
+            }
+            
+            // Default to media path
             return this.baseUrl + '/media/' + image;
         }
         return 'assets/default-recipe.jpg';
@@ -707,13 +735,24 @@ class RecipeDetailManager {
                     this.errorMessage.textContent = recipe?.detail || 'Recipe not found.';
                 }
             }
+            this.hideLoading();
             return;
         }
         
+        console.log('🔄 Beginning recipe render with data:', recipe);
+        
         // Set hero image
         if (this.heroImage && recipe.image) {
-            this.heroImage.src = this.getImageUrl(recipe.image);
+            const imageUrl = this.getImageUrl(recipe.image);
+            console.log('🖼️ Setting hero image:', imageUrl);
+            this.heroImage.src = imageUrl;
             this.heroImage.alt = recipe.title || recipe.name || 'Recipe image';
+            
+            // Add error handling for the image
+            this.heroImage.onerror = () => {
+                console.error('❌ Failed to load hero image:', imageUrl);
+                this.heroImage.src = 'assets/default-recipe.jpg';
+            };
         }
         
         // Set title and subtitle
@@ -737,6 +776,7 @@ class RecipeDetailManager {
         } else {
             console.error('renderIngredients method not available');
         }
+        
         // Defensive check for renderInstructions
         const instructionsData = this.extractInstructions(recipe);
         if (typeof this.renderInstructions === 'function') {
@@ -752,6 +792,7 @@ class RecipeDetailManager {
         } else {
             console.error('renderAnalytics method not available');
         }
+        
         // Defensive check for updateSocialUI
         if (typeof this.updateSocialUI === 'function') {
             this.updateSocialUI(recipe);
@@ -761,22 +802,39 @@ class RecipeDetailManager {
         
         // Update contributor information if available
         if (recipe.contributor) {
-            console.log('✅ Updating contributor information:', recipe.contributor);
+            console.log('👨‍🍳 Processing contributor information:', recipe.contributor);
             if (this.contributorSection) {
                 this.contributorSection.classList.remove('hidden');
             }
-            // Use contributor.photo for avatar
-            const profileImage = recipe.contributor.photo || 'assets/default-recipe.jpg';
+            // Use contributor.photo for avatar - use no fallback if missing
+            const profileImage = recipe.contributor.photo || null;
             const displayName = recipe.contributor.username || 'Anonymous Chef';
             const bio = recipe.contributor.bio || 'Recipe contributor';
             const contributorId = recipe.contributor.id || '';
+            
+            console.log(`👨‍🍳 Contributor data: name=${displayName}, photo=${profileImage}, id=${contributorId}`);
+            
             // Set avatar
             if (this.contributorAvatar) {
-                this.contributorAvatar.src = this.getImageUrl(profileImage);
-                this.contributorAvatar.alt = displayName;
-                this.contributorAvatar.onerror = function() {
-                    this.src = 'assets/default-recipe.jpg';
-                };
+                console.log('🔍 Setting contributor avatar with:', profileImage);
+                if (profileImage) {
+                    // Process the image URL
+                    const finalImageUrl = this.getImageUrl(profileImage);
+                    console.log('✅ Final contributor image URL:', finalImageUrl);
+                    
+                    this.contributorAvatar.src = finalImageUrl;
+                    this.contributorAvatar.alt = displayName;
+                    
+                    // Improved error handler
+                    this.contributorAvatar.onerror = function() {
+                        console.error('❌ Failed to load contributor image:', this.src);
+                        // Don't show any fallback image if requested
+                        this.style.display = 'none';
+                    };
+                } else {
+                    console.log('⚠️ No contributor photo available');
+                    this.contributorAvatar.style.display = 'none';
+                }
             }
             // Set name
             if (this.contributorName) {
@@ -795,15 +853,26 @@ class RecipeDetailManager {
                     this.contributorProfileLink.href = '#';
                 }
             }
+        } else {
+            console.log('⚠️ No contributor information available');
+            if (this.contributorSection) {
+                this.contributorSection.style.display = 'none';
+            }
         }
         
         // Show content
         if (this.recipeContent) {
+            console.log('✅ Showing recipe content');
             this.recipeContent.classList.remove('hidden');
             this.recipeContent.style.display = 'block'; // Ensure content is visible
+        } else {
+            console.error('❌ recipeContent element not found');
         }
         
-        console.log('✅ Recipe rendered successfully');
+        // Ensure loading spinner is hidden
+        this.hideLoading();
+        
+        console.log('🎉 Recipe rendered successfully');
     }
 
     // Update social features UI based on recipe data

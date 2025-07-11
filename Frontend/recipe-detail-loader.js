@@ -13,6 +13,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
+    // Initialize enhanced recipe API if not already done
+    try {
+        if (!window.enhancedRecipeAPI) {
+            console.log('⚙️ Initializing Enhanced Recipe API');
+            window.enhancedRecipeAPI = new EnhancedRecipeAPI('https://njoya.pythonanywhere.com');
+            console.log('✅ Enhanced Recipe API initialized');
+        }
+    } catch (error) {
+        console.error('❌ Failed to initialize Enhanced Recipe API:', error);
+    }
+    
     // Check if API is accessible (optional health check)
     try {
         console.log('🔍 Testing API connectivity...');
@@ -185,3 +196,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.prepend(errorContainer);
     }
 });
+
+// Add a global timeout to ensure the page doesn't get stuck loading
+setTimeout(() => {
+    // Check if we still have a visible loading spinner after 10 seconds
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    if (loadingSpinner && loadingSpinner.style.display !== 'none') {
+        console.error('⏰ Global timeout triggered - forcing loading state to end after 10 seconds');
+        
+        // Try to hide the loading spinner
+        loadingSpinner.style.display = 'none';
+        
+        // Try to show the recipe content if available
+        const recipeContent = document.getElementById('recipeContent');
+        if (recipeContent) {
+            recipeContent.style.display = 'block';
+        }
+        
+        // Show warning message to user
+        const warningDiv = document.createElement('div');
+        warningDiv.style.padding = '10px 15px';
+        warningDiv.style.margin = '15px';
+        warningDiv.style.borderRadius = '8px';
+        warningDiv.style.backgroundColor = '#fff3cd';
+        warningDiv.style.border = '1px solid #ffeeba';
+        warningDiv.style.color = '#856404';
+        warningDiv.innerHTML = `
+            <h4 style="margin-top: 5px;"><i class="fas fa-exclamation-triangle"></i> Warning</h4>
+            <p>The recipe took longer than expected to load. Some features might not work correctly.</p>
+            <p>You can try refreshing the page if anything doesn't look right.</p>
+        `;
+        
+        // Insert the warning at the top of the recipe content
+        const container = document.querySelector('.recipe-detail-container') || document.body;
+        container.insertBefore(warningDiv, container.firstChild);
+    }
+}, 10000); // 10 second timeout
