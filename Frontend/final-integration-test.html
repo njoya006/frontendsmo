@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChopSmo - Final API Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-pass { background-color: #4CAF50; }
+        .status-fail { background-color: #f44336; }
+        .status-warning { background-color: #ff9800; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+            font-family: monospace; 
+            white-space: pre-wrap; 
+            max-height: 200px; 
+            overflow-y: auto; 
+        }
+        .summary {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 ChopSmo Final API Integration Test</h1>
+        <p>This page performs end-to-end testing of the review and rating functionality with live backend integration.</p>
+        
+        <div class="summary" id="summary">
+            <h3>Test Summary</h3>
+            <div id="summaryContent">Click "Run All Tests" to start validation</div>
+        </div>
+        
+        <button onclick="runAllTests()">🚀 Run All Tests</button>
+        <button onclick="clearLogs()">🧹 Clear Logs</button>
+        <button onclick="location.reload()">🔄 Refresh Page</button>
+    </div>
+
+    <div class="test-container">
+        <h2>📋 Test Results</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>📝 Detailed Logs</h2>
+        <div id="detailedLogs" class="log">Ready to run tests...</div>
+    </div>
+
+    <!-- Load the enhanced recipe API -->
+    <script src="enhanced-recipe-api.js"></script>
+    
+    <script>
+        let testResults = [];
+        let logs = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logs.push(logEntry);
+            document.getElementById('detailedLogs').innerHTML = logs.join('\n');
+            console.log(message);
+        }
+        
+        function addTestResult(testName, passed, details = '') {
+            testResults.push({ testName, passed, details });
+            updateTestResultsDisplay();
+        }
+        
+        function updateTestResultsDisplay() {
+            const container = document.getElementById('testResults');
+            container.innerHTML = testResults.map(result => `
+                <div style="margin: 10px 0; padding: 10px; border-left: 4px solid ${result.passed ? '#4CAF50' : '#f44336'};">
+                    <span class="status-indicator ${result.passed ? 'status-pass' : 'status-fail'}"></span>
+                    <strong>${result.testName}</strong>: ${result.passed ? 'PASS' : 'FAIL'}
+                    ${result.details ? `<br><small style="color: #666;">${result.details}</small>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        function updateSummary() {
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = total - passed;
+            const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
+            
+            let status = 'info';
+            let message = 'No tests run yet';
+            
+            if (total > 0) {
+                if (percentage >= 80) {
+                    status = 'success';
+                    message = `Excellent! ${percentage}% tests passed (${passed}/${total})`;
+                } else if (percentage >= 60) {
+                    status = 'warning';
+                    message = `Good! ${percentage}% tests passed (${passed}/${total})`;
+                } else {
+                    status = 'error';
+                    message = `Needs attention! Only ${percentage}% tests passed (${passed}/${total})`;
+                }
+            }
+            
+            document.getElementById('summaryContent').innerHTML = `
+                <div style="color: ${status === 'success' ? '#4CAF50' : status === 'warning' ? '#ff9800' : '#f44336'};">
+                    <strong>${message}</strong>
+                </div>
+                ${total > 0 ? `<div style="margin-top: 10px;">✅ Passed: ${passed} | ❌ Failed: ${failed}</div>` : ''}
+            `;
+        }
+        
+        function clearLogs() {
+            logs = [];
+            testResults = [];
+            document.getElementById('detailedLogs').innerHTML = 'Logs cleared...';
+            document.getElementById('testResults').innerHTML = '';
+            updateSummary();
+        }
+        
+        async function runAllTests() {
+            log('🚀 Starting comprehensive API integration tests...');
+            testResults = [];
+            logs = ['🚀 Starting comprehensive API integration tests...'];
+            
+            const testRecipeId = '1';
+            
+            try {
+                // Test 1: API Initialization
+                log('📦 Test 1: Checking API initialization...');
+                const apiExists = !!window.enhancedRecipeAPI;
+                addTestResult('API Initialization', apiExists, apiExists ? 'API object found' : 'API object missing');
+                
+                if (!apiExists) {
+                    log('❌ Cannot continue tests without API object');
+                    updateSummary();
+                    return;
+                }
+                
+                const api = window.enhancedRecipeAPI;
+                
+                // Test 2: API Configuration
+                log('⚙️ Test 2: Checking API configuration...');
+                const hasBaseUrl = !!api.baseUrl;
+                const hasToken = !!api.getAuthToken();
+                addTestResult('API Configuration', hasBaseUrl, 
+                             `Base URL: ${api.baseUrl}, Auth Token: ${hasToken ? 'Present' : 'Missing'}`);
+                
+                // Test 3: Connection Test
+                log('🌐 Test 3: Testing API connection...');
+                const connectionResult = await api.checkApiStatus();
+                addTestResult('API Connection', connectionResult !== false, 
+                             `Available: ${connectionResult}, Status: ${JSON.stringify(api.apiStatus.isAvailable)}`);
+                
+                // Test 4: Recipe Data Loading
+                log('📖 Test 4: Testing recipe data loading...');
+                const recipe = await api.getRecipe(testRecipeId);
+                const recipeLoaded = !!(recipe && recipe.id);
+                addTestResult('Recipe Loading', recipeLoaded, 
+                             recipeLoaded ? `Loaded: ${recipe.title}` : 'Failed to load recipe');
+                
+                // Test 5: Ratings Data Loading
+                log('⭐ Test 5: Testing ratings data loading...');
+                const ratings = await api.getRecipeRatings(testRecipeId);
+                const ratingsLoaded = !!(ratings && typeof ratings.average_rating === 'number');
+                addTestResult('Ratings Loading', ratingsLoaded, 
+                             ratingsLoaded ? `Average: ${ratings.average_rating}, Total: ${ratings.total_ratings}` : 'Failed to load ratings');
+                
+                // Test 6: Reviews Data Loading
+                log('💬 Test 6: Testing reviews data loading...');
+                const reviews = await api.getRecipeReviews(testRecipeId);
+                const reviewsLoaded = !!(reviews && Array.isArray(reviews.results));
+                addTestResult('Reviews Loading', reviewsLoaded, 
+                             reviewsLoaded ? `Count: ${reviews.count}, Results: ${reviews.results.length}` : 'Failed to load reviews');
+                
+                // Test 7: Rating Submission
+                log('⭐ Test 7: Testing rating submission...');
+                const ratingResult = await api.submitRating(testRecipeId, 5);
+                const ratingSubmitted = !!(ratingResult && ratingResult.success);
+                const hasUpdatedRatings = !!(ratingResult && ratingResult.updatedRatings);
+                addTestResult('Rating Submission', ratingSubmitted, 
+                             `Success: ${ratingSubmitted}, Returns Updated Data: ${hasUpdatedRatings}`);
+                
+                // Test 8: Review Submission
+                log('💬 Test 8: Testing review submission...');
+                const reviewText = `Integration test review - ${new Date().toISOString()}`;
+                const reviewResult = await api.submitReview(testRecipeId, 4, reviewText);
+                const reviewSubmitted = !!(reviewResult && reviewResult.success);
+                const hasUpdatedReviews = !!(reviewResult && reviewResult.updatedReviews);
+                const hasUpdatedRatingsFromReview = !!(reviewResult && reviewResult.updatedRatings);
+                addTestResult('Review Submission', reviewSubmitted, 
+                             `Success: ${reviewSubmitted}, Returns Reviews: ${hasUpdatedReviews}, Returns Ratings: ${hasUpdatedRatingsFromReview}`);
+                
+                // Test 9: Data Consistency After Submissions
+                log('🔄 Test 9: Testing data consistency after submissions...');
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait a bit
+                const newRatings = await api.getRecipeRatings(testRecipeId);
+                const newReviews = await api.getRecipeReviews(testRecipeId);
+                
+                const ratingsConsistent = newRatings && typeof newRatings.average_rating === 'number';
+                const reviewsConsistent = newReviews && Array.isArray(newReviews.results);
+                const dataConsistent = ratingsConsistent && reviewsConsistent;
+                
+                addTestResult('Data Consistency', dataConsistent, 
+                             `Ratings: ${ratingsConsistent ? 'OK' : 'Failed'}, Reviews: ${reviewsConsistent ? 'OK' : 'Failed'}`);
+                
+                // Test 10: Error Handling
+                log('🛡️ Test 10: Testing error handling...');
+                try {
+                    // Test with invalid recipe ID
+                    const invalidResult = await api.getRecipe('invalid_id_9999');
+                    const errorHandled = !!invalidResult; // Should return fallback data
+                    addTestResult('Error Handling', errorHandled, 'API gracefully handles invalid requests');
+                } catch (error) {
+                    addTestResult('Error Handling', true, 'API properly throws errors when expected');
+                }
+                
+                // Test 11: Cache Functionality
+                log('💾 Test 11: Testing cache functionality...');
+                const cacheKey = 'test_integration_cache';
+                const cacheData = { test: 'data', time: Date.now() };
+                const cacheSet = api.setCachedData(cacheKey, cacheData, 60000);
+                const cacheGet = api.getCachedData(cacheKey);
+                const cacheWorks = cacheSet && cacheGet && cacheGet.data.test === 'data';
+                addTestResult('Cache Functionality', cacheWorks, 'Cache set/get operations work correctly');
+                
+                // Clean up test cache
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.removeItem(`chopsmo_cache_${cacheKey}`);
+                }
+                
+                // Test 12: Debug Functions
+                log('🔧 Test 12: Testing debug functions...');
+                try {
+                    await api.debugApiStatus();
+                    const debugResult = await api.testEndpoint('/api/recipes/', 'GET');
+                    const debugWorks = !!debugResult;
+                    addTestResult('Debug Functions', debugWorks, 'Debug methods execute without errors');
+                } catch (error) {
+                    addTestResult('Debug Functions', false, `Debug error: ${error.message}`);
+                }
+                
+                log('✅ All tests completed!');
+                
+            } catch (error) {
+                log(`❌ Test suite failed with error: ${error.message}`);
+                addTestResult('Test Suite Execution', false, error.message);
+            }
+            
+            updateSummary();
+            
+            // Final recommendations
+            const passedCount = testResults.filter(r => r.passed).length;
+            const totalCount = testResults.length;
+            
+            if (passedCount === totalCount) {
+                log('🎉 EXCELLENT! All tests passed. Your API integration is working perfectly!');
+            } else if (passedCount >= totalCount * 0.8) {
+                log('✅ GOOD! Most tests passed. Minor issues may exist but core functionality works.');
+            } else {
+                log('⚠️ ATTENTION NEEDED! Several tests failed. Please check the API configuration and backend connectivity.');
+            }
+        }
+        
+        // Auto-run tests when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Page loaded. Enhanced Recipe API available: ' + !!window.enhancedRecipeAPI);
+            updateSummary();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe API Test - ChopSmo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .test-button.danger {
+            background: #f44336;
+        }
+        .test-button.danger:hover {
+            background: #da190b;
+        }
+        .results {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .info {
+            color: #2196F3;
+        }
+        .warning {
+            color: #FF9800;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Recipe API Test Suite</h1>
+    <p>Test the ChopSmo Recipe API functionality including reviews, ratings, and backend connectivity.</p>
+
+    <div class="test-section">
+        <h2>🔌 Connection Tests</h2>
+        <button class="test-button" onclick="testApiConnection()">Test API Connection</button>
+        <button class="test-button" onclick="testEndpoints()">Test All Endpoints</button>
+        <button class="test-button" onclick="checkAuthStatus()">Check Auth Status</button>
+        <div id="connection-results" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📖 Recipe Data Tests</h2>
+        <input type="text" id="recipeId" placeholder="Recipe ID (default: 1)" value="1">
+        <button class="test-button" onclick="testGetRecipe()">Get Recipe</button>
+        <button class="test-button" onclick="testGetRatings()">Get Ratings</button>
+        <button class="test-button" onclick="testGetReviews()">Get Reviews</button>
+        <div id="recipe-results" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>⭐ Rating Submission Test</h2>
+        <input type="text" id="ratingRecipeId" placeholder="Recipe ID" value="1">
+        <input type="number" id="ratingValue" placeholder="Rating (1-5)" min="1" max="5" value="5">
+        <button class="test-button" onclick="testSubmitRating()">Submit Rating</button>
+        <div id="rating-results" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>💬 Review Submission Test</h2>
+        <input type="text" id="reviewRecipeId" placeholder="Recipe ID" value="1">
+        <input type="number" id="reviewRating" placeholder="Rating (1-5)" min="1" max="5" value="4">
+        <textarea id="reviewText" placeholder="Review text">This is a test review from the API test suite. The recipe looks delicious!</textarea>
+        <button class="test-button" onclick="testSubmitReview()">Submit Review</button>
+        <div id="review-results" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧹 Cache Management</h2>
+        <button class="test-button" onclick="clearAllCache()">Clear All Cache</button>
+        <button class="test-button" onclick="viewCacheInfo()">View Cache Info</button>
+        <div id="cache-results" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚨 Stress Tests</h2>
+        <p><strong>Warning:</strong> These tests may trigger rate limiting.</p>
+        <button class="test-button danger" onclick="stressTestReviews()">Stress Test Reviews (5 submissions)</button>
+        <button class="test-button danger" onclick="stressTestRatings()">Stress Test Ratings (5 submissions)</button>
+        <div id="stress-results" class="results"></div>
+    </div>
+
+    <!-- Load the enhanced recipe API -->
+    <script src="enhanced-recipe-api.js"></script>
+    
+    <script>
+        // Utility functions
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = {
+                'success': 'success',
+                'error': 'error', 
+                'info': 'info',
+                'warning': 'warning'
+            }[type] || 'info';
+            
+            return `<span class="${color}">[${timestamp}] ${message}</span>\n`;
+        }
+        
+        function appendResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML += log(message, type);
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        function clearResults(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        // Connection Tests
+        async function testApiConnection() {
+            clearResults('connection-results');
+            appendResult('connection-results', '🔍 Testing API connection...', 'info');
+            
+            try {
+                if (window.enhancedRecipeAPI) {
+                    await window.enhancedRecipeAPI.debugApiStatus();
+                    appendResult('connection-results', '✅ API debug completed (check console for details)', 'success');
+                } else {
+                    appendResult('connection-results', '❌ Enhanced Recipe API not loaded', 'error');
+                }
+            } catch (error) {
+                appendResult('connection-results', `❌ Connection test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testEndpoints() {
+            clearResults('connection-results');
+            appendResult('connection-results', '🔍 Testing endpoints...', 'info');
+            
+            const endpoints = [
+                '/api/recipes/',
+                '/api/recipes/1/',
+                '/api/recipes/1/reviews/',
+                '/api/recipes/1/ratings/'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const result = await window.enhancedRecipeAPI.testEndpoint(endpoint);
+                    if (result.ok) {
+                        appendResult('connection-results', `✅ ${endpoint}: ${result.status}`, 'success');
+                    } else {
+                        appendResult('connection-results', `⚠️ ${endpoint}: ${result.status}`, 'warning');
+                    }
+                } catch (error) {
+                    appendResult('connection-results', `❌ ${endpoint}: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        async function checkAuthStatus() {
+            clearResults('connection-results');
+            const token = window.enhancedRecipeAPI.getAuthToken();
+            const online = window.enhancedRecipeAPI.isOnline();
+            
+            appendResult('connection-results', `Auth Token: ${token ? 'Present' : 'Missing'}`, token ? 'success' : 'warning');
+            appendResult('connection-results', `Online Status: ${online}`, online ? 'success' : 'warning');
+            appendResult('connection-results', `Base URL: ${window.enhancedRecipeAPI.baseUrl}`, 'info');
+        }
+
+        // Recipe Data Tests
+        async function testGetRecipe() {
+            clearResults('recipe-results');
+            const recipeId = document.getElementById('recipeId').value || '1';
+            appendResult('recipe-results', `📖 Getting recipe ${recipeId}...`, 'info');
+            
+            try {
+                const recipe = await window.enhancedRecipeAPI.getRecipe(recipeId);
+                appendResult('recipe-results', `✅ Recipe received: ${recipe.title}`, 'success');
+                appendResult('recipe-results', JSON.stringify(recipe, null, 2), 'info');
+            } catch (error) {
+                appendResult('recipe-results', `❌ Failed to get recipe: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testGetRatings() {
+            clearResults('recipe-results');
+            const recipeId = document.getElementById('recipeId').value || '1';
+            appendResult('recipe-results', `⭐ Getting ratings for recipe ${recipeId}...`, 'info');
+            
+            try {
+                const ratings = await window.enhancedRecipeAPI.getRecipeRatings(recipeId);
+                appendResult('recipe-results', `✅ Ratings received: ${ratings.average_rating}/5 (${ratings.total_ratings} ratings)`, 'success');
+                appendResult('recipe-results', JSON.stringify(ratings, null, 2), 'info');
+            } catch (error) {
+                appendResult('recipe-results', `❌ Failed to get ratings: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testGetReviews() {
+            clearResults('recipe-results');
+            const recipeId = document.getElementById('recipeId').value || '1';
+            appendResult('recipe-results', `💬 Getting reviews for recipe ${recipeId}...`, 'info');
+            
+            try {
+                const reviews = await window.enhancedRecipeAPI.getRecipeReviews(recipeId);
+                appendResult('recipe-results', `✅ Reviews received: ${reviews.count} reviews`, 'success');
+                appendResult('recipe-results', JSON.stringify(reviews, null, 2), 'info');
+            } catch (error) {
+                appendResult('recipe-results', `❌ Failed to get reviews: ${error.message}`, 'error');
+            }
+        }
+
+        // Rating Submission Test
+        async function testSubmitRating() {
+            clearResults('rating-results');
+            const recipeId = document.getElementById('ratingRecipeId').value || '1';
+            const rating = parseInt(document.getElementById('ratingValue').value) || 5;
+            
+            appendResult('rating-results', `⭐ Submitting rating ${rating} for recipe ${recipeId}...`, 'info');
+            
+            try {
+                const result = await window.enhancedRecipeAPI.submitRating(recipeId, rating);
+                if (result.success) {
+                    appendResult('rating-results', '✅ Rating submitted successfully!', 'success');
+                    if (result.updatedRatings) {
+                        appendResult('rating-results', `Updated ratings: ${result.updatedRatings.average_rating}/5 (${result.updatedRatings.total_ratings} total)`, 'success');
+                    }
+                } else {
+                    appendResult('rating-results', `⚠️ Rating submission returned: ${result.message || 'Unknown response'}`, 'warning');
+                }
+                appendResult('rating-results', JSON.stringify(result, null, 2), 'info');
+            } catch (error) {
+                appendResult('rating-results', `❌ Rating submission failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Review Submission Test
+        async function testSubmitReview() {
+            clearResults('review-results');
+            const recipeId = document.getElementById('reviewRecipeId').value || '1';
+            const rating = parseInt(document.getElementById('reviewRating').value) || 4;
+            const reviewText = document.getElementById('reviewText').value || 'Test review';
+            
+            appendResult('review-results', `💬 Submitting review for recipe ${recipeId}...`, 'info');
+            appendResult('review-results', `Rating: ${rating}, Text: "${reviewText}"`, 'info');
+            
+            try {
+                const result = await window.enhancedRecipeAPI.submitReview(recipeId, rating, reviewText);
+                if (result.success) {
+                    appendResult('review-results', '✅ Review submitted successfully!', 'success');
+                    if (result.updatedReviews) {
+                        appendResult('review-results', `Updated reviews count: ${result.updatedReviews.count}`, 'success');
+                    }
+                    if (result.updatedRatings) {
+                        appendResult('review-results', `Updated ratings: ${result.updatedRatings.average_rating}/5`, 'success');
+                    }
+                } else if (result.error === 'rate_limited') {
+                    appendResult('review-results', `⚠️ Rate limited: ${result.message}`, 'warning');
+                } else {
+                    appendResult('review-results', `⚠️ Review submission returned: ${result.message || 'Unknown response'}`, 'warning');
+                }
+                appendResult('review-results', JSON.stringify(result, null, 2), 'info');
+            } catch (error) {
+                appendResult('review-results', `❌ Review submission failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Cache Management
+        function clearAllCache() {
+            clearResults('cache-results');
+            try {
+                const keys = Object.keys(localStorage).filter(key => key.startsWith('chopsmo_cache_'));
+                keys.forEach(key => localStorage.removeItem(key));
+                appendResult('cache-results', `✅ Cleared ${keys.length} cache entries`, 'success');
+            } catch (error) {
+                appendResult('cache-results', `❌ Failed to clear cache: ${error.message}`, 'error');
+            }
+        }
+        
+        function viewCacheInfo() {
+            clearResults('cache-results');
+            try {
+                const keys = Object.keys(localStorage).filter(key => key.startsWith('chopsmo_cache_'));
+                appendResult('cache-results', `📊 Found ${keys.length} cache entries:`, 'info');
+                keys.forEach(key => {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    const age = Date.now() - data.timestamp;
+                    const ageStr = age < 60000 ? `${Math.round(age/1000)}s` : `${Math.round(age/60000)}m`;
+                    appendResult('cache-results', `  ${key.replace('chopsmo_cache_', '')}: ${ageStr} old`, 'info');
+                });
+            } catch (error) {
+                appendResult('cache-results', `❌ Failed to read cache: ${error.message}`, 'error');
+            }
+        }
+
+        // Stress Tests
+        async function stressTestReviews() {
+            clearResults('stress-results');
+            appendResult('stress-results', '🚨 Starting review stress test (5 submissions)...', 'warning');
+            
+            for (let i = 1; i <= 5; i++) {
+                try {
+                    const result = await window.enhancedRecipeAPI.submitReview('1', 4, `Stress test review #${i}`);
+                    if (result.success) {
+                        appendResult('stress-results', `✅ Review ${i}/5 submitted`, 'success');
+                    } else if (result.error === 'rate_limited') {
+                        appendResult('stress-results', `⚠️ Review ${i}/5 rate limited: ${result.message}`, 'warning');
+                        break; // Stop on rate limit
+                    } else {
+                        appendResult('stress-results', `❌ Review ${i}/5 failed`, 'error');
+                    }
+                } catch (error) {
+                    appendResult('stress-results', `❌ Review ${i}/5 error: ${error.message}`, 'error');
+                }
+                
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+        
+        async function stressTestRatings() {
+            clearResults('stress-results');
+            appendResult('stress-results', '🚨 Starting rating stress test (5 submissions)...', 'warning');
+            
+            for (let i = 1; i <= 5; i++) {
+                try {
+                    const rating = (i % 5) + 1; // Cycle through 1-5
+                    const result = await window.enhancedRecipeAPI.submitRating('1', rating);
+                    if (result.success) {
+                        appendResult('stress-results', `✅ Rating ${i}/5 (${rating}⭐) submitted`, 'success');
+                    } else {
+                        appendResult('stress-results', `❌ Rating ${i}/5 failed`, 'error');
+                    }
+                } catch (error) {
+                    appendResult('stress-results', `❌ Rating ${i}/5 error: ${error.message}`, 'error');
+                }
+                
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.enhancedRecipeAPI) {
+                appendResult('connection-results', '✅ Enhanced Recipe API loaded successfully', 'success');
+            } else {
+                appendResult('connection-results', '❌ Enhanced Recipe API not found', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

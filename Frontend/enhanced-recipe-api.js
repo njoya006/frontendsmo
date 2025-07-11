@@ -478,23 +478,13 @@ class EnhancedRecipeAPI {
         } catch (e) {
             console.error('❌ Error fetching ratings:', e);
         }
-        // Fallback to empty if online, mock only if offline
-        if (!this.isOnline()) {
-            console.log('🔄 Using fallback mock ratings data (offline mode)');
-            return this.mockData.ratings[recipeId] || {
-                average_rating: 4.0,
-                total_ratings: 10,
-                distribution: { 1: 0, 2: 1, 3: 2, 4: 4, 5: 3 },
-                total_reviews: 5
-            };
-        } else {
-            return {
-                average_rating: 0,
-                total_ratings: 0,
-                distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-                total_reviews: 0
-            };
-        }
+        // Return fresh data from API if available, otherwise empty data (not mock)
+        return {
+            average_rating: 0,
+            total_ratings: 0,
+            distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            total_reviews: 0
+        };
     }
     
     // Get recipe reviews with fallbacks
@@ -643,35 +633,13 @@ class EnhancedRecipeAPI {
             return expiredCache.data;
         }
         
-        // Fallback to empty if online, mock only if offline
-        if (!this.isOnline()) {
-            console.log('🔄 Using fallback mock reviews data (offline mode)');
-            return this.mockData.reviews[recipeId] || {
-                count: 0,
-                next: null,
-                previous: null,
-                results: [{
-                    id: "r1",
-                    user: {
-                        id: "u1",
-                        username: "FoodLover",
-                        is_verified: true
-                    },
-                    recipe_id: recipeId,
-                    rating: 5,
-                    review: "This is a mock review since the API is currently unavailable. The recipe looks delicious!",
-                    likes_count: 3,
-                    created_at: new Date().toISOString()
-                }]
-            };
-        } else {
-            return {
-                count: 0,
-                next: null,
-                previous: null,
-                results: []
-            };
-        }
+        // Return empty data for online mode when API fails (not mock data)
+        return {
+            count: 0,
+            next: null,
+            previous: null,
+            results: []
+        };
     }
     
     // Submit user rating with fallbacks
@@ -717,7 +685,19 @@ class EnhancedRecipeAPI {
                             console.log('✅ Rating submitted successfully:', data);
                             // After successful rating submission, clear ratings cache for this recipe
                             this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
-                            return { success: true, data };
+                            
+                            // Fetch updated ratings immediately after successful submission
+                            try {
+                                const updatedRatings = await this.getRecipeRatings(recipeId);
+                                return { 
+                                    success: true, 
+                                    data,
+                                    updatedRatings
+                                };
+                            } catch (fetchError) {
+                                console.warn('⚠️ Failed to fetch updated ratings after submission:', fetchError);
+                                return { success: true, data };
+                            }
                         }
                         
                         console.warn(`⚠️ Rating submission to ${endpoint} failed: ${response.status}`);
@@ -751,12 +731,14 @@ class EnhancedRecipeAPI {
         this.mockData.ratings[recipeId].average_rating = totalRatings ? (sum / totalRatings) : rating;
         this.mockData.ratings[recipeId].total_ratings = totalRatings;
         this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
+        // Return updated ratings data for instant UI update
         return {
-            success: true, 
-            data: { 
+            success: true,
+            data: {
                 rating: rating,
-                message: 'Rating saved offline. Will sync when connectivity is restored.' 
-            }
+                message: 'Rating saved offline. Will sync when connectivity is restored.'
+            },
+            updatedRatings: this.mockData.ratings[recipeId]
         };
     }
     
@@ -868,8 +850,26 @@ class EnhancedRecipeAPI {
                     this.resetRateLimitFor(baseEndpointPath);
                     this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
                     this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
-                    return { success: true, data };
+                    
+                    // Fetch updated reviews and ratings immediately after successful submission
+                    try {
+                        const [updatedReviews, updatedRatings] = await Promise.all([
+                            this.getRecipeReviews(recipeId, 1),
+                            this.getRecipeRatings(recipeId)
+                        ]);
+                        
+                        return { 
+                            success: true, 
+                            data,
+                            updatedReviews,
+                            updatedRatings
+                        };
+                    } catch (fetchError) {
+                        console.warn('⚠️ Failed to fetch updated data after review submission:', fetchError);
+                        return { success: true, data };
+                    }
                 }
+                
                 // Other error: save and try next
                 lastError = new Error(`Failed to submit review: ${response.status} ${response.statusText}`);
                 console.warn(`⚠️ Review submission to ${endpoint} failed: ${response.status}`);
@@ -879,6 +879,7 @@ class EnhancedRecipeAPI {
             }
         }
     }
+    
     // If all endpoints failed and lastError is 403, show user-friendly message
     if (lastError && lastError.message && lastError.message.includes('not authorized')) {
         return {
@@ -887,6 +888,7 @@ class EnhancedRecipeAPI {
             message: lastError.message
         };
     }
+    
     // Create mock response and update mock reviews array/count
     console.log('🔄 Using local review submission response');
     const mockData = this.createLocalReview(recipeId, rating, reviewText);
@@ -928,9 +930,12 @@ class EnhancedRecipeAPI {
     this.mockData.ratings[recipeId].total_reviews = this.mockData.reviews[recipeId].count;
     this.clearCacheByPattern(`recipe_reviews_${recipeId}`);
     this.clearCacheByPattern(`recipe_ratings_${recipeId}`);
+    // Return updated reviews and ratings data for instant UI update
     return {
         success: true,
-        data: mockData
+        data: mockData,
+        updatedReviews: this.mockData.reviews[recipeId],
+        updatedRatings: this.mockData.ratings[recipeId]
     };
 }
     
@@ -1200,6 +1205,65 @@ class EnhancedRecipeAPI {
         } catch (error) {
             console.warn('Error getting current user data:', error);
             return null;
+        }
+    }
+    
+    // Debug method to check API status and endpoints
+    async debugApiStatus() {
+        console.log('🔍 API Debug Information:');
+        console.log('Base URL:', this.baseUrl);
+        console.log('API Status:', this.apiStatus);
+        console.log('Auth Token:', this.getAuthToken() ? 'Present' : 'Missing');
+        console.log('Online Status:', this.isOnline());
+        
+        // Test basic connectivity
+        try {
+            const response = await fetch(`${this.baseUrl}/api/recipes/`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Token ${this.getAuthToken()}`
+                }
+            });
+            console.log('Basic API test:', response.status, response.statusText);
+        } catch (error) {
+            console.log('Basic API test failed:', error.message);
+        }
+    }
+    
+    // Test specific endpoint
+    async testEndpoint(endpoint, method = 'GET', data = null) {
+        const url = `${this.baseUrl}${endpoint}`;
+        console.log(`🧪 Testing ${method} ${url}`);
+        
+        try {
+            const options = {
+                method,
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Token ${this.getAuthToken()}`
+                }
+            };
+            
+            if (method === 'POST' && data) {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(data);
+            }
+            
+            const response = await fetch(url, options);
+            const responseText = await response.text();
+            
+            console.log(`Response: ${response.status} ${response.statusText}`);
+            console.log('Response body:', responseText);
+            
+            return {
+                status: response.status,
+                ok: response.ok,
+                data: responseText
+            };
+        } catch (error) {
+            console.error('Test failed:', error);
+            return { error: error.message };
         }
     }
 }

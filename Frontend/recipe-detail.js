@@ -116,12 +116,31 @@ class RecipeDetailManager {
         }
     }
 
-    // Submission handler: reload ratings/reviews after successful submit
+    // Submission handler: use returned data or reload ratings/reviews after successful submit
     async handleReviewSubmission(submitFn, ...args) {
         try {
-            await submitFn(...args);
-            await this.reloadRatingsAndReviews();
-            this.showToast('Review submitted and UI updated!', 'success');
+            const result = await submitFn(...args);
+            
+            // If the submission returned updated data, use it directly
+            if (result && result.success && (result.updatedReviews || result.updatedRatings)) {
+                console.log('✅ Using returned updated data from API submission');
+                
+                // Update UI with returned data instead of making new API calls
+                if (result.updatedRatings) {
+                    this.updateRatingsUI(result.updatedRatings);
+                }
+                
+                if (result.updatedReviews) {
+                    this.updateReviewsUI(result.updatedReviews);
+                }
+                
+                this.showToast('Review submitted and UI updated!', 'success');
+            } else {
+                // Fallback: reload from API if no updated data was returned
+                console.log('⚡ Reloading data from API (no updated data returned)');
+                await this.reloadRatingsAndReviews();
+                this.showToast('Review submitted and UI updated!', 'success');
+            }
         } catch (error) {
             this.showToast('Failed to submit review: ' + error.message, 'error');
         }
@@ -820,152 +839,112 @@ class RecipeDetailManager {
         ];
     }
 
-    renderRecipe(recipe) {
-        // Defensive: check for error object or invalid recipe
-        if (!recipe || recipe.detail) {
-            console.error('Recipe not found or invalid recipe object:', recipe?.detail || recipe);
-            if (this.errorState) {
-                this.errorState.classList.remove('hidden');
-                this.recipeContent.classList.add('hidden');
-                if (this.errorMessage) {
-                    this.errorMessage.textContent = recipe?.detail || 'Recipe not found.';
+    // Rating submission handler: use returned data or reload if needed
+    async handleRatingSubmission(rating) {
+        try {
+            let result;
+            if (window.enhancedRecipeAPI) {
+                result = await window.enhancedRecipeAPI.submitRating(this.recipeId, rating);
+            } else if (this.useAPI) {
+                result = await this.recipeAPI.submitRating(this.recipeId, rating);
+            }
+            
+            // If the submission returned updated data, use it directly
+            if (result && result.success && result.updatedRatings) {
+                console.log('✅ Using returned updated ratings from API submission');
+                this.updateRatingsUI(result.updatedRatings);
+                this.showToast('Rating submitted successfully!', 'success');
+            } else {
+                // Fallback: reload from API if no updated data was returned
+                console.log('⚡ Reloading ratings from API (no updated data returned)');
+                await this.reloadRatingsAndReviews();
+                this.showToast('Rating submitted successfully!', 'success');
+            }
+        } catch (error) {
+            this.showToast('Failed to submit rating: ' + error.message, 'error');
+        }
+    }
+
+    // Helper methods to update UI components directly
+    updateRatingsUI(ratingsData) {
+        console.log('🎯 Updating ratings UI with:', ratingsData);
+        
+        // Update rating bar
+        if (document.getElementById('ratingBar')) {
+            document.getElementById('ratingBar').value = ratingsData.average_rating || 0;
+        }
+        
+        // Update rating display text
+        const ratingDisplay = document.querySelector('.rating-display, .average-rating');
+        if (ratingDisplay && ratingsData.average_rating) {
+            ratingDisplay.textContent = `${ratingsData.average_rating.toFixed(1)}/5`;
+        }
+        
+        // Update rating count
+        const ratingCount = document.querySelector('.rating-count, .total-ratings');
+        if (ratingCount && ratingsData.total_ratings !== undefined) {
+            ratingCount.textContent = `${ratingsData.total_ratings} ratings`;
+        }
+        
+        // Update star distribution if available
+        if (ratingsData.distribution && document.querySelector('.rating-distribution')) {
+            this.updateStarDistribution(ratingsData.distribution, ratingsData.total_ratings);
+        }
+    }
+    
+    updateReviewsUI(reviewsData) {
+        console.log('💬 Updating reviews UI with:', reviewsData);
+        
+        // Update review count
+        const reviewCount = document.querySelector('.review-count, .total-reviews');
+        if (reviewCount && reviewsData.count !== undefined) {
+            reviewCount.textContent = `${reviewsData.count} reviews`;
+        }
+        
+        // Update reviews list if container exists
+        const reviewsContainer = document.querySelector('.reviews-list, .review-container');
+        if (reviewsContainer && reviewsData.results) {
+            this.renderReviewsList(reviewsData.results, reviewsContainer);
+        }
+    }
+    
+    updateStarDistribution(distribution, totalRatings) {
+        for (let star = 1; star <= 5; star++) {
+            const barElement = document.querySelector(`.star-${star}-bar, .rating-bar-${star}`);
+            if (barElement && distribution[star] !== undefined) {
+                const percentage = totalRatings > 0 ? (distribution[star] / totalRatings) * 100 : 0;
+                barElement.style.width = `${percentage}%`;
+                
+                const countElement = document.querySelector(`.star-${star}-count`);
+                if (countElement) {
+                    countElement.textContent = distribution[star];
                 }
             }
-            this.hideLoading();
+        }
+    }
+    
+    renderReviewsList(reviews, container) {
+        if (!reviews || reviews.length === 0) {
+            container.innerHTML = '<p>No reviews yet.</p>';
             return;
         }
         
-        console.log('🔄 Beginning recipe render with data:', recipe);
+        const reviewsHTML = reviews.map(review => `
+            <div class="review-item" data-review-id="${review.id}">
+                <div class="review-header">
+                    <span class="reviewer-name">${review.user?.username || 'Anonymous'}</span>
+                    <span class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span>
+                    <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="review-content">${review.review}</div>
+                ${review.pending ? '<div class="review-status">⏳ Pending sync</div>' : ''}
+            </div>
+        `).join('');
         
-        // Set hero image
-        if (this.heroImage && recipe.image) {
-            const imageUrl = this.getImageUrl(recipe.image);
-            console.log('🖼️ Setting hero image:', imageUrl);
-            this.heroImage.src = imageUrl;
-            this.heroImage.alt = recipe.title || recipe.name || 'Recipe image';
-            // Professional error handler: fallback only once, then hide image
-            let triedFallback = false;
-            this.heroImage.onerror = function() {
-                if (!triedFallback) {
-                    triedFallback = true;
-                    console.error('❌ Failed to load hero image, trying local fallback:', imageUrl);
-                    this.src = 'assets/default-recipe.jpg';
-                } else {
-                    console.error('❌ Failed to load local fallback image, hiding hero image.');
-                    this.style.display = 'none';
-                }
-            };
-        }
-        
-        // Set title and subtitle
-        if (this.recipeTitle) {
-            this.recipeTitle.textContent = recipe.title || recipe.name || 'Untitled Recipe';
-        }
-        
-        if (this.recipeSubtitle) {
-            this.recipeSubtitle.textContent = recipe.description || 'No description available';
-        }
-        
-        // Render description
-        if (this.recipeDescription) {
-            this.recipeDescription.textContent = recipe.description || recipe.summary || 'No description available';
-        }
-        
-        // Render ingredients
-        // Defensive check for renderIngredients
-        if (typeof this.renderIngredients === 'function') {
-            this.renderIngredients(recipe.ingredients || []);
-        } else {
-            console.error('renderIngredients method not available');
-        }
-        
-        // Defensive check for renderInstructions
-        const instructionsData = this.extractInstructions(recipe);
-        if (typeof this.renderInstructions === 'function') {
-            this.renderInstructions(instructionsData);
-        } else {
-            console.error('renderInstructions method not available');
-        }
-        
-        // Render analytics buttons and stats
-        // Defensive check for renderAnalytics
-        if (typeof this.renderAnalytics === 'function') {
-            this.renderAnalytics(recipe);
-        } else {
-            console.error('renderAnalytics method not available');
-        }
-        
-        // Defensive check for updateSocialUI
-        if (typeof this.updateSocialUI === 'function') {
-            this.updateSocialUI(recipe);
-        } else {
-            console.error('updateSocialUI method not available');
-        }
-        
-        // Update contributor information if available
-        if (recipe.contributor) {
-            console.log('👨‍🍳 Processing contributor information:', recipe.contributor);
-            if (this.contributorSection) {
-                this.contributorSection.classList.remove('hidden');
-            }
-            // Use contributor.profile_photo if available, otherwise fallback to contributor.photo
-            const profileImage = recipe.contributor.profile_photo || recipe.contributor.photo || null;
-            const displayName = recipe.contributor.username || 'Anonymous Chef';
-            const bio = recipe.contributor.bio || 'Recipe contributor';
-            const contributorId = recipe.contributor.id || '';
-            // Debug log for maintainers
-            console.log('👨‍🍳 Contributor data:', { name: displayName, photo: profileImage, id: contributorId });
-            // Set avatar
-            if (this.contributorAvatar) {
-                console.log('🔍 Setting contributor avatar with:', profileImage);
-                if (profileImage) {
-                    // Process the image URL
-                    const finalImageUrl = this.getImageUrl(profileImage);
-                    console.log('✅ Final contributor image URL:', finalImageUrl);
-                    this.contributorAvatar.src = finalImageUrl;
-                    this.contributorAvatar.alt = displayName;
-                    // Improved error handler
-                    this.contributorAvatar.onerror = function() {
-                        console.error('❌ Failed to load contributor image:', this.src);
-                        // Don't show any fallback image if requested
-                        this.style.display = 'none';
-                    };
-                } else {
-                    console.log('⚠️ No contributor photo available');
-                    this.contributorAvatar.style.display = 'none';
-                }
-            }
-            // Set name
-            if (this.contributorName) {
-                this.contributorName.textContent = displayName;
-            }
-            // Set bio
-            if (this.contributorBio) {
-                this.contributorBio.textContent = bio;
-            }
-            // Set profile link
-            if (this.contributorProfileLink) {
-                if (contributorId) {
-                    this.contributorProfileLink.href = 'Profile.html?id=' + encodeURIComponent(contributorId);
-                    this.contributorProfileLink.target = '_blank';
-                } else {
-                    this.contributorProfileLink.href = '#';
-                }
-            }
-        } else {
-            console.log('⚠️ No contributor information available');
-            if (this.contributorSection) {
-                this.contributorSection.style.display = 'none';
-            }
-        }
-        
-        // Show recipe content
-        if (this.recipeContent) {
-            this.recipeContent.style.display = 'block';
-        }
-        
-        this.hideLoading();
+        container.innerHTML = reviewsHTML;
     }
+
+    // ...existing code...
 }
 
 // Global instance for recipe detail manager
@@ -979,43 +958,38 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             // Get review text and rating value
             const reviewText = document.getElementById('reviewInput')?.value || '';
-            const ratingValue = document.getElementById('ratingInput')?.value || 0;
+            const ratingValue = parseInt(document.getElementById('ratingInput')?.value) || 0;
+            
             // Submit using enhanced API if available
             if (window.recipeDetailManager) {
                 await window.recipeDetailManager.handleReviewSubmission(
                     async () => {
                         if (window.enhancedRecipeAPI) {
-                            await window.enhancedRecipeAPI.submitReview(window.recipeDetailManager.recipeId, reviewText, ratingValue);
+                            return await window.enhancedRecipeAPI.submitReview(window.recipeDetailManager.recipeId, ratingValue, reviewText);
                         } else if (window.recipeDetailManager.useAPI) {
-                            await window.recipeDetailManager.recipeAPI.submitReview(window.recipeDetailManager.recipeId, reviewText, ratingValue);
+                            return await window.recipeDetailManager.recipeAPI.submitReview(window.recipeDetailManager.recipeId, ratingValue, reviewText);
                         }
                     }
                 );
             }
         });
     }
-});
-// Example: Attach to review/rating form submission
-document.addEventListener('DOMContentLoaded', function() {
-    const reviewForm = document.getElementById('reviewForm');
-    if (reviewForm) {
-        reviewForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            // Get review text and rating value
-            const reviewText = document.getElementById('reviewInput')?.value || '';
-            const ratingValue = document.getElementById('ratingInput')?.value || 0;
-            // Submit using enhanced API if available
-            if (window.recipeDetailManager) {
-                await window.recipeDetailManager.handleReviewSubmission(
-                    async () => {
-                        if (window.enhancedRecipeAPI) {
-                            await window.enhancedRecipeAPI.submitReview(window.recipeDetailManager.recipeId, reviewText, ratingValue);
-                        } else if (window.recipeDetailManager.useAPI) {
-                            await window.recipeDetailManager.recipeAPI.submitReview(window.recipeDetailManager.recipeId, reviewText, ratingValue);
-                        }
+    
+    // Also handle star rating clicks for quick rating submission
+    const starElements = document.querySelectorAll('.star-rating-input .star, .rating-stars .star');
+    starElements.forEach((star, index) => {
+        star.addEventListener('click', async function() {
+            const rating = index + 1;
+            if (window.recipeDetailManager && window.enhancedRecipeAPI) {
+                try {
+                    const result = await window.enhancedRecipeAPI.submitRating(window.recipeDetailManager.recipeId, rating);
+                    if (result.success && result.updatedRatings) {
+                        window.recipeDetailManager.updateRatingsUI(result.updatedRatings);
                     }
-                );
+                } catch (error) {
+                    console.error('Failed to submit rating:', error);
+                }
             }
         });
-    }
+    });
 });

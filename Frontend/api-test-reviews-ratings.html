@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChopSmo - Reviews & Ratings API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .review-form {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .ratings-display {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .star-rating {
+            font-size: 24px;
+            color: #ffc107;
+        }
+        .review-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .reviewer-name {
+            font-weight: bold;
+        }
+        .review-date {
+            color: #666;
+            font-size: 12px;
+        }
+        .review-status {
+            color: #856404;
+            font-style: italic;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 ChopSmo Reviews & Ratings API Test</h1>
+        <p>This page tests the enhanced recipe API functionality for reviews and ratings with live backend integration.</p>
+    </div>
+
+    <div class="container">
+        <h2>📡 API Status & Debugging</h2>
+        <div class="test-section">
+            <h3>Connection Test</h3>
+            <button onclick="testApiConnection()">🔍 Test API Connection</button>
+            <button onclick="debugApiStatus()">🔧 Debug API Status</button>
+            <button onclick="testAuthToken()">🔑 Test Auth Token</button>
+            <div id="connectionOutput" class="output"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🍽️ Recipe Testing</h2>
+        <div class="form-group">
+            <label for="recipeId">Recipe ID:</label>
+            <input type="text" id="recipeId" value="1" placeholder="Enter recipe ID">
+        </div>
+        
+        <div class="test-section">
+            <h3>Load Recipe Data</h3>
+            <button onclick="loadRecipe()">📖 Load Recipe</button>
+            <button onclick="loadRatings()">⭐ Load Ratings</button>
+            <button onclick="loadReviews()">💬 Load Reviews</button>
+            <div id="recipeOutput" class="output"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>⭐ Rating Submission Test</h2>
+        <div class="review-form">
+            <div class="form-group">
+                <label for="ratingValue">Rating (1-5):</label>
+                <select id="ratingValue">
+                    <option value="5">5 Stars - Excellent</option>
+                    <option value="4">4 Stars - Very Good</option>
+                    <option value="3">3 Stars - Good</option>
+                    <option value="2">2 Stars - Fair</option>
+                    <option value="1">1 Star - Poor</option>
+                </select>
+            </div>
+            <button onclick="submitTestRating()">⭐ Submit Rating</button>
+            <div id="ratingOutput" class="output"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>💬 Review Submission Test</h2>
+        <div class="review-form">
+            <div class="form-group">
+                <label for="reviewRating">Rating (1-5):</label>
+                <select id="reviewRating">
+                    <option value="5">5 Stars - Excellent</option>
+                    <option value="4" selected>4 Stars - Very Good</option>
+                    <option value="3">3 Stars - Good</option>
+                    <option value="2">2 Stars - Fair</option>
+                    <option value="1">1 Star - Poor</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="reviewText">Review Text:</label>
+                <textarea id="reviewText" placeholder="Write your review here...">This is a test review from the API testing page. The recipe looks delicious and the instructions are clear!</textarea>
+            </div>
+            <button onclick="submitTestReview()">💬 Submit Review</button>
+            <div id="reviewSubmissionOutput" class="output"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Live Data Display</h2>
+        <div id="ratingsDisplay" class="ratings-display">
+            <h3>Current Ratings</h3>
+            <div id="ratingsContent">Click "Load Ratings" to see current ratings</div>
+        </div>
+        
+        <div id="reviewsDisplay">
+            <h3>Current Reviews</h3>
+            <div id="reviewsContent">Click "Load Reviews" to see current reviews</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Advanced Endpoint Testing</h2>
+        <div class="test-section">
+            <h3>Manual Endpoint Test</h3>
+            <div class="form-group">
+                <label for="testEndpoint">Endpoint:</label>
+                <input type="text" id="testEndpoint" placeholder="/api/recipes/1/reviews/" value="/api/recipes/1/reviews/">
+            </div>
+            <div class="form-group">
+                <label for="testMethod">Method:</label>
+                <select id="testMethod">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="testData">Request Data (JSON):</label>
+                <textarea id="testData" placeholder='{"key": "value"}'></textarea>
+            </div>
+            <button onclick="testCustomEndpoint()">🧪 Test Endpoint</button>
+            <div id="endpointOutput" class="output"></div>
+        </div>
+    </div>
+
+    <!-- Load the enhanced recipe API -->
+    <script src="enhanced-recipe-api.js"></script>
+    
+    <script>
+        // Global variables
+        let currentRecipeId = '1';
+        
+        // Update recipe ID when input changes
+        document.getElementById('recipeId').addEventListener('input', function(e) {
+            currentRecipeId = e.target.value || '1';
+        });
+        
+        // Utility function to display output
+        function displayOutput(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const status = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            
+            const output = `[${timestamp}] ${typeof content === 'object' ? JSON.stringify(content, null, 2) : content}`;
+            element.innerHTML = `<span class="status ${status}">${type.toUpperCase()}</span>\n${output}`;
+        }
+        
+        // Test API connection
+        async function testApiConnection() {
+            displayOutput('connectionOutput', 'Testing API connection...', 'info');
+            
+            try {
+                if (!window.enhancedRecipeAPI) {
+                    throw new Error('Enhanced Recipe API not loaded');
+                }
+                
+                const result = await window.enhancedRecipeAPI.checkApiStatus();
+                displayOutput('connectionOutput', `API Status Check: ${result ? 'SUCCESS' : 'FAILED'}\nAPI Details: ${JSON.stringify(window.enhancedRecipeAPI.apiStatus, null, 2)}`, result ? 'success' : 'error');
+            } catch (error) {
+                displayOutput('connectionOutput', `Connection test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Debug API status
+        async function debugApiStatus() {
+            displayOutput('connectionOutput', 'Running API debug...', 'info');
+            
+            try {
+                await window.enhancedRecipeAPI.debugApiStatus();
+                displayOutput('connectionOutput', 'Debug completed. Check browser console for detailed output.', 'success');
+            } catch (error) {
+                displayOutput('connectionOutput', `Debug failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test auth token
+        function testAuthToken() {
+            const token = window.enhancedRecipeAPI.getAuthToken();
+            const isOnline = window.enhancedRecipeAPI.isOnline();
+            
+            displayOutput('connectionOutput', `Auth Token: ${token ? 'Present ✅' : 'Missing ❌'}\nOnline Status: ${isOnline ? 'Online ✅' : 'Offline ❌'}\nBase URL: ${window.enhancedRecipeAPI.baseUrl}`, token ? 'success' : 'warning');
+        }
+        
+        // Load recipe
+        async function loadRecipe() {
+            displayOutput('recipeOutput', `Loading recipe ${currentRecipeId}...`, 'info');
+            
+            try {
+                const recipe = await window.enhancedRecipeAPI.getRecipe(currentRecipeId);
+                displayOutput('recipeOutput', recipe, 'success');
+            } catch (error) {
+                displayOutput('recipeOutput', `Failed to load recipe: ${error.message}`, 'error');
+            }
+        }
+        
+        // Load ratings
+        async function loadRatings() {
+            displayOutput('recipeOutput', `Loading ratings for recipe ${currentRecipeId}...`, 'info');
+            
+            try {
+                const ratings = await window.enhancedRecipeAPI.getRecipeRatings(currentRecipeId);
+                displayOutput('recipeOutput', ratings, 'success');
+                updateRatingsDisplay(ratings);
+            } catch (error) {
+                displayOutput('recipeOutput', `Failed to load ratings: ${error.message}`, 'error');
+            }
+        }
+        
+        // Load reviews
+        async function loadReviews() {
+            displayOutput('recipeOutput', `Loading reviews for recipe ${currentRecipeId}...`, 'info');
+            
+            try {
+                const reviews = await window.enhancedRecipeAPI.getRecipeReviews(currentRecipeId);
+                displayOutput('recipeOutput', reviews, 'success');
+                updateReviewsDisplay(reviews);
+            } catch (error) {
+                displayOutput('recipeOutput', `Failed to load reviews: ${error.message}`, 'error');
+            }
+        }
+        
+        // Submit test rating
+        async function submitTestRating() {
+            const rating = parseInt(document.getElementById('ratingValue').value);
+            displayOutput('ratingOutput', `Submitting rating ${rating} for recipe ${currentRecipeId}...`, 'info');
+            
+            try {
+                const result = await window.enhancedRecipeAPI.submitRating(currentRecipeId, rating);
+                displayOutput('ratingOutput', result, result.success ? 'success' : 'error');
+                
+                // If we got updated ratings, display them
+                if (result.updatedRatings) {
+                    updateRatingsDisplay(result.updatedRatings);
+                }
+                
+                // Automatically reload ratings to show the update
+                setTimeout(() => loadRatings(), 1000);
+            } catch (error) {
+                displayOutput('ratingOutput', `Failed to submit rating: ${error.message}`, 'error');
+            }
+        }
+        
+        // Submit test review
+        async function submitTestReview() {
+            const rating = parseInt(document.getElementById('reviewRating').value);
+            const reviewText = document.getElementById('reviewText').value;
+            
+            displayOutput('reviewSubmissionOutput', `Submitting review (${rating} stars) for recipe ${currentRecipeId}...`, 'info');
+            
+            try {
+                const result = await window.enhancedRecipeAPI.submitReview(currentRecipeId, rating, reviewText);
+                displayOutput('reviewSubmissionOutput', result, result.success ? 'success' : 'error');
+                
+                // If we got updated data, display it
+                if (result.updatedReviews) {
+                    updateReviewsDisplay(result.updatedReviews);
+                }
+                if (result.updatedRatings) {
+                    updateRatingsDisplay(result.updatedRatings);
+                }
+                
+                // Automatically reload reviews to show the update
+                setTimeout(() => {
+                    loadReviews();
+                    loadRatings();
+                }, 1000);
+            } catch (error) {
+                displayOutput('reviewSubmissionOutput', `Failed to submit review: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test custom endpoint
+        async function testCustomEndpoint() {
+            const endpoint = document.getElementById('testEndpoint').value;
+            const method = document.getElementById('testMethod').value;
+            const dataText = document.getElementById('testData').value;
+            
+            let data = null;
+            if (dataText.trim()) {
+                try {
+                    data = JSON.parse(dataText);
+                } catch (e) {
+                    displayOutput('endpointOutput', `Invalid JSON data: ${e.message}`, 'error');
+                    return;
+                }
+            }
+            
+            displayOutput('endpointOutput', `Testing ${method} ${endpoint}...`, 'info');
+            
+            try {
+                const result = await window.enhancedRecipeAPI.testEndpoint(endpoint, method, data);
+                displayOutput('endpointOutput', result, result.ok ? 'success' : 'error');
+            } catch (error) {
+                displayOutput('endpointOutput', `Endpoint test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Update ratings display
+        function updateRatingsDisplay(ratings) {
+            const content = document.getElementById('ratingsContent');
+            if (!ratings) {
+                content.innerHTML = 'No ratings data available';
+                return;
+            }
+            
+            const stars = '★'.repeat(Math.round(ratings.average_rating || 0)) + '☆'.repeat(5 - Math.round(ratings.average_rating || 0));
+            
+            content.innerHTML = `
+                <div class="star-rating">${stars}</div>
+                <p><strong>Average:</strong> ${(ratings.average_rating || 0).toFixed(1)}/5</p>
+                <p><strong>Total Ratings:</strong> ${ratings.total_ratings || 0}</p>
+                <p><strong>Total Reviews:</strong> ${ratings.total_reviews || 0}</p>
+                ${ratings.distribution ? `
+                    <div style="margin-top: 10px;">
+                        <h4>Rating Distribution:</h4>
+                        <div>5 stars: ${ratings.distribution[5] || 0}</div>
+                        <div>4 stars: ${ratings.distribution[4] || 0}</div>
+                        <div>3 stars: ${ratings.distribution[3] || 0}</div>
+                        <div>2 stars: ${ratings.distribution[2] || 0}</div>
+                        <div>1 star: ${ratings.distribution[1] || 0}</div>
+                    </div>
+                ` : ''}
+            `;
+        }
+        
+        // Update reviews display
+        function updateReviewsDisplay(reviews) {
+            const content = document.getElementById('reviewsContent');
+            if (!reviews || !reviews.results || reviews.results.length === 0) {
+                content.innerHTML = 'No reviews available';
+                return;
+            }
+            
+            const reviewsHTML = reviews.results.map(review => `
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="reviewer-name">${review.user?.username || 'Anonymous'}</span>
+                        <span class="star-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span>
+                        <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="review-content">${review.review}</div>
+                    ${review.pending ? '<div class="review-status">⏳ Pending sync</div>' : ''}
+                    ${review.message ? '<div class="review-status">ℹ️ ' + review.message + '</div>' : ''}
+                </div>
+            `).join('');
+            
+            content.innerHTML = `
+                <p><strong>Total Reviews:</strong> ${reviews.count}</p>
+                ${reviewsHTML}
+            `;
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('API Test Page Loaded');
+            console.log('Enhanced Recipe API:', window.enhancedRecipeAPI);
+            
+            // Auto-test connection on load
+            setTimeout(() => {
+                testAuthToken();
+                testApiConnection();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
