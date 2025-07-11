@@ -852,7 +852,7 @@ class EnhancedRecipeAPI {
                             const limitMessage = this.formatRateLimitMessage(limitInfo);
                             console.log(`ℹ️ ${limitMessage}`);
                             
-                            // Create a rate limited mock data for UI display
+                            // Create a mock review that will be displayed immediately
                             const mockData = this.createLocalReview(recipeId, rating, reviewText);
                             mockData.pending = true;
                             mockData.pendingReason = 'rate_limited';
@@ -866,13 +866,11 @@ class EnhancedRecipeAPI {
                             };
                             
                             return {
-                                success: true, 
-                                data: mockData,
-                                limitInfo: {
-                                    limited: true,
-                                    message: limitMessage,
-                                    retryAfter: limitInfo.retryAfter
-                                }
+                                success: false,
+                                error: "rate_limited",
+                                message: limitMessage,
+                                retryAfter: limitInfo.retryAfter,
+                                data: mockData // Still return the mock data for immediate display
                             };
                         }
                         
