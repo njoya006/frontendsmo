@@ -908,9 +908,8 @@ class RecipeDetailManager {
             if (this.contributorSection) {
                 this.contributorSection.classList.remove('hidden');
             }
-            // Only use contributor.photo for avatar. No fallback, no default image.
-            // If photo is missing, avatar will be hidden.
-            const profileImage = recipe.contributor.photo || null;
+            // Use contributor.profile_photo if available, otherwise fallback to contributor.photo
+            const profileImage = recipe.contributor.profile_photo || recipe.contributor.photo || null;
             const displayName = recipe.contributor.username || 'Anonymous Chef';
             const bio = recipe.contributor.bio || 'Recipe contributor';
             const contributorId = recipe.contributor.id || '';
