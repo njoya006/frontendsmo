@@ -757,18 +757,16 @@ class RecipeDetailManager {
         }
         
         // Update contributor information if available
-        if (recipe.created_by) {
-            console.log('✅ Updating contributor information:', recipe.created_by);
+        if (recipe.contributor) {
+            console.log('✅ Updating contributor information:', recipe.contributor);
             if (this.contributorSection) {
                 this.contributorSection.classList.remove('hidden');
             }
-            // Defensive fallback for contributor info
-            const profileImage = recipe.created_by.profile_image || 'assets/default-recipe.jpg';
-            const displayName = (recipe.created_by.first_name && recipe.created_by.last_name)
-                ? `${recipe.created_by.first_name} ${recipe.created_by.last_name}`
-                : (recipe.created_by.username || 'Anonymous Chef');
-            const bio = recipe.created_by.bio || 'Recipe contributor';
-            const contributorId = recipe.created_by.id || '';
+            // Use contributor.photo for avatar
+            const profileImage = recipe.contributor.photo || 'assets/default-recipe.jpg';
+            const displayName = recipe.contributor.username || 'Anonymous Chef';
+            const bio = recipe.contributor.bio || 'Recipe contributor';
+            const contributorId = recipe.contributor.id || '';
             // Set avatar
             if (this.contributorAvatar) {
                 this.contributorAvatar.src = this.getImageUrl(profileImage);
