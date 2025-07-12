@@ -702,90 +702,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // --- Fetch meals from backend (enhanced version) ---
+    // --- Enhanced recipe data management ---
     let mealData = [];
-
-    async function fetchMealsFromBackend() {
-        console.log('📡 Fetching meals from backend...');
-        
-        try {
-            let recipes = [];
-            
-            // Try enhanced API first if available and properly initialized
-            if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.searchRecipes === 'function') {
-                console.log('🚀 Using enhanced recipe API');
-                try {
-                    recipes = await window.enhancedRecipeAPI.searchRecipes('', {
-                        includeIngredients: true,
-                        limit: 100
-                    });
-                    
-                    // If we got recipes from enhanced API, return them
-                    if (recipes && Array.isArray(recipes) && recipes.length > 0) {
-                        console.log(`✅ Loaded ${recipes.length} recipes from enhanced API`);
-                        
-                        // Filter and format recipes
-                        const validRecipes = recipes.filter(recipe => 
-                            recipe && (recipe.title || recipe.name) && recipe.description
-                        ).map(recipe => ({
-                            ...recipe,
-                            title: recipe.title || recipe.name,
-                            type: recipe.meal_type || recipe.type || 'main',
-                            cuisine: recipe.cuisine || 'International',
-                            time: recipe.cooking_time || recipe.prep_time || 30,
-                            calories: recipe.calories || 'Unknown'
-                        }));
-                        
-                        return validRecipes;
-                    } else {
-                        console.log('⚠️ Enhanced API returned no recipes or invalid format');
-                    }
-                } catch (enhancedApiError) {
-                    console.warn('⚠️ Enhanced API call failed:', enhancedApiError);
-                }
-            } else {
-                console.log('⚠️ Enhanced API not available or searchRecipes method missing');
-            }
-            
-            // Fallback to regular API
-            console.log('📡 Trying direct API call as fallback...');
-            const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': localStorage.getItem('authToken') ? 
-                                   `Token ${localStorage.getItem('authToken')}` : ''
-                },
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Direct API failed: HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            recipes = data.results || data;
-            
-            // Filter and format recipes
-            const validRecipes = recipes.filter(recipe => 
-                recipe && (recipe.title || recipe.name) && recipe.description
-            ).map(recipe => ({
-                ...recipe,
-                title: recipe.title || recipe.name,
-                type: recipe.meal_type || recipe.type || 'main',
-                cuisine: recipe.cuisine || 'International',
-                time: recipe.cooking_time || recipe.prep_time || 30,
-                calories: recipe.calories || 'Unknown'
-            }));
-            
-            console.log(`✅ Loaded ${validRecipes.length} valid recipes`);
-            return validRecipes;
-            
-        } catch (error) {
-            console.error('❌ Error fetching meals:', error);
-            showToast('Failed to load meals. Please try again later.', 'error');
-            return [];
-        }
-    }
 
     // DOM elements
     const suggestionsGrid = document.querySelector('.suggestions-grid');
@@ -984,18 +902,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         input.addEventListener('input', updateDatalist);
     }
 
+    // Initialize ingredient validation and search
     await loadValidIngredients();
     if (ingredientInput) setupIngredientAutocomplete(ingredientInput);
 
-    // Initialize
-    setTimeout(async () => {
-        mealData = await fetchMealsFromBackend();
-        displayMeals(mealData);
-    }, 1000); // Simulate loading delay
-
-    // Utility function to load all recipes (for fallback scenarios)
+    // Utility function to load all recipes - matches Recipes.js approach
     async function loadAllRecipes() {
-        console.log('📚 Loading all recipes...');
+        console.log('📚 Loading all recipes (same as Recipes page)...');
         
         const suggestionsGrid = document.querySelector('.suggestions-grid');
         if (suggestionsGrid) {
@@ -1003,96 +916,155 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         try {
-            let recipes = [];
-            
-            // Try enhanced API first
-            if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.searchRecipes === 'function') {
-                console.log('🚀 Attempting to load recipes via enhanced API...');
-                try {
-                    recipes = await window.enhancedRecipeAPI.searchRecipes('', {
-                        includeIngredients: true,
-                        limit: 100
-                    });
-                    
-                    if (recipes && Array.isArray(recipes) && recipes.length > 0) {
-                        console.log(`✅ Enhanced API returned ${recipes.length} recipes`);
-                    } else {
-                        console.log('⚠️ Enhanced API returned no recipes, trying direct API...');
-                    }
-                } catch (apiError) {
-                    console.warn('⚠️ Enhanced API error:', apiError);
-                    recipes = [];
-                }
-            } else {
-                console.log('⚠️ Enhanced API not available or searchRecipes method missing, trying direct API...');
-            }
-            
-            // Fallback to regular API call if enhanced API didn't work
-            if (!recipes || !Array.isArray(recipes) || recipes.length === 0) {
-                console.log('📡 Trying direct API call...');
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': localStorage.getItem('authToken') ? 
-                                       `Token ${localStorage.getItem('authToken')}` : ''
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    recipes = data.results || data;
-                    console.log(`✅ Direct API returned ${recipes ? recipes.length : 0} recipes`);
-                } else {
-                    console.warn(`⚠️ Direct API failed with status: ${response.status}`);
-                }
-            }
+            // Use the same approach as Recipes.js
+            const recipes = await fetchRecipesFromBackend();
             
             if (recipes && Array.isArray(recipes) && recipes.length > 0) {
-                console.log(`✅ Successfully loaded ${recipes.length} recipes`);
+                console.log(`✅ Successfully loaded ${recipes.length} recipes from backend`);
+                console.log('� First few recipes:', recipes.slice(0, 2));
                 mealData = recipes;
                 displayMeals(recipes);
             } else {
-                console.log('⚠️ No recipes available from any source');
-                displayNoRecipesAvailable();
+                console.log('⚠️ No recipes available from backend, loading fallback data');
+                const fallbackRecipes = getFallbackMealRecipes();
+                mealData = fallbackRecipes;
+                displayMeals(fallbackRecipes);
             }
             
         } catch (error) {
             console.error('❌ Error loading all recipes:', error);
-            displayLoadError(error.message);
+            console.log('🔄 Loading fallback recipes due to error...');
+            const fallbackRecipes = getFallbackMealRecipes();
+            mealData = fallbackRecipes;
+            displayMeals(fallbackRecipes);
         }
     }
 
-    function displayNoRecipesAvailable() {
-        const suggestionsGrid = document.querySelector('.suggestions-grid');
-        if (!suggestionsGrid) return;
-        
-        suggestionsGrid.innerHTML = `
-            <div class="no-recipes" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                <i class="fas fa-utensils" style="font-size: 50px; color: #ccc; margin-bottom: 20px;"></i>
-                <h3>No recipes available</h3>
-                <p>It seems there are no recipes in the database yet.</p>
-                <a href="Recipes.html" style="margin-top: 15px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">
-                    Go to Recipes Page
-                </a>
-            </div>
-        `;
+    // Fetch recipes from backend - same logic as Recipes.js
+    async function fetchRecipesFromBackend() {
+        const token = localStorage.getItem('authToken');
+        try {
+            console.log('🔄 Fetching recipes from API (same as Recipes page)...');
+            const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                method: 'GET',
+                headers: token ? { 'Authorization': `Token ${token}` } : {},
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                console.warn('⚠️ API call failed, will use fallback data');
+                throw new Error(`API call failed with status: ${response.status}`);
+            }
+            console.log('✅ Successfully fetched recipes from API');
+            console.log('🔍 Raw API Response:', data);
+            console.log('🔍 Total recipes fetched:', data.length);
+            
+            // Only use recipes that have a contributor (created by users) - same as Recipes.js
+            const contributorRecipes = data.filter(recipe => recipe.contributor);
+            console.log(`🔍 Recipes with contributors: ${contributorRecipes.length}`);
+            
+            // Format recipes for MealSuggestion display
+            const formattedRecipes = contributorRecipes.map(recipe => ({
+                ...recipe,
+                title: recipe.title || recipe.name || 'Untitled Recipe',
+                description: recipe.description || 'No description available',
+                image: recipe.image || 'assets/default-recipe.jpg',
+                type: recipe.meal_type || recipe.type || 'main',
+                cuisine: recipe.cuisine || 'International',
+                time: recipe.cooking_time || recipe.prep_time || recipe.time || '30',
+                calories: recipe.calories || 'Unknown',
+                servings: recipe.servings || '1-2'
+            }));
+            
+            return formattedRecipes;
+        } catch (error) {
+            console.warn('⚠️ Network error fetching recipes:', error);
+            throw error; // Re-throw to trigger fallback in loadAllRecipes
+        }
     }
 
-    function displayLoadError(errorMessage) {
-        const suggestionsGrid = document.querySelector('.suggestions-grid');
-        if (!suggestionsGrid) return;
-        
-        suggestionsGrid.innerHTML = `
-            <div class="load-error" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                <i class="fas fa-exclamation-circle" style="font-size: 50px; color: #dc3545; margin-bottom: 20px;"></i>
-                <h3>Unable to load recipes</h3>
-                <p>Error: ${errorMessage}</p>
-                <button onclick="loadAllRecipes()" style="margin-top: 15px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    Try Again
-                </button>
-            </div>
-        `;
+    // Fallback recipes for when API is not available - similar to Recipes.js
+    function getFallbackMealRecipes() {
+        console.log('🍳 Loading fallback meal recipes...');
+        return [
+            {
+                id: 1,
+                title: "Sample Pasta Recipe",
+                name: "Quick Pasta",
+                description: "A delicious and quick pasta recipe perfect for any meal.",
+                image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop",
+                time: "20",
+                calories: "350",
+                servings: "4",
+                type: "dinner",
+                cuisine: "italian",
+                contributor: { 
+                    username: "ChopSmo Chef"
+                }
+            },
+            {
+                id: 2,
+                title: "Healthy Salad Bowl",
+                name: "Fresh Salad",
+                description: "A nutritious and colorful salad bowl with fresh vegetables.",
+                image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop",
+                time: "15",
+                calories: "200",
+                servings: "2",
+                type: "lunch",
+                cuisine: "mediterranean",
+                contributor: { 
+                    username: "ChopSmo Chef"
+                }
+            },
+            {
+                id: 3,
+                title: "Breakfast Pancakes",
+                name: "Fluffy Pancakes",
+                description: "Light and fluffy pancakes perfect for a weekend breakfast.",
+                image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop",
+                time: "25",
+                calories: "300",
+                servings: "3",
+                type: "breakfast",
+                cuisine: "american",
+                contributor: { 
+                    username: "ChopSmo Chef"
+                }
+            },
+            {
+                id: 4,
+                title: "Ndole with Plantains",
+                name: "Traditional Ndole",
+                description: "A delicious Cameroonian dish made with bitter leaves and ground nuts, served with plantains.",
+                image: "images/Ndole and Plaintain.jpg",
+                time: "90",
+                calories: "450",
+                servings: "4",
+                type: "dinner",
+                cuisine: "cameroonian",
+                contributor: { 
+                    username: "NjoyaChef"
+                }
+            },
+            {
+                id: 5,
+                title: "Eru with Garri",
+                name: "Forest Leaf Eru",
+                description: "A nutritious forest leaf dish cooked with palm oil and served with garri (cassava flakes).",
+                image: "images/Eru.jpg",
+                time: "65",
+                calories: "320",
+                servings: "6",
+                type: "dinner",
+                cuisine: "cameroonian",
+                contributor: { 
+                    username: "EruMaster"
+                }
+            }
+        ];
     }
+
+
 
     // Enhanced ingredient input functionality
     function setupIngredientInput() {
