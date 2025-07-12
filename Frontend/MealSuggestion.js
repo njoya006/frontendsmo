@@ -637,6 +637,38 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Initialize enhanced functionality
     console.log('🚀 Initializing enhanced meal suggestion system...');
     
+    // Wait for enhanced API to be available
+    let apiInitialized = false;
+    let retryCount = 0;
+    const maxRetries = 10;
+    
+    const waitForEnhancedAPI = () => {
+        return new Promise((resolve) => {
+            const checkAPI = () => {
+                if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.searchRecipes === 'function') {
+                    console.log('✅ Enhanced API is ready');
+                    apiInitialized = true;
+                    resolve(true);
+                } else if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`⏳ Waiting for enhanced API... attempt ${retryCount}/${maxRetries}`);
+                    setTimeout(checkAPI, 500);
+                } else {
+                    console.warn('⚠️ Enhanced API not available after max retries');
+                    resolve(false);
+                }
+            };
+            checkAPI();
+        });
+    };
+    
+    // Wait for enhanced API and then initialize
+    const apiReady = await waitForEnhancedAPI();
+    
+    if (!apiReady) {
+        console.warn('⚠️ Enhanced API not available, will use direct API calls only');
+    }
+    
     // Set up search functionality
     initSearch();
     
@@ -679,36 +711,44 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             let recipes = [];
             
-            // Try enhanced API first
-            if (window.enhancedRecipeAPI) {
+            // Try enhanced API first if available and properly initialized
+            if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.searchRecipes === 'function') {
                 console.log('🚀 Using enhanced recipe API');
-                recipes = await window.enhancedRecipeAPI.searchRecipes('', {
-                    includeIngredients: true,
-                    limit: 100
-                });
-                
-                // If we got recipes from enhanced API, return them
-                if (recipes && Array.isArray(recipes) && recipes.length > 0) {
-                    console.log(`✅ Loaded ${recipes.length} recipes from enhanced API`);
+                try {
+                    recipes = await window.enhancedRecipeAPI.searchRecipes('', {
+                        includeIngredients: true,
+                        limit: 100
+                    });
                     
-                    // Filter and format recipes
-                    const validRecipes = recipes.filter(recipe => 
-                        recipe && (recipe.title || recipe.name) && recipe.description
-                    ).map(recipe => ({
-                        ...recipe,
-                        title: recipe.title || recipe.name,
-                        type: recipe.meal_type || recipe.type || 'main',
-                        cuisine: recipe.cuisine || 'International',
-                        time: recipe.cooking_time || recipe.prep_time || 30,
-                        calories: recipe.calories || 'Unknown'
-                    }));
-                    
-                    return validRecipes;
+                    // If we got recipes from enhanced API, return them
+                    if (recipes && Array.isArray(recipes) && recipes.length > 0) {
+                        console.log(`✅ Loaded ${recipes.length} recipes from enhanced API`);
+                        
+                        // Filter and format recipes
+                        const validRecipes = recipes.filter(recipe => 
+                            recipe && (recipe.title || recipe.name) && recipe.description
+                        ).map(recipe => ({
+                            ...recipe,
+                            title: recipe.title || recipe.name,
+                            type: recipe.meal_type || recipe.type || 'main',
+                            cuisine: recipe.cuisine || 'International',
+                            time: recipe.cooking_time || recipe.prep_time || 30,
+                            calories: recipe.calories || 'Unknown'
+                        }));
+                        
+                        return validRecipes;
+                    } else {
+                        console.log('⚠️ Enhanced API returned no recipes or invalid format');
+                    }
+                } catch (enhancedApiError) {
+                    console.warn('⚠️ Enhanced API call failed:', enhancedApiError);
                 }
+            } else {
+                console.log('⚠️ Enhanced API not available or searchRecipes method missing');
             }
             
             // Fallback to regular API
-            console.log('📡 Using fallback API');
+            console.log('📡 Trying direct API call as fallback...');
             const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
                 method: 'GET',
                 headers: {
@@ -719,7 +759,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                throw new Error(`Direct API failed: HTTP ${response.status}: ${response.statusText}`);
             }
             
             const data = await response.json();
@@ -966,20 +1006,25 @@ document.addEventListener('DOMContentLoaded', async function() {
             let recipes = [];
             
             // Try enhanced API first
-            if (window.enhancedRecipeAPI) {
+            if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.searchRecipes === 'function') {
                 console.log('🚀 Attempting to load recipes via enhanced API...');
-                recipes = await window.enhancedRecipeAPI.searchRecipes('', {
-                    includeIngredients: true,
-                    limit: 100
-                });
-                
-                if (recipes && Array.isArray(recipes) && recipes.length > 0) {
-                    console.log(`✅ Enhanced API returned ${recipes.length} recipes`);
-                } else {
-                    console.log('⚠️ Enhanced API returned no recipes, trying direct API...');
+                try {
+                    recipes = await window.enhancedRecipeAPI.searchRecipes('', {
+                        includeIngredients: true,
+                        limit: 100
+                    });
+                    
+                    if (recipes && Array.isArray(recipes) && recipes.length > 0) {
+                        console.log(`✅ Enhanced API returned ${recipes.length} recipes`);
+                    } else {
+                        console.log('⚠️ Enhanced API returned no recipes, trying direct API...');
+                    }
+                } catch (apiError) {
+                    console.warn('⚠️ Enhanced API error:', apiError);
+                    recipes = [];
                 }
             } else {
-                console.log('⚠️ Enhanced API not available, trying direct API...');
+                console.log('⚠️ Enhanced API not available or searchRecipes method missing, trying direct API...');
             }
             
             // Fallback to regular API call if enhanced API didn't work
