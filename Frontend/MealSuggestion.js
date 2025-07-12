@@ -645,7 +645,30 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Load initial data
     console.log('📚 Loading initial meal data...');
-    await loadAllRecipes();
+    try {
+        await loadAllRecipes();
+    } catch (error) {
+        console.error('❌ Failed to load initial recipes:', error);
+        // Show a user-friendly message instead of just failing
+        const suggestionsGrid = document.querySelector('.suggestions-grid');
+        if (suggestionsGrid) {
+            suggestionsGrid.innerHTML = `
+                <div class="load-error" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 50px; color: #f44336; margin-bottom: 20px;"></i>
+                    <h3>Unable to load recipes</h3>
+                    <p>There was an issue loading the recipe database. This could be due to:</p>
+                    <ul style="text-align: left; display: inline-block; margin: 20px 0;">
+                        <li>Network connectivity issues</li>
+                        <li>Server maintenance</li>
+                        <li>Authentication problems</li>
+                    </ul>
+                    <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+    }
 
     // --- Fetch meals from backend (enhanced version) ---
     let mealData = [];
@@ -663,25 +686,44 @@ document.addEventListener('DOMContentLoaded', async function() {
                     includeIngredients: true,
                     limit: 100
                 });
+                
+                // If we got recipes from enhanced API, return them
+                if (recipes && Array.isArray(recipes) && recipes.length > 0) {
+                    console.log(`✅ Loaded ${recipes.length} recipes from enhanced API`);
+                    
+                    // Filter and format recipes
+                    const validRecipes = recipes.filter(recipe => 
+                        recipe && (recipe.title || recipe.name) && recipe.description
+                    ).map(recipe => ({
+                        ...recipe,
+                        title: recipe.title || recipe.name,
+                        type: recipe.meal_type || recipe.type || 'main',
+                        cuisine: recipe.cuisine || 'International',
+                        time: recipe.cooking_time || recipe.prep_time || 30,
+                        calories: recipe.calories || 'Unknown'
+                    }));
+                    
+                    return validRecipes;
+                }
             }
             
             // Fallback to regular API
-            if (!recipes || recipes.length === 0) {
-                console.log('📡 Using fallback API');
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                recipes = data.results || data;
+            console.log('📡 Using fallback API');
+            const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') ? 
+                                   `Token ${localStorage.getItem('authToken')}` : ''
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
+            
+            const data = await response.json();
+            recipes = data.results || data;
             
             // Filter and format recipes
             const validRecipes = recipes.filter(recipe => 
@@ -925,14 +967,24 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // Try enhanced API first
             if (window.enhancedRecipeAPI) {
+                console.log('🚀 Attempting to load recipes via enhanced API...');
                 recipes = await window.enhancedRecipeAPI.searchRecipes('', {
                     includeIngredients: true,
                     limit: 100
                 });
+                
+                if (recipes && Array.isArray(recipes) && recipes.length > 0) {
+                    console.log(`✅ Enhanced API returned ${recipes.length} recipes`);
+                } else {
+                    console.log('⚠️ Enhanced API returned no recipes, trying direct API...');
+                }
+            } else {
+                console.log('⚠️ Enhanced API not available, trying direct API...');
             }
             
-            // Fallback to regular API call
-            if (!recipes || recipes.length === 0) {
+            // Fallback to regular API call if enhanced API didn't work
+            if (!recipes || !Array.isArray(recipes) || recipes.length === 0) {
+                console.log('📡 Trying direct API call...');
                 const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
                     headers: {
                         'Content-Type': 'application/json',
@@ -944,14 +996,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (response.ok) {
                     const data = await response.json();
                     recipes = data.results || data;
+                    console.log(`✅ Direct API returned ${recipes ? recipes.length : 0} recipes`);
+                } else {
+                    console.warn(`⚠️ Direct API failed with status: ${response.status}`);
                 }
             }
             
-            if (recipes && recipes.length > 0) {
-                console.log(`✅ Loaded ${recipes.length} recipes`);
+            if (recipes && Array.isArray(recipes) && recipes.length > 0) {
+                console.log(`✅ Successfully loaded ${recipes.length} recipes`);
                 mealData = recipes;
                 displayMeals(recipes);
             } else {
+                console.log('⚠️ No recipes available from any source');
                 displayNoRecipesAvailable();
             }
             

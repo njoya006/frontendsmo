@@ -1657,6 +1657,96 @@ class EnhancedRecipeAPI {
             per_page: limit
         };
     }
+
+    // Search recipes with various criteria (needed by MealSuggestion.js)
+    async searchRecipes(searchTerm = '', options = {}) {
+        console.log(`🔍 Searching recipes with term: "${searchTerm}"`);
+        
+        try {
+            // Try real API first
+            if (this.apiStatus.isAvailable) {
+                const endpoints = [
+                    `/api/recipes/search/`,
+                    `/api/recipes/`,
+                    `/search/recipes/`
+                ];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const params = new URLSearchParams();
+                        if (searchTerm) params.append('search', searchTerm);
+                        if (options.limit) params.append('limit', options.limit);
+                        if (options.page) params.append('page', options.page);
+                        
+                        const url = `${this.baseUrl}${endpoint}${params.toString() ? '?' + params.toString() : ''}`;
+                        console.log(`🔍 Searching recipes from: ${url}`);
+                        
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 8000);
+                        
+                        const response = await fetch(url, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'Authorization': `Token ${this.getAuthToken()}`
+                            },
+                            signal: controller.signal
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('✅ Recipe search results received from API:', data);
+                            
+                            // Extract recipes from different response formats
+                            let recipes = data.results || data.recipes || data;
+                            if (!Array.isArray(recipes)) {
+                                recipes = [data]; // Single recipe response
+                            }
+                            
+                            return recipes;
+                        }
+                        
+                        console.warn(`⚠️ Recipe search from ${endpoint} failed: ${response.status}`);
+                    } catch (endpointError) {
+                        console.warn(`⚠️ Error with search endpoint ${endpoint}:`, endpointError.message);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error searching recipes from API:', error);
+        }
+        
+        // Use mock data for recipe search
+        console.log('🔄 Using mock data for recipe search');
+        return this.getMockSearchResults(searchTerm, options);
+    }
+
+    // Get mock search results
+    getMockSearchResults(searchTerm = '', options = {}) {
+        let allRecipes = Object.values(this.mockData.recipes);
+        
+        // Filter by search term if provided
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            allRecipes = allRecipes.filter(recipe => 
+                recipe.title.toLowerCase().includes(term) ||
+                recipe.description.toLowerCase().includes(term) ||
+                recipe.cuisine.toLowerCase().includes(term) ||
+                recipe.ingredients.some(ing => ing.ingredient_name.toLowerCase().includes(term))
+            );
+        }
+        
+        // Apply limit if specified
+        if (options.limit) {
+            allRecipes = allRecipes.slice(0, options.limit);
+        }
+        
+        console.log(`🔄 Mock search returning ${allRecipes.length} recipes`);
+        return allRecipes;
+    }
 }
 
 // Usage example (in your app code):
