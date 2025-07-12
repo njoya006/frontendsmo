@@ -1133,7 +1133,38 @@
                         <span class="search-tag">🌶️ Spicy <button class="remove-tag"><i class="fas fa-times"></i></button></span>
                     </div>
                 </div>
-            </section><div class="ingredient-selection">
+            </section>            <!-- Budget-Based Meal Suggestions -->
+            <div class="budget-selection" style="margin: 40px 0;">
+                <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%); backdrop-filter: blur(10px); padding: 40px; border-radius: 24px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(76, 175, 80, 0.08); border: 1px solid rgba(76, 175, 80, 0.1); position: relative;">
+                    <div style="position: absolute; top: 20px; right: 30px; font-size: 24px; opacity: 0.7;">💰</div>
+                    
+                    <label for="budgetInput" style="font-weight: 700; font-size: 18px; color: var(--primary-color); margin-bottom: 20px; display: block; letter-spacing: 0.3px;">
+                        💰 What's your budget for meals?
+                    </label>
+                    <p style="font-size: 14px; color: #64748b; margin-bottom: 15px; font-weight: 500;">
+                        Enter your budget amount and currency. We'll suggest delicious and affordable meals within your budget!
+                    </p>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: end; margin: 20px 0;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="budgetInput" style="display: block; font-weight: 600; color: #64748b; margin-bottom: 8px; font-size: 14px;">Budget Amount</label>
+                            <input id="budgetInput" type="number" placeholder="Enter amount..." style="width: 100%; padding: 18px 24px; border-radius: 15px; border: 2px solid #e8f5e8; font-size: 16px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(135deg, #ffffff 0%, #fafffe 100%); font-family: 'Poppins', sans-serif; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);" min="1" step="0.01">
+                        </div>
+                        <div style="min-width: 150px;">
+                            <label for="currencySelect" style="display: block; font-weight: 600; color: #64748b; margin-bottom: 8px; font-size: 14px;">Currency</label>
+                            <select id="currencySelect" style="width: 100%; padding: 18px 20px; border-radius: 15px; border: 2px solid #e8f5e8; font-size: 16px; background: linear-gradient(135deg, #ffffff 0%, #fafffe 100%); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Poppins', sans-serif; font-weight: 500; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);">
+                                <option value="XAF">XAF (Central African Francs)</option>
+                                <option value="USD">USD (US Dollars)</option>
+                            </select>
+                        </div>
+                        <button id="suggestByBudgetBtn" class="btn btn-primary" style="font-size: 16px; padding: 18px 28px; border-radius: 15px; font-weight: 700; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2); display: flex; align-items: center; gap: 10px; white-space: nowrap;">
+                            💰 Find Budget Meals
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ingredient-selection">
                 <label for="ingredientInput">🥬 What ingredients do you have available?</label>
                 <p style="font-size: 14px; color: #64748b; margin-bottom: 15px; font-weight: 500;">
                     Enter ingredients separated by commas or press Enter after each one. We'll suggest delicious meals you can make!

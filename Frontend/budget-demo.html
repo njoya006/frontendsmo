@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Recipe Demo - ChopSmo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .demo-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .budget-input {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 200px;
+        }
+        .currency-select {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .search-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .recipe-result {
+            background: #f9f9f9;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .cost {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #4CAF50;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🍽️ ChopSmo Budget Recipe Finder Demo</h1>
+        <p>Test the budget-based recipe suggestion feature:</p>
+        
+        <div>
+            <label>Budget Amount:</label><br>
+            <input type="number" id="budgetInput" class="budget-input" placeholder="Enter budget amount" value="2000">
+        </div>
+        
+        <div>
+            <label>Currency:</label><br>
+            <select id="currencySelect" class="currency-select">
+                <option value="XAF">XAF (Central African Francs)</option>
+                <option value="USD">USD (US Dollars)</option>
+            </select>
+        </div>
+        
+        <button onclick="searchByBudget()" class="search-btn">🔍 Find Recipes</button>
+        <button onclick="searchByIngredients()" class="search-btn">🥬 Ingredients Demo</button>
+        <button onclick="getAllRecipes()" class="search-btn">📋 All Recipes</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script src="enhanced-recipe-api.js"></script>
+    <script>
+        async function searchByBudget() {
+            const budget = document.getElementById('budgetInput').value;
+            const currency = document.getElementById('currencySelect').value;
+            const resultsDiv = document.getElementById('results');
+            
+            if (!budget || budget <= 0) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a valid budget amount</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div>🔍 Searching for recipes within your budget...</div>';
+            
+            try {
+                const result = await window.enhancedRecipeAPI.suggestRecipesByBudget(parseFloat(budget), currency);
+                
+                if (result.suggestions && result.suggestions.length > 0) {
+                    let html = `<div class="success">${result.message}</div>`;
+                    
+                    result.suggestions.forEach(recipe => {
+                        html += `
+                            <div class="recipe-result">
+                                <h3>${recipe.title}</h3>
+                                <p>${recipe.description}</p>
+                                <p><strong>Cost:</strong> <span class="cost">${recipe.estimated_cost} ${recipe.currency}</span></p>
+                                <p><strong>Difficulty:</strong> ${recipe.difficulty}</p>
+                                <p><strong>Prep Time:</strong> ${recipe.prep_time} mins | <strong>Cook Time:</strong> ${recipe.cook_time} mins</p>
+                                <p><strong>Savings:</strong> ${recipe.cost_savings} ${currency} (${recipe.cost_percentage}% of budget)</p>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">${result.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function searchByIngredients() {
+            const resultsDiv = document.getElementById('results');
+            const ingredients = ['garlic', 'palm oil', 'beef'];
+            
+            resultsDiv.innerHTML = `<div>🥬 Searching for recipes with ingredients: ${ingredients.join(', ')}...</div>`;
+            
+            try {
+                const result = await window.enhancedRecipeAPI.suggestRecipesByIngredients(ingredients);
+                
+                if (result.recipes && result.recipes.length > 0) {
+                    let html = `<div class="success">${result.message}</div>`;
+                    
+                    result.recipes.forEach(recipe => {
+                        html += `
+                            <div class="recipe-result">
+                                <h3>${recipe.title}</h3>
+                                <p>${recipe.description}</p>
+                                <p><strong>Match Score:</strong> ${recipe.match_score}/${ingredients.length} ingredients (${recipe.match_percentage}%)</p>
+                                <p><strong>Cost:</strong> <span class="cost">${recipe.estimated_cost} ${recipe.currency}</span></p>
+                                <p><strong>Difficulty:</strong> ${recipe.difficulty}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">${result.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function getAllRecipes() {
+            const resultsDiv = document.getElementById('results');
+            
+            resultsDiv.innerHTML = '<div>📋 Loading all available recipes...</div>';
+            
+            try {
+                const result = await window.enhancedRecipeAPI.getAllRecipes();
+                
+                if (result.results && result.results.length > 0) {
+                    let html = `<div class="success">Found ${result.count} recipes total</div>`;
+                    
+                    result.results.forEach(recipe => {
+                        html += `
+                            <div class="recipe-result">
+                                <h3>${recipe.title}</h3>
+                                <p>${recipe.description}</p>
+                                <p><strong>Cost:</strong> <span class="cost">${recipe.estimated_cost} ${recipe.currency}</span></p>
+                                <p><strong>Difficulty:</strong> ${recipe.difficulty} | <strong>Cuisine:</strong> ${recipe.cuisine}</p>
+                                <p><strong>Prep:</strong> ${recipe.prep_time}m | <strong>Cook:</strong> ${recipe.cook_time}m | <strong>Serves:</strong> ${recipe.servings}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">No recipes found</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-run demo on page load
+        window.addEventListener('load', () => {
+            console.log('🎯 ChopSmo Budget Demo loaded successfully!');
+            console.log('Available API methods:', Object.getOwnPropertyNames(window.enhancedRecipeAPI.__proto__));
+        });
+    </script>
+</body>
+</html>

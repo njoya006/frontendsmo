@@ -281,14 +281,11 @@ async function handleIngredientSuggestion() {
         // Use enhanced API if available
         if (window.enhancedRecipeAPI) {
             console.log('🚀 Using enhanced recipe API for ingredient suggestions');
-            suggestions = await window.enhancedRecipeAPI.getRecipeSuggestions(ingredientNames, {
-                limit: 15,
-                includeMissing: true
-            });
+            suggestions = await window.enhancedRecipeAPI.suggestRecipesByIngredients(ingredientNames);
             
             if (suggestions.success && suggestions.recipes.length > 0) {
                 console.log('✅ Enhanced API suggestions received:', suggestions);
-                displayIngredientSuggestions(suggestions.recipes, ingredientNames);
+                displayIngredientSuggestions(suggestions.recipes, ingredientNames, suggestions);
             } else {
                 console.log('⚠️ Enhanced API returned no results, trying fallback');
                 displaySuggestionError(suggestions.error, suggestions.suggestions, ingredientNames);
@@ -311,7 +308,7 @@ async function handleIngredientSuggestion() {
     }
 }
 
-function displayIngredientSuggestions(suggestions, userIngredients) {
+function displayIngredientSuggestions(suggestions, userIngredients, resultData = {}) {
     console.log('🍽️ Displaying ingredient-based suggestions:', suggestions);
     
     const suggestionsGrid = document.querySelector('.suggestions-grid');
@@ -321,13 +318,17 @@ function displayIngredientSuggestions(suggestions, userIngredients) {
     suggestionsGrid.innerHTML = '';
     
     // Add header for ingredient-based results
+    const sourceNote = resultData.source === 'api' ? '✅ Live API Data' : '📝 Demo Data';
+    const permissionNote = resultData.permission_note ? `<br><small style="color: #ff9800; font-style: italic;">${resultData.permission_note}</small>` : '';
+    
     suggestionsGrid.innerHTML = `
         <div class="suggestions-header" style="grid-column: 1 / -1; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
             <h3 style="margin: 0 0 10px 0; color: #2c3e50;">
                 <i class="fas fa-magic"></i> Recipe Suggestions Based On Your Ingredients
+                <span style="font-size: 12px; background: ${resultData.source === 'api' ? '#4CAF50' : '#ff9800'}; color: white; padding: 2px 8px; border-radius: 12px; margin-left: 10px;">${sourceNote}</span>
             </h3>
             <p style="margin: 0; color: #666;">
-                <strong>Your ingredients:</strong> ${userIngredients.join(', ')}
+                <strong>Your ingredients:</strong> ${userIngredients.join(', ')}${permissionNote}
             </p>
         </div>
     `;
@@ -740,46 +741,26 @@ document.addEventListener('DOMContentLoaded', async function() {
             const type = meal.type ? (meal.type.charAt ? meal.type.charAt(0).toUpperCase() + meal.type.slice(1) : meal.type) : '';
             const cuisine = meal.cuisine ? (meal.cuisine.charAt ? meal.cuisine.charAt(0).toUpperCase() + meal.cuisine.slice(1) : meal.cuisine) : '';
             const time = meal.time || '';
-            const calories = meal.calories || '';
-            const mealCard = document.createElement('div');
-            mealCard.className = 'meal-card';
-            mealCard.innerHTML = `
-                <div class="meal-image" style="background-image: url(${image})">
-                    <span class="meal-badge">${type}</span>
-                </div>
-                <div class="meal-content">
-                    <h3 class="meal-title">${title}</h3>
-                    <p class="meal-description">${description}</p>
-                    <div class="meal-meta">
-                        <span><i class="fas fa-globe-americas"></i> ${cuisine}</span>
-                        <span><i class="fas fa-clock"></i> ${time} mins</span>
-                        <span><i class="fas fa-fire"></i> ${calories} kcal</span>
+            const calories = meal.calories || '';            suggestionsGrid.innerHTML += `
+                <div class="meal-card" onclick="viewMeal('${meal.id}')" style="cursor: pointer;">
+                    <div class="meal-image" style="background-image: url(${image})">
+                        <span class="meal-badge">${type}</span>
                     </div>
-                    <div class="meal-actions">
-                        <button class="btn-save" data-id="${meal.id}">
-                            <i class="fas fa-plus"></i> Save
-                        </button>
-                        <button class="btn-view" data-id="${meal.id}">
-                            <i class="fas fa-eye"></i> View
-                        </button>
+                    <div class="meal-content">
+                        <h3 class="meal-title">${title}</h3>
+                        <p class="meal-description">${description}</p>
+                        <div class="meal-meta">
+                            <span><i class="fas fa-globe-americas"></i> ${cuisine}</span>
+                            <span><i class="fas fa-clock"></i> ${time} mins</span>
+                            <span><i class="fas fa-fire"></i> ${calories} kcal</span>
+                        </div>
+                        <div class="meal-actions" onclick="event.stopPropagation();">
+                            <button class="btn-save" data-id="${meal.id}"><i class="fas fa-plus"></i> Save</button>
+                            <button class="btn-view" data-id="${meal.id}"><i class="fas fa-eye"></i> View</button>
+                        </div>
                     </div>
                 </div>
             `;
-            suggestionsGrid.appendChild(mealCard);
-        });
-
-        
-        // Add event listeners to buttons
-        document.querySelectorAll('.btn-save').forEach(btn => {
-            btn.addEventListener('click', function() {
-                saveMeal(this.dataset.id);
-            });
-        });
-        
-        document.querySelectorAll('.btn-view').forEach(btn => {
-            btn.addEventListener('click', function() {
-                viewMeal(this.dataset.id);
-            });
         });
     }
 
@@ -839,8 +820,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     const ingredientInput = document.getElementById('ingredientInput');
     const ingredientTagsContainer = document.getElementById('ingredientTags');
     const suggestMealsBtn = document.getElementById('suggestMealsBtn');
+    const suggestByBudgetBtn = document.getElementById('suggestByBudgetBtn');
+    
     if (suggestMealsBtn) {
         suggestMealsBtn.addEventListener('click', handleIngredientSuggestion);
+    }
+    
+    if (suggestByBudgetBtn) {
+        suggestByBudgetBtn.addEventListener('click', handleBudgetSuggestion);
     }
 
     function addIngredientTag(name) {
@@ -1195,4 +1182,240 @@ function showToast(message, type = 'info') {
 
 // Make globally available
 window.showToast = showToast;
-});
+
+// --- Budget-Based Meal Suggestions ---
+async function handleBudgetSuggestion() {
+    console.log('💰 Starting budget-based suggestion process...');
+    
+    const budgetInput = document.getElementById('budgetInput');
+    const currencySelect = document.getElementById('currencySelect');
+    
+    if (!budgetInput || !currencySelect) {
+        console.error('Budget input elements not found');
+        return;
+    }
+    
+    const budget = parseFloat(budgetInput.value);
+    const currency = currencySelect.value;
+    
+    if (!budget || budget <= 0) {
+        alert('Please enter a valid budget amount greater than 0.');
+        return;
+    }
+    
+    console.log(`💰 Budget: ${budget} ${currency}`);
+    
+    // Show loading state
+    const suggestionsGrid = document.querySelector('.suggestions-grid');
+    if (suggestionsGrid) {
+        suggestionsGrid.innerHTML = `
+            <div class="loading-budget" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <div class="spinner" style="margin-bottom: 20px;">💰</div>
+                <h3>Finding budget-friendly meals...</h3>
+                <p>Budget: ${budget} ${currency}</p>
+            </div>
+        `;
+    }
+    
+    try {
+        let budgetSuggestions;
+        
+        // Use enhanced API if available
+        if (window.enhancedRecipeAPI) {
+            console.log('🚀 Using enhanced recipe API for budget suggestions');
+            budgetSuggestions = await window.enhancedRecipeAPI.suggestRecipesByBudget(budget, currency);
+            
+            if (budgetSuggestions && budgetSuggestions.suggestions && budgetSuggestions.suggestions.length > 0) {
+                console.log('✅ Budget suggestions received:', budgetSuggestions);
+                displayBudgetSuggestions(budgetSuggestions, budget, currency);
+            } else {
+                console.log('⚠️ No budget suggestions found');
+                displayNoBudgetMatches(budget, currency);
+            }
+        } else {
+            // Fallback to regular API
+            console.log('📡 Using fallback budget API');
+            displayNoBudgetMatches(budget, currency);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error getting budget suggestions:', error);
+        displayBudgetError(error.message, budget, currency);
+    }
+}
+
+function displayBudgetSuggestions(budgetData, userBudget, currency) {
+    console.log('💰 Displaying budget-based suggestions:', budgetData);
+    
+    const suggestionsGrid = document.querySelector('.suggestions-grid');
+    if (!suggestionsGrid) return;
+    
+    // Clear loading state
+    suggestionsGrid.innerHTML = '';
+    
+    // Add header for budget-based results
+    const sourceNote = budgetData.source === 'api' ? '✅ Live API Data' : '📝 Demo Data';
+    suggestionsGrid.innerHTML = `
+        <div class="budget-header" style="grid-column: 1 / -1; margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #e8f5e8 0%, #f0fdf4 100%); border-radius: 12px; border: 2px solid #4CAF50;">
+            <h3 style="margin: 0 0 10px 0; color: #2E7D32; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-coins"></i> Budget-Friendly Recipe Suggestions
+                <span style="font-size: 12px; background: ${budgetData.source === 'api' ? '#4CAF50' : '#ff9800'}; color: white; padding: 2px 8px; border-radius: 12px; margin-left: auto;">${sourceNote}</span>
+            </h3>
+            <p style="margin: 0; color: #388E3C; font-weight: 600;">
+                <strong>Your budget:</strong> ${userBudget} ${currency} | 
+                <strong>Found:</strong> ${budgetData.total_found || budgetData.suggestions.length} recipes
+            </p>
+            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">
+                ${budgetData.message}
+            </p>
+        </div>
+    `;
+    
+    // Process and display suggestions
+    budgetData.suggestions.forEach((recipe, index) => {
+        const title = recipe.title || recipe.name || 'Untitled Recipe';
+        const description = recipe.description || 'No description available';
+        const image = recipe.image_url || recipe.image || 'assets/default-recipe.jpg';
+        const cuisine = recipe.cuisine || 'International';
+        const cookingTime = recipe.cook_time || recipe.cooking_time || recipe.time || 'Unknown';
+        const difficulty = recipe.difficulty || 'Medium';
+        const cost = recipe.estimated_cost || 0;
+        const recipeCurrency = recipe.currency || currency;
+        const savings = recipe.cost_savings || 0;
+        const costPercentage = recipe.cost_percentage || 0;
+        
+        // Format cost display
+        const costDisplay = `${cost} ${recipeCurrency}`;
+        const savingsDisplay = savings > 0 ? `Save ${savings} ${currency}` : '';
+        const percentageDisplay = costPercentage > 0 ? `${costPercentage}% of budget` : '';
+        
+        suggestionsGrid.innerHTML += `
+            <div class="meal-card budget-card" style="position: relative; cursor: pointer; border: 2px solid #4CAF50; background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 255, 248, 0.9) 100%);" onclick="viewMeal('${recipe.id}')">
+                <div class="budget-badge" style="position: absolute; top: 10px; right: 10px; background: #4CAF50; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; z-index: 2;">
+                    💰 ${costDisplay}
+                </div>
+                <div class="meal-image" style="background-image: url('${image}'); height: 200px; background-size: cover; background-position: center; border-radius: 8px 8px 0 0;">
+                    <span class="meal-badge" style="background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; position: absolute; bottom: 10px; left: 10px;">
+                        ${cuisine}
+                    </span>
+                </div>
+                <div class="meal-content" style="padding: 15px;">
+                    <h3 class="meal-title" style="margin: 0 0 8px 0; font-size: 18px; line-height: 1.3; color: #2E7D32;">${title}</h3>
+                    <p class="meal-description" style="margin: 0 0 10px 0; color: #666; font-size: 14px; line-height: 1.4;">${description}</p>
+                    
+                    <div class="meal-meta" style="display: flex; gap: 15px; margin-bottom: 15px; font-size: 13px; color: #888;">
+                        <span><i class="fas fa-clock"></i> ${cookingTime} mins</span>
+                        <span><i class="fas fa-chart-bar"></i> ${difficulty}</span>
+                    </div>
+                    
+                    <div class="budget-info" style="background: rgba(76, 175, 80, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(76, 175, 80, 0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-weight: 600; color: #2E7D32;">Cost: ${costDisplay}</span>
+                            ${savingsDisplay ? `<span style="color: #4CAF50; font-size: 12px;">💾 ${savingsDisplay}</span>` : ''}
+                        </div>
+                        ${percentageDisplay ? `<div style="font-size: 12px; color: #666;">${percentageDisplay}</div>` : ''}
+                    </div>
+                    
+                    <div class="meal-actions" style="display: flex; gap: 10px;" onclick="event.stopPropagation();">
+                        <button class="btn-view" data-id="${recipe.id}" style="flex: 1; padding: 8px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-eye"></i> View Recipe
+                        </button>
+                        <button class="btn-save" data-id="${recipe.id}" style="padding: 8px 12px; background: #2E7D32; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            <i class="fas fa-bookmark"></i> Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Add event listeners to buttons
+    document.querySelectorAll('.btn-save').forEach(btn => {
+        btn.addEventListener('click', function() {
+            saveMeal(this.dataset.id);
+        });
+    });
+    
+    document.querySelectorAll('.btn-view').forEach(btn => {
+        btn.addEventListener('click', function() {
+            viewMeal(this.dataset.id);
+        });
+    });
+    
+    console.log('✅ Budget suggestions displayed successfully');
+}
+
+function displayNoBudgetMatches(budget, currency) {
+    const suggestionsGrid = document.querySelector('.suggestions-grid');
+    if (!suggestionsGrid) return;
+    
+    suggestionsGrid.innerHTML = `
+        <div class="no-budget-matches" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+            <i class="fas fa-piggy-bank" style="font-size: 50px; color: #6c757d; margin-bottom: 20px;"></i>
+            <h3>No recipes found within your budget</h3>
+            <p><strong>Your budget:</strong> ${budget} ${currency}</p>
+            <div style="margin: 20px 0; padding: 15px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeaa7;">
+                <strong>💡 Tips to find budget-friendly meals:</strong>
+                <ul style="text-align: left; display: inline-block; margin-top: 10px;">
+                    <li>Try increasing your budget amount</li>
+                    <li>Look for recipes with basic ingredients</li>
+                    <li>Consider vegetarian options (often more affordable)</li>
+                    <li>Check for seasonal ingredient recipes</li>
+                </ul>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="increaseBudgetSuggestion()" style="padding: 10px 20px; background: #ffc107; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                    💰 Try Higher Budget
+                </button>
+                <button onclick="loadAllRecipes()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    📋 Browse All Recipes
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function displayBudgetError(errorMessage, budget, currency) {
+    const suggestionsGrid = document.querySelector('.suggestions-grid');
+    if (!suggestionsGrid) return;
+    
+    suggestionsGrid.innerHTML = `
+        <div class="budget-error" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 50px; color: #f44336; margin-bottom: 20px;"></i>
+            <h3>Error finding budget suggestions</h3>
+            <p><strong>Your budget:</strong> ${budget} ${currency}</p>
+            <div style="margin: 20px 0; padding: 15px; background: #ffebee; border-radius: 8px;">
+                <strong>Error:</strong> ${errorMessage}
+            </div>
+            <button onclick="loadAllRecipes()" style="margin-top: 15px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Browse All Recipes Instead
+            </button>
+        </div>
+    `;
+}
+
+function increaseBudgetSuggestion() {
+    const budgetInput = document.getElementById('budgetInput');
+    const currencySelect = document.getElementById('currencySelect');
+    
+    if (budgetInput && currencySelect) {
+        const currentBudget = parseFloat(budgetInput.value) || 0;
+        const currency = currencySelect.value;
+        
+        // Suggest a higher budget based on currency
+        const newBudget = currency === 'USD' ? 
+            Math.ceil((currentBudget + 5) / 5) * 5 : // Round to nearest $5
+            Math.ceil((currentBudget + 1000) / 1000) * 1000; // Round to nearest 1000 XAF
+        
+        budgetInput.value = newBudget;
+        
+        // Show suggestion message
+        alert(`💡 Try increasing your budget to ${newBudget} ${currency} for more options!`);
+    }
+}
+
+// Make budget functions globally available
+window.handleBudgetSuggestion = handleBudgetSuggestion;
+window.increaseBudgetSuggestion = increaseBudgetSuggestion;
+
+}); // End of DOMContentLoaded

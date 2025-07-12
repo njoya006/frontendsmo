@@ -1032,40 +1032,49 @@
             justify-content: space-between;
             gap: 8px;
             min-width: 250px;
+            margin-top: 20px;
         }
         
-        .breakdown-item {
+        /* Rating Breakdown Bar Styles */
+        .rating-breakdown {
+            margin-top: 20px;
+        }
+        
+        .rating-bar {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
         }
         
-        .breakdown-label {
-            min-width: 35px;
-            font-weight: 600;
+        .rating-label {
+            color: var(--gray-color);
+            min-width: 60px;
+            font-weight: 500;
         }
         
-        .breakdown-bar {
-            background: var(--border-color);
-            height: 12px;
-            border-radius: 10px;
+        .bar-container {
             flex-grow: 1;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
             overflow: hidden;
             position: relative;
         }
         
-        .breakdown-fill {
+        .bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--secondary-color), #FFB74D);
-            border-radius: 10px;
-            width: 0; /* Will be set by JS */
-            transition: width 1s ease-out;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            border-radius: 4px;
+            transition: width 0.6s ease-out;
+            min-width: 2px; /* Ensure at least some visibility */
         }
         
-        .breakdown-count {
+        .rating-count {
             color: var(--gray-color);
-            font-size: 0.9rem;
-            min-width: 45px;
+            font-weight: 600;
+            min-width: 30px;
             text-align: right;
         }
         

@@ -1299,17 +1299,23 @@ class RecipeDetailManager {
     
     // Helper method to update rating breakdown
     updateRatingBreakdown(container, ratingsData) {
+        console.log('📊 Updating rating breakdown with:', ratingsData);
         const distribution = ratingsData.distribution || {};
         const totalRatings = ratingsData.total_ratings || 0;
+        
+        console.log('📊 Distribution:', distribution);
+        console.log('📊 Total ratings:', totalRatings);
         
         let breakdownHTML = '';
         for (let i = 5; i >= 1; i--) {
             const count = distribution[i] || 0;
             const percentage = totalRatings > 0 ? (count / totalRatings) * 100 : 0;
             
+            console.log(`⭐ ${i} stars: ${count} ratings (${percentage.toFixed(1)}%)`);
+            
             breakdownHTML += `
                 <div class="rating-bar">
-                    <span class="rating-label">${i} star</span>
+                    <span class="rating-label">${i} star${i !== 1 ? 's' : ''}</span>
                     <div class="bar-container">
                         <div class="bar-fill" style="width: ${percentage}%"></div>
                     </div>
@@ -1319,6 +1325,7 @@ class RecipeDetailManager {
         }
         
         container.innerHTML = breakdownHTML;
+        console.log('✅ Rating breakdown updated successfully');
     }
     
     // Helper method to update reviews display
