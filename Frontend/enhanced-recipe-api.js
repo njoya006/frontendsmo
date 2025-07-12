@@ -1350,8 +1350,7 @@ class EnhancedRecipeAPI {
                 const endpoints = [
                     `/api/recipes/suggest-by-budget/`,
                     `/api/budget-suggestions/`,
-                    `/api/recipes/budget/`,
-                    `/api/recipes/filter-by-budget/`
+                    `/api/recipes/budget/`
                 ];
                 
                 for (const endpoint of endpoints) {
@@ -1372,8 +1371,7 @@ class EnhancedRecipeAPI {
                             signal: controller.signal,
                             body: JSON.stringify({
                                 budget: budget,
-                                currency: currency,
-                                max_cost: budget
+                                currency: currency
                             })
                         });
                         
@@ -1382,24 +1380,7 @@ class EnhancedRecipeAPI {
                         if (response.ok) {
                             const data = await response.json();
                             console.log('✅ Budget suggestions received from API:', data);
-                            
-                            // Transform API response to match our expected format
-                            const recipes = data.results || data.recipes || data.suggested_recipes || [];
-                            return {
-                                count: recipes.length,
-                                budget: budget,
-                                currency: currency,
-                                suggestions: recipes,
-                                total_recipes_checked: data.total_checked || recipes.length,
-                                source: 'api',
-                                message: data.message || `Found ${recipes.length} recipes within your budget of ${budget} ${currency}`
-                            };
-                        } else if (response.status === 401) {
-                            console.warn('⚠️ Authentication required for budget suggestions');
-                            // Show user-friendly message about authentication
-                            this.showAuthMessage('budget');
-                        } else if (response.status === 403) {
-                            console.warn('⚠️ Insufficient permissions for budget suggestions');
+                            return data;
                         }
                         
                         console.warn(`⚠️ Budget suggestions from ${endpoint} failed: ${response.status}`);
@@ -1466,124 +1447,9 @@ class EnhancedRecipeAPI {
             currency: currency,
             suggestions: suggestions,
             total_recipes_checked: allRecipes.length,
-            source: 'mock',
             message: suggestions.length > 0 
-                ? `Found ${suggestions.length} recipes within your budget of ${budget} ${currency} (demo data)`
+                ? `Found ${suggestions.length} recipes within your budget of ${budget} ${currency}`
                 : `No recipes found within your budget of ${budget} ${currency}. Try increasing your budget.`
-        };
-    }
-
-    // Ingredient-based recipe suggestions (keeping existing functionality)
-    async suggestRecipesByIngredients(ingredients) {
-        console.log(`🥬 Getting recipe suggestions for ingredients: ${ingredients.join(', ')}`);
-        
-        try {
-            // Try real API first
-            if (this.apiStatus.isAvailable) {
-                const endpoints = [
-                    `/api/recipes/suggest-by-ingredients/`,
-                    `/api/recipes/search-by-ingredients/`,
-                    `/api/ingredient-suggestions/`
-                ];
-                
-                for (const endpoint of endpoints) {
-                    try {
-                        const url = `${this.baseUrl}${endpoint}`;
-                        console.log(`🔍 Trying ingredient suggestions from: ${url}`);
-                        
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 8000);
-                        
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'Authorization': `Token ${this.getAuthToken()}`
-                            },
-                            signal: controller.signal,
-                            body: JSON.stringify({
-                                ingredient_names: ingredients,
-                                ingredients: ingredients
-                            })
-                        });
-                        
-                        clearTimeout(timeoutId);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log('✅ Ingredient suggestions received from API:', data);
-                            return {
-                                success: true,
-                                recipes: data.suggested_recipes || data.recipes || [],
-                                total_found: data.total_found || 0,
-                                message: data.message || 'Suggestions found',
-                                source: 'api'
-                            };
-                        } else if (response.status === 403) {
-                            console.warn('⚠️ Insufficient permissions for ingredient suggestions - requires verified contributor status');
-                            break; // Don't try other endpoints if it's a permission issue
-                        } else if (response.status === 401) {
-                            console.warn('⚠️ Authentication required for ingredient suggestions');
-                            break; // Don't try other endpoints if authentication is needed
-                        }
-                        
-                        console.warn(`⚠️ Ingredient suggestions from ${endpoint} failed: ${response.status}`);
-                    } catch (endpointError) {
-                        console.warn(`⚠️ Error with ingredient endpoint ${endpoint}:`, endpointError.message);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('❌ Error fetching ingredient suggestions:', error);
-        }
-        
-        // Use mock data as fallback
-        console.log('🔄 Using mock ingredient suggestions due to API limitations (requires verified contributor status)');
-        return this.getMockIngredientSuggestions(ingredients);
-    }
-
-    // Get mock ingredient-based suggestions
-    getMockIngredientSuggestions(ingredients) {
-        const allRecipes = Object.values(this.mockData.recipes);
-        const matchingRecipes = [];
-        
-        allRecipes.forEach(recipe => {
-            let matchCount = 0;
-            const recipeIngredients = recipe.ingredients.map(ing => ing.ingredient_name.toLowerCase());
-            
-            ingredients.forEach(ingredient => {
-                const ingredientLower = ingredient.toLowerCase();
-                if (recipeIngredients.some(recipeIng => recipeIng.includes(ingredientLower))) {
-                    matchCount++;
-                }
-            });
-            
-            if (matchCount > 0) {
-                matchingRecipes.push({
-                    recipe: recipe,
-                    match_score: matchCount,
-                    match_percentage: Math.round((matchCount / ingredients.length) * 100),
-                    missing_ingredients: [],
-                    substitutions: {},
-                    message: `${matchCount}/${ingredients.length} ingredients match`
-                });
-            }
-        });
-        
-        // Sort by match score (descending)
-        matchingRecipes.sort((a, b) => b.match_score - a.match_score);
-        
-        return {
-            success: matchingRecipes.length > 0,
-            recipes: matchingRecipes,
-            total_found: matchingRecipes.length,
-            ingredients_searched: ingredients,
-            source: 'mock',
-            permission_note: 'Live ingredient suggestions require verified contributor status',
-            message: matchingRecipes.length > 0 
-                ? `Found ${matchingRecipes.length} recipes matching your ingredients (demo data)`
-                : `No recipes found with those ingredients. Try different ingredients.`
         };
     }
 
@@ -1656,96 +1522,6 @@ class EnhancedRecipeAPI {
             total_pages: Math.ceil(allRecipes.length / limit),
             per_page: limit
         };
-    }
-
-    // Search recipes with various criteria (needed by MealSuggestion.js)
-    async searchRecipes(searchTerm = '', options = {}) {
-        console.log(`🔍 Searching recipes with term: "${searchTerm}"`);
-        
-        try {
-            // Try real API first
-            if (this.apiStatus.isAvailable) {
-                const endpoints = [
-                    `/api/recipes/search/`,
-                    `/api/recipes/`,
-                    `/search/recipes/`
-                ];
-                
-                for (const endpoint of endpoints) {
-                    try {
-                        const params = new URLSearchParams();
-                        if (searchTerm) params.append('search', searchTerm);
-                        if (options.limit) params.append('limit', options.limit);
-                        if (options.page) params.append('page', options.page);
-                        
-                        const url = `${this.baseUrl}${endpoint}${params.toString() ? '?' + params.toString() : ''}`;
-                        console.log(`🔍 Searching recipes from: ${url}`);
-                        
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 8000);
-                        
-                        const response = await fetch(url, {
-                            method: 'GET',
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json',
-                                'Authorization': `Token ${this.getAuthToken()}`
-                            },
-                            signal: controller.signal
-                        });
-                        
-                        clearTimeout(timeoutId);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log('✅ Recipe search results received from API:', data);
-                            
-                            // Extract recipes from different response formats
-                            let recipes = data.results || data.recipes || data;
-                            if (!Array.isArray(recipes)) {
-                                recipes = [data]; // Single recipe response
-                            }
-                            
-                            return recipes;
-                        }
-                        
-                        console.warn(`⚠️ Recipe search from ${endpoint} failed: ${response.status}`);
-                    } catch (endpointError) {
-                        console.warn(`⚠️ Error with search endpoint ${endpoint}:`, endpointError.message);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('❌ Error searching recipes from API:', error);
-        }
-        
-        // Use mock data for recipe search
-        console.log('🔄 Using mock data for recipe search');
-        return this.getMockSearchResults(searchTerm, options);
-    }
-
-    // Get mock search results
-    getMockSearchResults(searchTerm = '', options = {}) {
-        let allRecipes = Object.values(this.mockData.recipes);
-        
-        // Filter by search term if provided
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            allRecipes = allRecipes.filter(recipe => 
-                recipe.title.toLowerCase().includes(term) ||
-                recipe.description.toLowerCase().includes(term) ||
-                recipe.cuisine.toLowerCase().includes(term) ||
-                recipe.ingredients.some(ing => ing.ingredient_name.toLowerCase().includes(term))
-            );
-        }
-        
-        // Apply limit if specified
-        if (options.limit) {
-            allRecipes = allRecipes.slice(0, options.limit);
-        }
-        
-        console.log(`🔄 Mock search returning ${allRecipes.length} recipes`);
-        return allRecipes;
     }
 }
 
