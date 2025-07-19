@@ -254,22 +254,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch recipes from backend
     async function fetchRecipes() {
         const token = localStorage.getItem('authToken');
+        
+        console.log('🚀 === STARTING DATABASE RECIPE FETCH ===');
+        console.log('� API URL: https://njoya.pythonanywhere.com/api/recipes/');
+        console.log('🔍 Auth token present:', token ? 'YES (length: ' + token.length + ')' : 'NO');
+        console.log('🔍 Browser online:', navigator.onLine);
+        console.log('🔍 Current timestamp:', new Date().toISOString());
+        
         try {
-            console.log('🔄 Fetching recipes from API...');
-            console.log('🔍 Using token:', token ? 'Yes (hidden)' : 'No');
+            console.log('🔄 Initializing fetch request to database API...');
             
             const headers = {
                 'Content-Type': 'application/json'
             };
             if (token) {
                 headers['Authorization'] = `Token ${token}`;
+                console.log('🔐 Added authorization header');
             }
             
+            console.log('📡 Making fetch request...');
             const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
                 method: 'GET',
                 headers: headers,
                 mode: 'cors' // Explicitly set CORS mode
             });
+            
+            console.log('📥 Fetch request completed!');
             
             console.log('🔍 Response status:', response.status);
             console.log('🔍 Response ok:', response.ok);
@@ -328,20 +338,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
         } catch (error) {
-            console.error('❌ Network/CORS error details:', error);
-            console.error('❌ Error name:', error.name);
+            console.error('🚨 === CRITICAL API FETCH ERROR ===');
+            console.error('❌ Error type:', error.name);
             console.error('❌ Error message:', error.message);
+            console.error('❌ Error stack:', error.stack);
+            console.error('❌ Full error object:', error);
             
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                console.error('❌ This looks like a CORS or network connectivity issue');
-                console.error('❌ Possible causes:');
-                console.error('   - Backend server is not running');
-                console.error('   - CORS headers not configured on backend');
-                console.error('   - Network connectivity issue');
-                console.error('   - Firewall blocking the request');
+                console.error('🔍 DIAGNOSIS: This is a network/CORS/connectivity error');
+                console.error('🔍 Possible causes:');
+                console.error('   1. Backend server is not running');
+                console.error('   2. CORS headers not configured on backend');
+                console.error('   3. Network connectivity issue');
+                console.error('   4. Firewall/antivirus blocking the request');
+                console.error('   5. Backend URL is incorrect or inaccessible');
+            } else if (error.name === 'AbortError') {
+                console.error('🔍 DIAGNOSIS: Request was aborted (timeout)');
+            } else {
+                console.error('🔍 DIAGNOSIS: Unknown error type');
             }
             
-            console.warn('⚠️ Using fallback data due to error');
+            console.warn('⚠️ FALLING BACK TO MOCK DATA DUE TO ERROR');
+            console.log('🔄 === RETURNING FALLBACK RECIPES ===');
             return getFallbackRecipes();
         }
     }
