@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Display Test</title>
+    <style>
+        .recipes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; }
+        .recipe-card { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <h1>Recipe Display Test</h1>
+    <div id="status"></div>
+    <section class="recipes-grid" id="recipesGrid">
+        <!-- Recipes will be inserted here -->
+    </section>
+
+    <script>
+        console.log('Starting recipe display test...');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, testing recipe display...');
+            
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>Testing recipe display...</p>';
+            
+            const testRecipes = [
+                {
+                    id: 1,
+                    title: "Test Recipe 1",
+                    name: "Basic Test Recipe",
+                    description: "A simple test recipe to verify functionality.",
+                    image: "images/default-recipe.jpg",
+                    time: "15",
+                    calories: "200",
+                    servings: "2",
+                    contributor: { 
+                        username: "TestChef",
+                        basic_ingredients: "Available"
+                    }
+                },
+                {
+                    id: 2,
+                    title: "Test Recipe 2", 
+                    name: "Another Test Recipe",
+                    description: "Another test recipe for verification.",
+                    image: "images/default-recipe.jpg",
+                    time: "25",
+                    calories: "300",
+                    servings: "4",
+                    contributor: { 
+                        username: "TestChef2",
+                        basic_ingredients: "Available"
+                    }
+                }
+            ];
+            
+            const recipesGrid = document.getElementById('recipesGrid');
+            console.log('RecipesGrid found:', !!recipesGrid);
+            
+            if (recipesGrid) {
+                recipesGrid.innerHTML = '';
+                
+                testRecipes.forEach(recipe => {
+                    const recipeCard = document.createElement('div');
+                    recipeCard.className = 'recipe-card';
+                    recipeCard.innerHTML = `
+                        <div class="recipe-image" style="background: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center;">
+                            <span>🍽️ ${recipe.name}</span>
+                        </div>
+                        <div class="recipe-content" style="padding: 15px;">
+                            <h3>${recipe.title}</h3>
+                            <p>${recipe.description}</p>
+                            <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                                <span>⏱️ ${recipe.time}min</span>
+                                <span>🔥 ${recipe.calories}cal</span>
+                                <span>👥 ${recipe.servings}</span>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <strong>Chef: ${recipe.contributor.username}</strong>
+                            </div>
+                        </div>
+                    `;
+                    recipesGrid.appendChild(recipeCard);
+                });
+                
+                console.log('✅ Test recipes displayed successfully!');
+                statusDiv.innerHTML = '<p style="color: green;">✅ Test recipes displayed successfully!</p>';
+            } else {
+                console.error('❌ RecipesGrid not found!');
+                statusDiv.innerHTML = '<p style="color: red;">❌ RecipesGrid element not found!</p>';
+            }
+        });
+    </script>
+</body>
+</html>

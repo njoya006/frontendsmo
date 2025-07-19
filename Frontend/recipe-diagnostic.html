@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Loading Diagnostic</title>
+</head>
+<body>
+    <h1>Recipe Loading Test</h1>
+    <div id="results"></div>
+    <button onclick="testRecipeAPI()">Test Recipe API</button>
+    <button onclick="testFallback()">Test Fallback</button>
+
+    <script>
+        async function testRecipeAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing recipe API...</p>';
+            
+            try {
+                console.log('Testing recipe fetch...');
+                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                    method: 'GET',
+                    headers: {}
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                resultsDiv.innerHTML = `
+                    <h3>API Test Results:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>OK: ${response.ok}</p>
+                    <p>Recipes found: ${data.length || 0}</p>
+                    <p>First recipe: ${data[0] ? JSON.stringify(data[0], null, 2) : 'None'}</p>
+                `;
+            } catch (error) {
+                console.error('API Test Error:', error);
+                resultsDiv.innerHTML = `
+                    <h3>API Test Failed:</h3>
+                    <p>Error: ${error.message}</p>
+                    <p>This means the backend is not accessible</p>
+                `;
+            }
+        }
+        
+        function testFallback() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing fallback recipes...</p>';
+            
+            const fallbackRecipes = [
+                {
+                    id: 1,
+                    title: "Test Recipe",
+                    name: "Fallback Recipe",
+                    description: "This is a test fallback recipe",
+                    image: "images/default-recipe.jpg",
+                    time: "30",
+                    calories: "400",
+                    servings: "2",
+                    contributor: { username: "TestUser" }
+                }
+            ];
+            
+            resultsDiv.innerHTML = `
+                <h3>Fallback Test Results:</h3>
+                <p>Fallback recipes available: ${fallbackRecipes.length}</p>
+                <p>First recipe: ${JSON.stringify(fallbackRecipes[0], null, 2)}</p>
+            `;
+        }
+        
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded, running API test...');
+            testRecipeAPI();
+        });
+    </script>
+</body>
+</html>

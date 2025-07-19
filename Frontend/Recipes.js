@@ -346,8 +346,10 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
     }    // Display recipes (updated to show contributor info and profile photo)
     function displayRecipes(recipes) {
+        const recipesGrid = document.getElementById('recipesGrid');
         if (!recipesGrid) {
-            console.error('Recipes grid element not found');
+            console.error('Recipes grid element not found - DOM might not be ready');
+            console.log('Available elements:', document.querySelectorAll('[id*="recipe"]'));
             return;
         }
         
@@ -1166,54 +1168,80 @@ document.addEventListener('DOMContentLoaded', function() {
     setupModalHandlers();
     
     // ======= LOAD INITIAL RECIPES =======
-    console.log('🔄 Loading initial recipes...');
-    console.log('🔍 RecipesGrid element:', recipesGrid);
-    
-    if (!recipesGrid) {
-        console.error('❌ RecipesGrid element not found! Check HTML structure.');
-        console.log('🔍 Available recipe elements:', document.querySelectorAll('[id*="recipe"]'));
-    } else {
-        console.log('✅ RecipesGrid element found, proceeding with fetch...');
-    }
-    
-    // Check for force flags from diagnostic tool
-    const forceLoad = localStorage.getItem('forceLoadRecipes');
-    const loadFallback = localStorage.getItem('loadFallbackRecipes');
-    
-    if (forceLoad === 'true') {
-        console.log('🔧 Force load flag detected - forcing recipe load');
-        localStorage.removeItem('forceLoadRecipes'); // Clear flag
-    }
-    
-    if (loadFallback === 'true') {
-        console.log('🔧 Fallback flag detected - loading sample recipes');
-        localStorage.removeItem('loadFallbackRecipes'); // Clear flag
-        const fallbackRecipes = getFallbackRecipes();
-        allRecipes = fallbackRecipes;
-        recipeData = fallbackRecipes;
-        displayRecipes(fallbackRecipes);
-        console.log('✅ Sample recipes loaded via flag');
-    } else {
-        // Normal recipe loading
-        fetchRecipes().then(recipes => {
-            console.log('✅ Initial recipes loaded:', recipes.length);
-            console.log('🔍 First few recipes:', recipes.slice(0, 3));
-            allRecipes = recipes;
-            recipeData = recipes;
-            displayRecipes(recipes);
-            console.log('✅ Recipes displayed on page');
-        }).catch(error => {
-            console.error('❌ Initial fetch failed:', error);
-            console.log('🔄 Loading fallback recipes...');
-            // Display fallback recipes
+    // Robust recipe loading with proper DOM checks
+    function initializeRecipeLoading() {
+        console.log('🔄 Initializing recipe loading system...');
+        const recipesGridCheck = document.getElementById('recipesGrid');
+        console.log('🔍 RecipesGrid element:', recipesGridCheck);
+        
+        if (!recipesGridCheck) {
+            console.error('❌ RecipesGrid element not found! Check HTML structure.');
+            console.log('🔍 Available recipe elements:', document.querySelectorAll('[id*="recipe"]'));
+            console.log('🔍 All elements with IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+            
+            // Try again after a delay
+            setTimeout(initializeRecipeLoading, 500);
+            return;
+        }
+        
+        console.log('✅ RecipesGrid element found, proceeding with recipe loading...');
+        
+        // Check for force flags from diagnostic tool
+        const forceLoad = localStorage.getItem('forceLoadRecipes');
+        const loadFallback = localStorage.getItem('loadFallbackRecipes');
+        
+        if (forceLoad === 'true') {
+            console.log('🔧 Force load flag detected - forcing recipe load');
+            localStorage.removeItem('forceLoadRecipes'); // Clear flag
+        }
+        
+        if (loadFallback === 'true') {
+            console.log('🔧 Fallback flag detected - loading sample recipes');
+            localStorage.removeItem('loadFallbackRecipes'); // Clear flag
             const fallbackRecipes = getFallbackRecipes();
-            console.log('🔍 Fallback recipes:', fallbackRecipes.length);
             allRecipes = fallbackRecipes;
             recipeData = fallbackRecipes;
             displayRecipes(fallbackRecipes);
-            console.log('✅ Fallback recipes displayed');
-        });
+            console.log('✅ Sample recipes loaded via flag');
+        } else {
+            // Normal recipe loading with better error handling
+            console.log('🌐 Attempting to fetch recipes from API...');
+            fetchRecipes().then(recipes => {
+                console.log('✅ Initial recipes loaded:', recipes.length);
+                console.log('🔍 First few recipes:', recipes.slice(0, 3));
+                allRecipes = recipes;
+                recipeData = recipes;
+                displayRecipes(recipes);
+                console.log('✅ Recipes displayed on page');
+                
+                // Double-check that recipes are actually displayed
+                setTimeout(() => {
+                    const gridCheck = document.getElementById('recipesGrid');
+                    if (gridCheck && gridCheck.children.length === 0) {
+                        console.warn('⚠️ No recipe cards found in grid after display - loading fallback');
+                        const fallbackRecipes = getFallbackRecipes();
+                        allRecipes = fallbackRecipes;
+                        recipeData = fallbackRecipes;
+                        displayRecipes(fallbackRecipes);
+                    }
+                }, 1000);
+                
+            }).catch(error => {
+                console.error('❌ Initial fetch failed:', error);
+                console.log('🔄 Loading fallback recipes...');
+                // Display fallback recipes
+                const fallbackRecipes = getFallbackRecipes();
+                console.log('🔍 Fallback recipes:', fallbackRecipes.length);
+                allRecipes = fallbackRecipes;
+                recipeData = fallbackRecipes;
+                displayRecipes(fallbackRecipes);
+                console.log('✅ Fallback recipes displayed');
+            });
+        }
     }
+    
+    // Start initialization with delay to ensure DOM is ready
+    setTimeout(initializeRecipeLoading, 100);
     
     // Initialize Create Recipe button based on user verification status
     initializeCreateRecipeButton();
@@ -1503,4 +1531,23 @@ document.addEventListener('DOMContentLoaded', function() {
             // You should now include 'ingredients' in your form data sent to the backend
         });
     }
-});
+    
+    // ======= FAILSAFE RECIPE LOADING =======
+    // If no recipes are loaded after 3 seconds, force load fallback recipes
+    setTimeout(() => {
+        const recipesGridCheck = document.getElementById('recipesGrid');
+        if (recipesGridCheck && (!recipeData || recipeData.length === 0)) {
+            console.log('⚠️ FAILSAFE: No recipes detected after 3 seconds, loading fallback...');
+            const fallbackRecipes = getFallbackRecipes();
+            allRecipes = fallbackRecipes;
+            recipeData = fallbackRecipes;
+            displayRecipes(fallbackRecipes);
+            console.log('✅ FAILSAFE: Fallback recipes loaded');
+        } else if (recipesGridCheck && recipeData && recipeData.length > 0) {
+            console.log('✅ FAILSAFE: Recipes are properly loaded', recipeData.length);
+        } else if (!recipesGridCheck) {
+            console.error('❌ FAILSAFE: RecipesGrid element still not found after 3 seconds');
+        }
+    }, 3000);
+
+}); // End of DOMContentLoaded
