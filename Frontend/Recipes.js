@@ -1269,60 +1269,148 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Sample recipes loaded via flag');
         } else {
             // Normal recipe loading with better error handling - PRIORITIZE DATABASE RECIPES
-            console.log('🌐 Attempting to fetch recipes from DATABASE API...');
+            console.log('🌐 STARTING DATABASE RECIPE LOADING PROCESS...');
             console.log('🔍 API URL: https://njoya.pythonanywhere.com/api/recipes/');
+            console.log('🔍 Current URL:', window.location.href);
+            console.log('🔍 Timestamp:', new Date().toISOString());
+            
+            // Add a visual indicator that we're trying to load from database
+            const recipesGridCheck = document.getElementById('recipesGrid');
+            if (recipesGridCheck) {
+                recipesGridCheck.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(0,123,255,0.1); border-radius: 12px; border-left: 4px solid #007bff;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #0056b3; font-weight: 600; font-size: 18px;">
+                            <i class="fas fa-database"></i>
+                            <span>Loading recipes from your database...</span>
+                        </div>
+                        <div style="margin-top: 8px; color: #666; font-size: 14px;">
+                            Connecting to: njoya.pythonanywhere.com/api/recipes/
+                        </div>
+                    </div>
+                `;
+            }
             
             fetchRecipes().then(recipes => {
-                console.log('✅ API Response received:', recipes.length, 'recipes');
+                console.log('📥 API FETCH COMPLETED - Analyzing response...');
+                console.log('✅ API Response received:', recipes ? recipes.length : 'null/undefined', 'recipes');
                 
                 if (recipes && recipes.length > 0) {
                     // Check if these are real recipes or fallback recipes
-                    const isFallback = recipes.some(r => r.contributor && r.contributor.username === 'ChopSmo Chef');
+                    const isFallback = recipes.some(r => 
+                        r.contributor && (
+                            r.contributor.username === 'ChopSmo Chef' || 
+                            r.contributor.username === 'Pasta Master' ||
+                            r.contributor.username === 'Soup Master' ||
+                            r.title?.includes('Sample')
+                        )
+                    );
                     
                     if (isFallback) {
-                        console.log('⚠️ Received fallback recipes - API may have failed');
-                        console.log('🔄 This means your database recipes are not loading properly');
+                        console.error('❌ PROBLEM: Received FALLBACK/MOCK recipes instead of database recipes!');
+                        console.error('� This means the API call failed and returned mock data');
+                        console.error('🔍 Mock recipe titles:', recipes.map(r => r.title || r.name));
+                        
+                        // Show error message to user
+                        if (recipesGridCheck) {
+                            recipesGridCheck.innerHTML = `
+                                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(220,53,69,0.1); border-radius: 12px; border-left: 4px solid #dc3545;">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #721c24; font-weight: 600; font-size: 18px;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Database connection failed - showing sample recipes</span>
+                                    </div>
+                                    <div style="margin-top: 8px; color: #666; font-size: 14px;">
+                                        Your backend API is not responding properly.<br>
+                                        <a href="recipe-fix-tools.html" style="color: #007bff;">Click here to diagnose the issue</a>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Still display the recipes after the error message
+                            setTimeout(() => {
+                                allRecipes = recipes;
+                                recipeData = recipes;
+                                displayRecipes(recipes);
+                            }, 2000);
+                        }
                     } else {
-                        console.log('✅ SUCCESS: Loaded real recipes from your database!');
-                        console.log('🔍 First few recipes from your database:', recipes.slice(0, 3).map(r => ({
-                            title: r.title || r.name,
-                            contributor: r.contributor?.username || 'Unknown'
-                        })));
+                        console.log('🎉 SUCCESS: Loaded REAL recipes from your database!');
+                        console.log('🔍 Real recipe titles:', recipes.slice(0, 5).map(r => r.title || r.name));
+                        console.log('🔍 Contributors:', recipes.slice(0, 5).map(r => r.contributor?.username || 'Unknown'));
+                        
+                        // Show success message
+                        if (recipesGridCheck) {
+                            recipesGridCheck.innerHTML = `
+                                <div style="grid-column: 1 / -1; text-align: center; padding: 20px; background: rgba(40,167,69,0.1); border-radius: 12px; border-left: 4px solid #28a745;">
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #155724; font-weight: 600;">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Successfully loaded ${recipes.length} recipes from your database!</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        allRecipes = recipes;
+                        recipeData = recipes;
+                        
+                        // Display after a short delay to show the success message
+                        setTimeout(() => {
+                            displayRecipes(recipes);
+                        }, 1500);
                     }
-                    
-                    allRecipes = recipes;
-                    recipeData = recipes;
-                    displayRecipes(recipes);
-                    console.log('✅ Recipes displayed on page');
                 } else {
-                    console.log('⚠️ No recipes received from API - this should not happen');
+                    console.error('❌ No recipes received from API');
+                    
+                    // Show empty database message
+                    if (recipesGridCheck) {
+                        recipesGridCheck.innerHTML = `
+                            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(255,193,7,0.1); border-radius: 12px; border-left: 4px solid #ffc107;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #856404; font-weight: 600; font-size: 18px;">
+                                    <i class="fas fa-database"></i>
+                                    <span>Your database is empty</span>
+                                </div>
+                                <div style="margin-top: 8px; color: #666; font-size: 14px;">
+                                    Add some recipes to your database to see them here!
+                                </div>
+                            </div>
+                        `;
+                    }
                 }
                 
-                // Double-check that recipes are actually displayed
-                setTimeout(() => {
-                    const gridCheck = document.getElementById('recipesGrid');
-                    if (gridCheck && gridCheck.children.length === 0) {
-                        console.warn('⚠️ No recipe cards found in grid after display - DOM issue detected');
-                        console.warn('🔧 Trying to reload recipes...');
-                        const fallbackRecipes = getFallbackRecipes();
-                        allRecipes = fallbackRecipes;
-                        recipeData = fallbackRecipes;
-                        displayRecipes(fallbackRecipes);
-                    } else if (gridCheck) {
-                        console.log('✅ Recipe cards successfully displayed:', gridCheck.children.length, 'cards');
-                    }
-                }, 1000);
+                console.log('✅ Recipe loading process completed');
                 
             }).catch(error => {
-                console.error('❌ Recipe loading failed completely:', error);
-                console.log('🔄 Loading fallback recipes as last resort...');
-                // Display fallback recipes only as last resort
-                const fallbackRecipes = getFallbackRecipes();
-                console.log('🔍 Fallback recipes:', fallbackRecipes.length);
-                allRecipes = fallbackRecipes;
-                recipeData = fallbackRecipes;
-                displayRecipes(fallbackRecipes);
-                console.log('✅ Fallback recipes displayed');
+                console.error('❌ CRITICAL ERROR: Recipe loading failed completely:', error);
+                console.error('� Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                // Show critical error message
+                if (recipesGridCheck) {
+                    recipesGridCheck.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(220,53,69,0.1); border-radius: 12px; border-left: 4px solid #dc3545;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #721c24; font-weight: 600; font-size: 18px;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Critical Error: Cannot load recipes</span>
+                            </div>
+                            <div style="margin-top: 8px; color: #666; font-size: 14px;">
+                                Error: ${error.message}<br>
+                                <a href="recipe-fix-tools.html" style="color: #007bff;">Click here for diagnostic tools</a>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Load fallback recipes as absolute last resort
+                setTimeout(() => {
+                    console.log('� Loading fallback recipes as last resort...');
+                    const fallbackRecipes = getFallbackRecipes();
+                    allRecipes = fallbackRecipes;
+                    recipeData = fallbackRecipes;
+                    displayRecipes(fallbackRecipes);
+                    console.log('✅ Fallback recipes displayed');
+                }, 3000);
             });
         }
     }
