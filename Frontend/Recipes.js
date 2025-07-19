@@ -256,28 +256,92 @@ document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('authToken');
         try {
             console.log('🔄 Fetching recipes from API...');
+            console.log('🔍 Using token:', token ? 'Yes (hidden)' : 'No');
+            
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Token ${token}`;
+            }
+            
             const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
                 method: 'GET',
-                headers: token ? { 'Authorization': `Token ${token}` } : {},
+                headers: headers,
+                mode: 'cors' // Explicitly set CORS mode
             });
-            const data = await response.json();
+            
+            console.log('🔍 Response status:', response.status);
+            console.log('🔍 Response ok:', response.ok);
+            console.log('🔍 Response headers:', Object.fromEntries(response.headers.entries()));
+            
             if (!response.ok) {
+                console.error(`❌ API response not ok: ${response.status} ${response.statusText}`);
+                if (response.status === 404) {
+                    console.error('❌ API endpoint not found - check if backend is deployed');
+                } else if (response.status >= 500) {
+                    console.error('❌ Server error - backend may be down');
+                } else if (response.status === 403 || response.status === 401) {
+                    console.error('❌ Authentication error - trying without token');
+                    // Try again without token
+                    const retryResponse = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        mode: 'cors'
+                    });
+                    if (retryResponse.ok) {
+                        const retryData = await retryResponse.json();
+                        console.log('✅ Retry successful without token');
+                        return retryData;
+                    }
+                }
                 console.warn('⚠️ API call failed, using fallback data');
                 return getFallbackRecipes();
             }
+            
+            const data = await response.json();
             console.log('✅ Successfully fetched recipes from API');
+            console.log('🔍 Raw API Response type:', typeof data);
             console.log('🔍 Raw API Response:', data);
-            console.log('🔍 Total recipes fetched:', data.length);
-            console.log('🔍 First recipe complete object:', JSON.stringify(data[0], null, 2));
-            if (data[0]) {
-                console.log('🔍 First recipe image field:', data[0].image);
-                console.log('🔍 First recipe image type:', typeof data[0].image);
-                console.log('🔍 First recipe all fields:', Object.keys(data[0]));
+            console.log('🔍 Total recipes fetched:', Array.isArray(data) ? data.length : 'Not an array');
+            
+            if (Array.isArray(data) && data.length > 0) {
+                console.log('🔍 First recipe complete object:', JSON.stringify(data[0], null, 2));
+                console.log('🔍 First recipe has contributor:', !!data[0].contributor);
+                console.log('🔍 All recipe fields:', Object.keys(data[0]));
+                
+                // Don't filter by contributor if none have it - show all recipes
+                const recipesWithContributor = data.filter(recipe => recipe.contributor);
+                if (recipesWithContributor.length > 0) {
+                    console.log(`🔍 Found ${recipesWithContributor.length} recipes with contributors out of ${data.length} total`);
+                    return recipesWithContributor;
+                } else {
+                    console.log('⚠️ No recipes have contributor field - showing all recipes anyway');
+                    return data;
+                }
+            } else if (Array.isArray(data)) {
+                console.log('⚠️ API returned empty array - no recipes found');
+                return getFallbackRecipes();
+            } else {
+                console.error('❌ API returned non-array data:', data);
+                return getFallbackRecipes();
             }
-            // Only use recipes that have a contributor (created by users)
-            return data.filter(recipe => recipe.contributor);
+            
         } catch (error) {
-            console.warn('⚠️ Network error, using fallback data:', error);
+            console.error('❌ Network/CORS error details:', error);
+            console.error('❌ Error name:', error.name);
+            console.error('❌ Error message:', error.message);
+            
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.error('❌ This looks like a CORS or network connectivity issue');
+                console.error('❌ Possible causes:');
+                console.error('   - Backend server is not running');
+                console.error('   - CORS headers not configured on backend');
+                console.error('   - Network connectivity issue');
+                console.error('   - Firewall blocking the request');
+            }
+            
+            console.warn('⚠️ Using fallback data due to error');
             return getFallbackRecipes();
         }
     }
@@ -1204,32 +1268,55 @@ document.addEventListener('DOMContentLoaded', function() {
             displayRecipes(fallbackRecipes);
             console.log('✅ Sample recipes loaded via flag');
         } else {
-            // Normal recipe loading with better error handling
-            console.log('🌐 Attempting to fetch recipes from API...');
+            // Normal recipe loading with better error handling - PRIORITIZE DATABASE RECIPES
+            console.log('🌐 Attempting to fetch recipes from DATABASE API...');
+            console.log('🔍 API URL: https://njoya.pythonanywhere.com/api/recipes/');
+            
             fetchRecipes().then(recipes => {
-                console.log('✅ Initial recipes loaded:', recipes.length);
-                console.log('🔍 First few recipes:', recipes.slice(0, 3));
-                allRecipes = recipes;
-                recipeData = recipes;
-                displayRecipes(recipes);
-                console.log('✅ Recipes displayed on page');
+                console.log('✅ API Response received:', recipes.length, 'recipes');
+                
+                if (recipes && recipes.length > 0) {
+                    // Check if these are real recipes or fallback recipes
+                    const isFallback = recipes.some(r => r.contributor && r.contributor.username === 'ChopSmo Chef');
+                    
+                    if (isFallback) {
+                        console.log('⚠️ Received fallback recipes - API may have failed');
+                        console.log('🔄 This means your database recipes are not loading properly');
+                    } else {
+                        console.log('✅ SUCCESS: Loaded real recipes from your database!');
+                        console.log('🔍 First few recipes from your database:', recipes.slice(0, 3).map(r => ({
+                            title: r.title || r.name,
+                            contributor: r.contributor?.username || 'Unknown'
+                        })));
+                    }
+                    
+                    allRecipes = recipes;
+                    recipeData = recipes;
+                    displayRecipes(recipes);
+                    console.log('✅ Recipes displayed on page');
+                } else {
+                    console.log('⚠️ No recipes received from API - this should not happen');
+                }
                 
                 // Double-check that recipes are actually displayed
                 setTimeout(() => {
                     const gridCheck = document.getElementById('recipesGrid');
                     if (gridCheck && gridCheck.children.length === 0) {
-                        console.warn('⚠️ No recipe cards found in grid after display - loading fallback');
+                        console.warn('⚠️ No recipe cards found in grid after display - DOM issue detected');
+                        console.warn('🔧 Trying to reload recipes...');
                         const fallbackRecipes = getFallbackRecipes();
                         allRecipes = fallbackRecipes;
                         recipeData = fallbackRecipes;
                         displayRecipes(fallbackRecipes);
+                    } else if (gridCheck) {
+                        console.log('✅ Recipe cards successfully displayed:', gridCheck.children.length, 'cards');
                     }
                 }, 1000);
                 
             }).catch(error => {
-                console.error('❌ Initial fetch failed:', error);
-                console.log('🔄 Loading fallback recipes...');
-                // Display fallback recipes
+                console.error('❌ Recipe loading failed completely:', error);
+                console.log('🔄 Loading fallback recipes as last resort...');
+                // Display fallback recipes only as last resort
                 const fallbackRecipes = getFallbackRecipes();
                 console.log('🔍 Fallback recipes:', fallbackRecipes.length);
                 allRecipes = fallbackRecipes;
