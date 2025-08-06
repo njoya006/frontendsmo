@@ -579,6 +579,18 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
+                    <!-- Budget Suggestion UI -->
+                    <div class="budget-bar" style="display: flex; gap: 10px; max-width: 600px; margin: 10px auto 0; align-items: center; justify-content: center;">
+                        <input type="number" id="budgetInput" min="0" step="0.01" placeholder="Enter budget (e.g. 2000)" style="flex:1; padding: 12px 16px; border: 2px solid rgba(76,175,80,0.2); border-radius: var(--border-radius-lg); font-size: 16px; background: rgba(255,255,255,0.9);">
+                        <select id="budgetCurrency" style="padding: 12px 10px; border-radius: var(--border-radius-lg); border: 2px solid rgba(76,175,80,0.2); font-size: 16px;">
+                            <option value="XAF">XAF</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                        <button id="suggestByBudget" class="btn btn-primary" style="min-width: 160px;">
+                            <i class="fas fa-wallet"></i> Suggest by Budget
+                        </button>
+                    </div>
                     <div class="search-actions" style="display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
                         <button id="showAllRecipes" class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;">
                             <i class="fas fa-list"></i> Show All Recipes
