@@ -1719,9 +1719,80 @@ document.addEventListener('DOMContentLoaded', function() {
                 unit: units[i] || '',
                 preparation: preparations[i] || '' // Optional
             }));
-            // Example: log to verify
-            console.log('Submitting recipe with ingredients:', ingredients);
-            // You should now include 'ingredients' in your form data sent to the backend
+
+            // Collect other form fields
+            const title = document.getElementById('recipeTitle').value.trim();
+            const name = document.getElementById('recipeName').value.trim();
+            const description = document.getElementById('recipeDescription').value.trim();
+            const instructions = document.getElementById('recipeInstructions').value.trim();
+            const estimatedCostInput = document.getElementById('estimated_cost').value;
+            const estimated_cost = estimatedCostInput !== '' ? parseFloat(estimatedCostInput) : null;
+
+            // Collect categories, cuisines, tags (multi-select)
+            const getSelectedValues = sel => Array.from(sel.selectedOptions).map(opt => opt.value);
+            const categories = getSelectedValues(document.getElementById('recipeCategories'));
+            const cuisines = getSelectedValues(document.getElementById('recipeCuisines'));
+            const tags = getSelectedValues(document.getElementById('recipeTags'));
+
+            // Validation
+            const errors = {};
+            if (!title) errors.title = 'Title is required';
+            if (!description) errors.description = 'Description is required';
+            if (estimatedCostInput !== '' && (isNaN(estimated_cost) || estimated_cost < 0)) {
+                errors.estimated_cost = 'Cost must be a valid positive number';
+            }
+            // Add more validation as needed
+            if (Object.keys(errors).length > 0) {
+                showToast(Object.values(errors).join('\n'), '#f44336');
+                return;
+            }
+
+            // Build recipe data object
+            const recipeData = {
+                title,
+                name,
+                description,
+                instructions,
+                estimated_cost,
+                ingredients,
+                categories,
+                cuisines,
+                tags
+            };
+
+            // Auth token
+            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            if (!authToken) {
+                showToast('You must be logged in to create a recipe.', '#f44336');
+                return;
+            }
+
+            try {
+                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`
+                    },
+                    body: JSON.stringify(recipeData)
+                });
+                if (response.ok) {
+                    showToast('Recipe created successfully!', '#4CAF50');
+                    // Optionally close modal and refresh recipes
+                    document.getElementById('createRecipeModal').style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                    setTimeout(() => fetchRecipes().then(recipes => {
+                        allRecipes = recipes;
+                        recipeData = recipes;
+                        displayRecipes(recipes);
+                    }), 1000);
+                } else {
+                    const errorData = await response.json();
+                    showToast('Failed to create recipe: ' + (errorData.detail || JSON.stringify(errorData)), '#f44336');
+                }
+            } catch (err) {
+                showToast('Error creating recipe: ' + err.message, '#f44336');
+            }
         });
     }
     
