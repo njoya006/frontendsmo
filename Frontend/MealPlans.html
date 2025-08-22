@@ -1570,6 +1570,37 @@
                 </div>
             </div>
 
+            <!-- Grocery List Modal -->
+            <div id="groceryListModal" class="modal" aria-hidden="true" style="display:none;">
+                <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="groceryModalTitle">
+                    <div class="modal-header">
+                        <h2 id="groceryModalTitle">Grocery List</h2>
+                        <button id="closeGroceryModal" class="close" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="controls" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end">
+                            <div class="input-group">
+                                <label for="gStart">Start</label>
+                                <input id="gStart" type="date">
+                            </div>
+                            <div class="input-group">
+                                <label for="gEnd">End</label>
+                                <input id="gEnd" type="date">
+                            </div>
+                            <div class="input-group">
+                                <label for="gServings">Servings</label>
+                                <input id="gServings" type="number" min="1" class="small" placeholder="4">
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <button id="gGenerate" class="btn btn-primary">Generate</button>
+                                <button id="gDownloadCsv" class="btn btn-outline" disabled>Download CSV</button>
+                            </div>
+                        </div>
+                        <div id="gResults" class="card"><div id="gResultsInner"><p class="muted">No grocery list generated yet.</p></div></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Global Spinner & Toast -->
             <div id="loadingSpinner" style="display: none;"> <!-- Ensure styles are defined in <style> or index.css -->
                 <i class="fas fa-spinner fa-spin"></i>

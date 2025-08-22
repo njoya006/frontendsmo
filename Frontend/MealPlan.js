@@ -1219,7 +1219,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Enhanced Action Button Event Listeners
     if (generateGroceryListBtn) {
-        generateGroceryListBtn.addEventListener('click', generateGroceryList);
+        generateGroceryListBtn.addEventListener('click', function() {
+            try {
+                const weekInfo = getWeekInfo(currentDate || new Date());
+                const start = encodeURIComponent(weekInfo.startFormatted);
+                const end = encodeURIComponent(weekInfo.endFormatted);
+                // Open the dedicated grocery list page with date range prefilled
+                const url = `grocery-list.html?start=${start}&end=${end}`;
+                window.open(url, '_blank');
+            } catch (err) {
+                console.error('Failed to open grocery list page', err);
+                showToast('Unable to open grocery list. Please try again.', true);
+            }
+        });
     }
 
     if (copyToNextWeekBtn) {
@@ -1348,4 +1360,137 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Make viewRecipeDetail globally available for onclick handlers
     window.viewRecipeDetail = viewRecipeDetail;
+
+    // Embedded Grocery List Modal Logic
+    const groceryModal = document.getElementById('groceryListModal');
+    const closeGroceryModal = document.getElementById('closeGroceryModal');
+    const gStart = document.getElementById('gStart');
+    const gEnd = document.getElementById('gEnd');
+    const gServings = document.getElementById('gServings');
+    const gGenerate = document.getElementById('gGenerate');
+    const gDownloadCsv = document.getElementById('gDownloadCsv');
+    const gResultsInner = document.getElementById('gResultsInner');
+
+    function openGroceryModal(prefill) {
+        try {
+            if (prefill && prefill.start && prefill.end) {
+                gStart.value = prefill.start;
+                gEnd.value = prefill.end;
+            } else {
+                const week = getWeekInfo(currentDate);
+                gStart.value = week.startFormatted;
+                gEnd.value = week.endFormatted;
+            }
+            gServings.value = prefill && prefill.servings ? prefill.servings : '';
+            groceryModal.style.display = 'flex';
+            groceryModal.setAttribute('aria-hidden', 'false');
+        } catch (e) {
+            console.error('openGroceryModal error', e);
+        }
+    }
+
+    if (generateGroceryListBtn) {
+        generateGroceryListBtn.addEventListener('click', () => openGroceryModal());
+    }
+
+    if (closeGroceryModal) {
+        closeGroceryModal.addEventListener('click', () => {
+            groceryModal.style.display = 'none';
+            groceryModal.setAttribute('aria-hidden', 'true');
+        });
+    }
+
+    async function fetchGroceryList({start, end, servings, format}) {
+        const token = localStorage.getItem('authToken');
+        const params = new URLSearchParams();
+        if (start) params.set('start', start);
+        if (end) params.set('end', end);
+        if (servings) params.set('servings', servings);
+        if (format) params.set('format', format);
+        const url = `${API_BASE_URL}/api/planner/mealplans/grocery-list/?${params}`;
+
+        gResultsInner.innerHTML = '<p class="muted">Loading...</p>';
+        gDownloadCsv.disabled = true;
+
+        try {
+            const headers = token ? { 'Authorization': `Token ${token}` } : {};
+            const res = await fetch(url, { headers });
+            if (!res.ok) {
+                const err = await res.json().catch(()=>({ detail: 'Unable to parse error' }));
+                gResultsInner.innerHTML = `<p class="muted">Error: ${err.detail || JSON.stringify(err)}</p>`;
+                showToast('Failed to generate grocery list', true);
+                return null;
+            }
+            if (format && format.toLowerCase() === 'csv') {
+                // not used here
+                return res;
+            }
+            const data = await res.json();
+            return data;
+        } catch (e) {
+            console.error('fetchGroceryList error', e);
+            gResultsInner.innerHTML = `<p class="muted">Network error: ${e.message}</p>`;
+            showToast('Network error fetching grocery list', true);
+            return null;
+        }
+    }
+
+    function renderGroceryData(data) {
+        if (!data || !data.items) {
+            gResultsInner.innerHTML = '<p class="muted">No items returned.</p>';
+            return;
+        }
+        window._lastGrocery = data; // store for csv
+        gDownloadCsv.disabled = false;
+        let html = `<div class="meta"><div><strong>Total items:</strong> ${data.items.length}</div><div class="muted">${data.meta?.range || ''}</div></div>`;
+        html += '<div style="overflow:auto"><table><thead><tr><th>Ingredient</th><th>Unit</th><th>Total Quantity</th><th>Recipes</th></tr></thead><tbody>';
+        data.items.forEach(item => {
+            const recipes = (item.recipes || []).map(r => r.title || r.name).join(', ');
+            html += `<tr><td>${item.name}</td><td>${item.unit || ''}</td><td>${item.quantity || ''}</td><td>${recipes}</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+        if (data.breakdown) {
+            html += `<div style="margin-top:12px;"><span id="gToggleBreakdown" class="toggle">Show per-recipe breakdown</span></div>`;
+            html += `<div id="gBreakdown" style="margin-top:12px; display:none">`;
+            data.breakdown.forEach(b => {
+                html += `<div class="card" style="margin-bottom:10px;"><strong>${b.recipe_title}</strong> <div class="muted">Servings: ${b.servings}</div>`;
+                html += '<ul>';
+                b.items.forEach(i => { html += `<li>${i.name} — ${i.quantity} ${i.unit || ''}</li>` });
+                html += '</ul></div>';
+            });
+            html += `</div>`;
+        }
+        gResultsInner.innerHTML = html;
+        const t = document.getElementById('gToggleBreakdown');
+        if (t) t.addEventListener('click', ()=>{
+            const bd = document.getElementById('gBreakdown');
+            if (!bd) return;
+            bd.style.display = bd.style.display === 'none' ? 'block' : 'none';
+            t.textContent = bd.style.display === 'none' ? 'Show per-recipe breakdown' : 'Hide per-recipe breakdown';
+        });
+    }
+
+    gGenerate.addEventListener('click', async ()=>{
+        const start = gStart.value;
+        const end = gEnd.value;
+        const servings = gServings.value;
+        const data = await fetchGroceryList({start,end,servings});
+        if (data) renderGroceryData(data);
+    });
+
+    gDownloadCsv.addEventListener('click', ()=>{
+        const data = window._lastGrocery;
+        if (!data) return;
+        const rows = [];
+        rows.push(['ingredient','unit','total_quantity','recipes']);
+        data.items.forEach(i => {
+            const recipes = (i.recipes || []).map(r => r.title || r.name).join(' | ');
+            rows.push([i.name, i.unit || '', i.quantity || '', recipes]);
+        });
+        const csv = rows.map(r => r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `grocery-list-${Date.now()}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
 });
