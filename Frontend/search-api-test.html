@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search API Test - Chopsmo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .search-results {
+            min-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        .result-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #e55a2b;
+        }
+        .test-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Search API Test Suite</h1>
+        <div class="test-info">
+            <h3>Testing the new search functionality:</h3>
+            <ul>
+                <li>✅ Debounced search (300ms delay)</li>
+                <li>✅ Paginated API search endpoint: <code>GET /api/recipes/search/?name=TERM&page=N</code></li>
+                <li>✅ Exact lookup endpoint: <code>GET /api/recipes/by-name/{name}/</code></li>
+                <li>✅ No authentication required</li>
+                <li>✅ Search suggestions for no matches</li>
+                <li>✅ Pagination controls</li>
+            </ul>
+        </div>
+
+        <h2>🔎 Live Search Test</h2>
+        <input type="text" id="searchInput" class="search-input" placeholder="Type to search recipes (e.g., 'chicken', 'pasta', 'soup')...">
+        
+        <div>
+            <button class="btn" onclick="testSearch('chicken')">Test: chicken</button>
+            <button class="btn" onclick="testSearch('pasta')">Test: pasta</button>
+            <button class="btn" onclick="testSearch('nonexistent123')">Test: No matches</button>
+            <button class="btn" onclick="testExactLookup('Chicken-Curry')">Test: Exact lookup</button>
+            <button class="btn" onclick="clearResults()">Clear</button>
+        </div>
+
+        <div id="searchResults" class="search-results">
+            <p>Start typing or click a test button to see search results...</p>
+        </div>
+
+        <h2>📊 API Response Log</h2>
+        <div id="apiLog" style="background: #000; color: #0f0; padding: 15px; border-radius: 8px; font-family: monospace; max-height: 300px; overflow-y: auto;">
+            <div>API calls will be logged here...</div>
+        </div>
+    </div>
+
+    <script>
+        let searchTimeout;
+        let currentPage = 1;
+        let lastQuery = '';
+
+        // Debounced search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (!query) {
+                document.getElementById('searchResults').innerHTML = '<p>Start typing to search...</p>';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                performSearch(query, 1);
+            }, 300);
+        });
+
+        // Main search function
+        async function performSearch(query, page = 1) {
+            logAPI(`🔍 Search: "${query}" (page ${page})`);
+            
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><i>🔄 Searching...</i></div>';
+            
+            lastQuery = query;
+            currentPage = page;
+
+            try {
+                const params = new URLSearchParams({
+                    name: query,
+                    page: page.toString()
+                });
+                
+                const response = await fetch(`https://njoya.pythonanywhere.com/api/recipes/search/?${params}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                logAPI(`📥 Response: ${JSON.stringify(data, null, 2)}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${data.detail || 'Search failed'}`);
+                }
+
+                renderResults(data, query);
+
+            } catch (error) {
+                logAPI(`❌ Error: ${error.message}`);
+                resultsDiv.innerHTML = `
+                    <div style="color: red; text-align: center; padding: 20px;">
+                        <h3>❌ Search Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Render search results
+        function renderResults(data, query) {
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (data.count === 0) {
+                // Show suggestions if available
+                if (data.suggestions && data.suggestions.length > 0) {
+                    const suggestions = data.suggestions.map(s => 
+                        `<button class="btn" onclick="testSearch('${s}')">${s}</button>`
+                    ).join(' ');
+                    
+                    resultsDiv.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <h3>🔍 No results for "${query}"</h3>
+                            <p>Try these suggestions:</p>
+                            <div style="margin: 15px 0;">${suggestions}</div>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <h3>🔍 No results found for "${query}"</h3>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            // Display results
+            const results = data.results.map(recipe => `
+                <div class="result-card">
+                    <h4>${recipe.title || recipe.name}</h4>
+                    <p><strong>Contributor:</strong> ${recipe.contributor?.username || 'Unknown'}</p>
+                    <p><strong>Cuisine:</strong> ${recipe.cuisine_type || 'Not specified'}</p>
+                    <p><strong>Prep Time:</strong> ${recipe.prep_time || 'Not specified'} mins</p>
+                    ${recipe.estimated_cost ? `<p><strong>Est. Cost:</strong> $${recipe.estimated_cost}</p>` : ''}
+                </div>
+            `).join('');
+
+            // Pagination controls
+            const pagination = renderPagination(data);
+
+            resultsDiv.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3>📊 Found ${data.count} recipes for "${query}" (Page ${currentPage})</h3>
+                </div>
+                ${results}
+                ${pagination}
+            `;
+        }
+
+        // Render pagination
+        function renderPagination(data) {
+            if (!data.next && !data.previous) return '';
+
+            const prevBtn = data.previous ? 
+                `<button class="btn" onclick="performSearch('${lastQuery}', ${currentPage - 1})">← Previous</button>` : 
+                `<button class="btn" disabled style="opacity: 0.5;">← Previous</button>`;
+
+            const nextBtn = data.next ? 
+                `<button class="btn" onclick="performSearch('${lastQuery}', ${currentPage + 1})">Next →</button>` : 
+                `<button class="btn" disabled style="opacity: 0.5;">Next →</button>`;
+
+            return `
+                <div style="text-align: center; margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+                    ${prevBtn}
+                    <span style="margin: 0 15px; font-weight: bold;">Page ${currentPage}</span>
+                    ${nextBtn}
+                </div>
+            `;
+        }
+
+        // Exact lookup test
+        async function testExactLookup(name) {
+            logAPI(`🎯 Exact lookup: "${name}"`);
+            
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><i>🔄 Looking up exact recipe...</i></div>';
+
+            try {
+                const encodedName = encodeURIComponent(name.replace(/\s+/g, '-'));
+                const response = await fetch(`https://njoya.pythonanywhere.com/api/recipes/by-name/${encodedName}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const recipe = await response.json();
+                    logAPI(`🎯 Exact lookup success: ${JSON.stringify(recipe, null, 2)}`);
+                    
+                    resultsDiv.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <h3>🎯 Exact Match Found!</h3>
+                        </div>
+                        <div class="result-card" style="border-left: 4px solid #2196F3;">
+                            <h4>${recipe.title || recipe.name}</h4>
+                            <p><strong>Contributor:</strong> ${recipe.contributor?.username || 'Unknown'}</p>
+                            <p><strong>Cuisine:</strong> ${recipe.cuisine_type || 'Not specified'}</p>
+                            <p><strong>Description:</strong> ${recipe.description || 'No description'}</p>
+                        </div>
+                    `;
+                } else {
+                    const errorData = await response.json();
+                    logAPI(`🎯 Recipe not found: ${JSON.stringify(errorData, null, 2)}`);
+                    
+                    resultsDiv.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <h3>🔍 Recipe "${name}" not found</h3>
+                            <p>Suggestion: ${errorData.suggestion || 'Try a different name'}</p>
+                            <button class="btn" onclick="testSearch('${name}')">Search instead</button>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                logAPI(`❌ Exact lookup error: ${error.message}`);
+                resultsDiv.innerHTML = `
+                    <div style="color: red; text-align: center; padding: 20px;">
+                        <h3>❌ Lookup Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test functions
+        function testSearch(query) {
+            document.getElementById('searchInput').value = query;
+            performSearch(query, 1);
+        }
+
+        function clearResults() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').innerHTML = '<p>Results cleared. Start typing to search...</p>';
+        }
+
+        // API logging
+        function logAPI(message) {
+            const logDiv = document.getElementById('apiLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div style="margin: 5px 0;">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Initialize
+        logAPI('🚀 Search API test page loaded');
+        logAPI('📡 API Base URL: https://njoya.pythonanywhere.com');
+    </script>
+</body>
+</html>

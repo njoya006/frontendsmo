@@ -976,8 +976,399 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast('Search cleared - showing all recipes', '#4CAF50');
     }
 
-    // Make clearSearch globally available for the error display
+    // Make search functions globally available for external access
     window.clearSearch = clearSearch;
+    window.performApiSearch = performApiSearch;
+    window.performExactLookup = performExactLookup;
+
+    // ======= API SEARCH WITH DEBOUNCING & PAGINATION =======
+    
+    let searchDebounceTimer = null;
+    let currentSearchPage = 1;
+    let lastSearchQuery = '';
+    
+    // Debounced API search function
+    function debounceApiSearch(query, delay = 300) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            if (query.trim()) {
+                performApiSearch(query.trim(), 1);
+            }
+        }, delay);
+    }
+    
+    // Main API search function (no auth required)
+    async function performApiSearch(query, page = 1) {
+        if (!query) return;
+        
+        lastSearchQuery = query;
+        currentSearchPage = page;
+        
+        console.log(`🔎 API Search: "${query}" (page ${page})`);
+        
+        // Show loading state
+        const recipesGrid = document.querySelector('.recipes-grid') || document.getElementById('recipesGrid');
+        if (recipesGrid) {
+            recipesGrid.innerHTML = `
+                <div class="loading-search" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 50px; color: #ff6b35; margin-bottom: 20px;"></i>
+                    <h3>Searching recipes...</h3>
+                    <p style="color: #666;">Page ${page}</p>
+                </div>
+            `;
+        }
+        
+        try {
+            const params = new URLSearchParams({
+                name: query,
+                page: page.toString()
+            });
+            
+            const response = await fetch(`https://njoya.pythonanywhere.com/api/recipes/search/?${params}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    // No auth header - unauthenticated access allowed
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Search failed: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('🔎 API Search Response:', data);
+            
+            // Handle no results with suggestions
+            if (data.count === 0 && data.suggestions && data.suggestions.length > 0) {
+                renderSearchSuggestions(query, data.suggestions);
+                return;
+            }
+            
+            // Update global recipe data
+            recipeData = data.results || [];
+            displayRecipes(recipeData);
+            
+            // Render pagination
+            renderSearchPagination(data);
+            
+            // Show success message
+            showToast(`Found ${data.count} recipes for "${query}"`, '#4CAF50');
+            
+        } catch (error) {
+            console.error('❌ API Search Error:', error);
+            renderSearchError(`Search failed: ${error.message}`);
+        }
+    }
+    
+    // Render search suggestions when no results found
+    function renderSearchSuggestions(query, suggestions) {
+        const recipesGrid = document.querySelector('.recipes-grid') || document.getElementById('recipesGrid');
+        if (!recipesGrid) return;
+        
+        const suggestionButtons = suggestions.map(suggestion => 
+            `<button class="btn btn-outline suggestion-btn" data-suggestion="${encodeURIComponent(suggestion)}" style="margin: 5px;">
+                ${suggestion}
+            </button>`
+        ).join('');
+        
+        recipesGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <i class="fas fa-search" style="font-size: 50px; color: #ccc; margin-bottom: 20px;"></i>
+                <h3 style="color: #333; margin-bottom: 15px;">No recipes found matching "${query}"</h3>
+                <p style="color: #666; margin-bottom: 20px;">Try one of these suggestions:</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0;">
+                    ${suggestionButtons}
+                </div>
+                <button onclick="clearSearch()" class="btn btn-primary" style="margin-top: 20px;">
+                    <i class="fas fa-times"></i> Clear Search
+                </button>
+            </div>
+        `;
+        
+        // Add click handlers for suggestions
+        document.querySelectorAll('.suggestion-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const suggestion = decodeURIComponent(e.target.dataset.suggestion);
+                if (searchInput) {
+                    searchInput.value = suggestion;
+                }
+                performApiSearch(suggestion, 1);
+            });
+        });
+    }
+    
+    // Render pagination controls
+    function renderSearchPagination(data) {
+        // Remove existing pagination
+        const existingPagination = document.querySelector('.search-pagination');
+        if (existingPagination) {
+            existingPagination.remove();
+        }
+        
+        if (!data.next && !data.previous) {
+            return; // No pagination needed
+        }
+        
+        const pagination = document.createElement('div');
+        pagination.className = 'search-pagination';
+        pagination.style.cssText = `
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        `;
+        
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'btn-pagination';
+        prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i> Previous';
+        prevBtn.disabled = !data.previous;
+        prevBtn.style.cssText = `
+            background: ${data.previous ? '#4CAF50' : '#ccc'};
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: ${data.previous ? 'pointer' : 'not-allowed'};
+            font-size: 14px;
+            transition: all 0.3s ease;
+        `;
+        
+        if (data.previous) {
+            prevBtn.addEventListener('click', () => {
+                const prevPage = currentSearchPage - 1;
+                performApiSearch(lastSearchQuery, prevPage);
+            });
+        }
+        
+        // Page info
+        const pageInfo = document.createElement('span');
+        pageInfo.textContent = `Page ${currentSearchPage}`;
+        pageInfo.style.cssText = `
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-weight: 500;
+            color: #333;
+        `;
+        
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'btn-pagination';
+        nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+        nextBtn.disabled = !data.next;
+        nextBtn.style.cssText = `
+            background: ${data.next ? '#4CAF50' : '#ccc'};
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: ${data.next ? 'pointer' : 'not-allowed'};
+            font-size: 14px;
+            transition: all 0.3s ease;
+        `;
+        
+        if (data.next) {
+            nextBtn.addEventListener('click', () => {
+                const nextPage = currentSearchPage + 1;
+                performApiSearch(lastSearchQuery, nextPage);
+            });
+        }
+        
+        pagination.appendChild(prevBtn);
+        pagination.appendChild(pageInfo);
+        pagination.appendChild(nextBtn);
+        
+        // Insert after recipes grid
+        const recipesGrid = document.querySelector('.recipes-grid') || document.getElementById('recipesGrid');
+        if (recipesGrid && recipesGrid.parentNode) {
+            recipesGrid.parentNode.insertBefore(pagination, recipesGrid.nextSibling);
+        }
+    }
+    
+    // Exact lookup by name for deep links
+    async function performExactLookup(name) {
+        if (!name) return;
+        
+        console.log(`🎯 Exact Lookup: "${name}"`);
+        
+        // Show loading state
+        const recipesGrid = document.querySelector('.recipes-grid') || document.getElementById('recipesGrid');
+        if (recipesGrid) {
+            recipesGrid.innerHTML = `
+                <div class="loading-search" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 50px; color: #ff6b35; margin-bottom: 20px;"></i>
+                    <h3>Looking up recipe...</h3>
+                </div>
+            `;
+        }
+        
+        try {
+            // Encode name for URL (replace spaces with hyphens)
+            const encodedName = encodeURIComponent(name.replace(/\s+/g, '-'));
+            
+            const response = await fetch(`https://njoya.pythonanywhere.com/api/recipes/by-name/${encodedName}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    // No auth header - unauthenticated access allowed
+                }
+            });
+            
+            if (response.ok) {
+                const recipe = await response.json();
+                console.log('🎯 Exact Lookup Success:', recipe);
+                
+                recipeData = [recipe];
+                displayRecipes([recipe]);
+                
+                // Remove any pagination
+                const existingPagination = document.querySelector('.search-pagination');
+                if (existingPagination) {
+                    existingPagination.remove();
+                }
+                
+                showToast(`Found recipe: "${recipe.title}"`, '#4CAF50');
+                
+            } else if (response.status === 404) {
+                const errorData = await response.json();
+                console.log('🎯 Recipe not found, showing suggestion:', errorData);
+                
+                // Show suggestion or fallback to search
+                const suggestion = errorData.suggestion || `Try searching for "${name}"`;
+                renderSearchError(`Recipe "${name}" not found. ${suggestion}`, name);
+                
+            } else {
+                throw new Error(`Lookup failed: ${response.status}`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Exact Lookup Error:', error);
+            renderSearchError(`Lookup failed: ${error.message}`, name);
+        }
+    }
+    
+    // Enhanced search error with fallback search option
+    function renderSearchError(message, fallbackQuery = null) {
+        const recipesGrid = document.querySelector('.recipes-grid') || document.getElementById('recipesGrid');
+        if (!recipesGrid) return;
+        
+        const fallbackButton = fallbackQuery ? 
+            `<button onclick="performApiSearch('${fallbackQuery}', 1)" class="btn btn-outline" style="margin: 10px;">
+                <i class="fas fa-search"></i> Search for "${fallbackQuery}"
+            </button>` : '';
+        
+        recipesGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <i class="fas fa-exclamation-triangle" style="font-size: 50px; color: #ff6b35; margin-bottom: 20px;"></i>
+                <h3 style="color: #333; margin-bottom: 15px;">${message}</h3>
+                <div style="margin: 20px 0;">
+                    ${fallbackButton}
+                    <button onclick="clearSearch()" class="btn btn-primary" style="margin: 10px;">
+                        <i class="fas fa-times"></i> Clear Search
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Check for deep links on page load
+    function initializeDeepLinkSearch() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const nameParam = urlParams.get('name');
+            
+            if (nameParam) {
+                const decodedName = decodeURIComponent(nameParam);
+                console.log('🔗 Deep link search detected:', decodedName);
+                
+                if (searchInput) {
+                    searchInput.value = decodedName;
+                }
+                
+                // Try exact lookup first, then search
+                performExactLookup(decodedName);
+                return;
+            }
+            
+            // Check for /by-name/ path pattern
+            const path = window.location.pathname;
+            const byNameMatch = path.match(/\/by-name\/(.+)$/);
+            if (byNameMatch) {
+                const encodedName = byNameMatch[1];
+                const decodedName = decodeURIComponent(encodedName.replace(/-/g, ' '));
+                console.log('🔗 By-name deep link detected:', decodedName);
+                
+                if (searchInput) {
+                    searchInput.value = decodedName;
+                }
+                
+                performExactLookup(decodedName);
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ Deep link initialization error:', error);
+        }
+    }
+    
+    // Enhanced search input handler with debouncing
+    function setupEnhancedSearch() {
+        if (!searchInput) return;
+        
+        // Remove existing event listeners to avoid duplicates
+        searchInput.removeEventListener('input', searchRecipes);
+        
+        // Add new debounced search handler
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            
+            if (!query) {
+                // Clear search
+                clearTimeout(searchDebounceTimer);
+                recipeData = [...allRecipes];
+                displayRecipes(allRecipes);
+                
+                // Remove pagination
+                const existingPagination = document.querySelector('.search-pagination');
+                if (existingPagination) {
+                    existingPagination.remove();
+                }
+                
+                return;
+            }
+            
+            // Show clear button
+            if (clearSearchButton) {
+                clearSearchButton.style.display = 'inline-block';
+            }
+            
+            // Perform local search immediately for better UX
+            performLocalSearch(query);
+            
+            // Debounced API search for comprehensive results
+            debounceApiSearch(query);
+        });
+        
+        // Keep existing search button functionality
+        if (searchButton) {
+            searchButton.addEventListener('click', function() {
+                const query = searchInput.value.trim();
+                if (query) {
+                    performApiSearch(query, 1);
+                }
+            });
+        }
+    }
+    
+    // Initialize enhanced search functionality
+    setupEnhancedSearch();
+    initializeDeepLinkSearch();
 
     // ======= CREATE RECIPE BUTTON INITIALIZATION =======
     
@@ -1337,19 +1728,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <span>Database connection failed - showing sample recipes</span>
                                     </div>
                                     <div style="margin-top: 8px; color: #666; font-size: 14px;">
-                                        Your backend API is not responding properly.<br>
-                                        <a href="recipe-fix-tools.html" style="color: #007bff;">Click here to diagnose the issue</a>
+                                        Using offline fallback recipes
                                     </div>
                                 </div>
                             `;
-                            
-                            // Still display the recipes after the error message
-                            setTimeout(() => {
-                                allRecipes = recipes;
-                                recipeData = recipes;
-                                displayRecipes(recipes);
-                            }, 2000);
                         }
+                        
+                        // Display fallback recipes after delay
+                        setTimeout(() => {
+                            allRecipes = recipes;
+                            recipeData = recipes;
+                            displayRecipes(recipes);
+                        }, 2000);
                     } else {
                         console.log('🎉 SUCCESS: Loaded REAL recipes from your database!');
                         console.log('🔍 Real recipe titles:', recipes.slice(0, 5).map(r => r.title || r.name));
