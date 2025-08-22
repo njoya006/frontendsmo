@@ -83,19 +83,56 @@
         resultsInner.innerHTML = '<p class="muted">Loading...</p>';
         csvBtn.disabled = true;
         try {
-            const res = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            // For GET requests avoid sending Content-Type; use Accept instead
+            const headers = { 'Accept': 'application/json' };
+            if (token) {
+                // If token already contains a scheme (e.g. "Token ..." or "Bearer ..."), use it as-is.
+                if (token.includes(' ')) {
+                    headers['Authorization'] = token;
+                } else if (token.split('.').length === 3) {
+                    // Likely a JWT
+                    headers['Authorization'] = `Bearer ${token}`;
+                } else {
+                    // Fallback to Token scheme used by some backends
+                    headers['Authorization'] = `Token ${token}`;
+                }
+            }
+
+            console.log('grocery-list: Fetching URL', url, 'with headers', headers);
+            const res = await fetch(url, { method: 'GET', headers });
+
             if (!res.ok) {
-                const err = await res.json().catch(()=>({ detail: 'Unknown error' }));
-                resultsInner.innerHTML = `<p class="muted">Error: ${err.detail || JSON.stringify(err)}</p>`;
-                showToast('Failed to generate grocery list', 3000);
+                // Try to parse JSON error, fallback to text
+                let errBody;
+                try {
+                    errBody = await res.json();
+                } catch (jsonErr) {
+                    errBody = await res.text().catch(() => 'Unable to read response body');
+                }
+
+                console.error('grocery-list: API error', res.status, errBody);
+                const detail = (errBody && (errBody.detail || errBody.error || errBody.message)) || JSON.stringify(errBody);
+                resultsInner.innerHTML = `<p class="muted">Error ${res.status}: ${detail}</p>`;
+                showToast(`Failed to generate grocery list (${res.status})`, 4000);
                 return;
             }
+
             const data = await res.json();
-            renderList(data);
+
+            // Render grouped view if selected
+            window._lastGrocery = data;
+            if (groupBySelect && groupBySelect.value === 'category') {
+                renderGrouped(data, 'category');
+            } else {
+                renderList(data);
+            }
+
             showToast('Grocery list generated', 2000);
             // store last result for CSV
             window._lastGrocery = data;
         } catch (e) {
+            console.error('grocery-list: Network or script error', e);
             resultsInner.innerHTML = `<p class="muted">Network error: ${e.message}</p>`;
             showToast('Network error', 3000);
         }
