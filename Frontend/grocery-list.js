@@ -27,7 +27,7 @@
         if (start) params.set('start', start);
         if (end) params.set('end', end);
         if (servings) params.set('servings', servings);
-        return `${apiBase}/api/planner/mealplans/grocery-list/?${params.toString()}`;
+        return `${apiBase}/api/planner/meal-plan/grocery-list/?${params.toString()}`;
     }
 
     function renderList(data) {
@@ -203,7 +203,7 @@
                 if (end) csvParams.set('end', end);
                 if (servings) csvParams.set('servings', servings);
                 csvParams.set('format', 'csv');
-                const csvUrl = `${apiBase}/api/planner/mealplans/grocery-list/?${csvParams.toString()}`;
+                const csvUrl = `${apiBase}/api/planner/meal-plan/grocery-list/?${csvParams.toString()}`;
                 // open CSV in new tab so browser downloads or displays it
                 window.open(csvUrl, '_blank');
                 return;

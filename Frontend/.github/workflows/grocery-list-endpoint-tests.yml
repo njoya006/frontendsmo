@@ -23,7 +23,7 @@ jobs:
           set -e
           START=2025-08-01
           END=2025-08-07
-          URL="$API_BASE/api/planner/mealplans/grocery-list/?start=$START&end=$END&servings=2"
+          URL="$API_BASE/api/planner/meal-plan/grocery-list/?start=$START&end=$END&servings=2"
           echo "Testing URL: $URL"
           HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" "$URL")
           echo "HTTP status: $HTTP_STATUS"
@@ -47,7 +47,7 @@ jobs:
         run: |
           set -e
           IDS=12,13
-          URL="$API_BASE/api/planner/mealplans/grocery-list/?ids=$IDS&format=csv"
+          URL="$API_BASE/api/planner/meal-plan/grocery-list/?ids=$IDS&format=csv"
           echo "Testing CSV URL: $URL"
           HTTP_STATUS=$(curl -s -o response.csv -w "%{http_code}" -H "Accept: text/csv" "$URL")
           echo "HTTP status: $HTTP_STATUS"
@@ -65,4 +65,4 @@ jobs:
           echo "CSV returned with $LINE_COUNT lines"
 
       - name: Success
-        run: echo "Grocery list endpoint tests completed successfully" 
+        run: echo "Grocery list endpoint tests completed successfully"
