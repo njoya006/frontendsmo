@@ -1,8 +1,27 @@
+const resolveUtilsApiBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        if (typeof window.getChopsmoApiBaseUrl === 'function') {
+            const resolved = window.getChopsmoApiBaseUrl();
+            if (resolved) return resolved;
+        }
+        if (typeof window.buildChopsmoUrl === 'function') {
+            return window.buildChopsmoUrl();
+        }
+        if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+            return window.CHOPSMO_CONFIG.API_BASE_URL;
+        }
+    }
+    return 'http://56.228.22.20';
+};
+
+const UTILS_DEFAULT_API_BASE_URL = resolveUtilsApiBaseUrl();
+const UTILS_NORMALIZED_DEFAULT_API_BASE = UTILS_DEFAULT_API_BASE_URL.replace(/\/$/, '');
+
 // Recipe Search and API Utilities for ChopSmo
 
 class RecipeAPI {
-    constructor(baseUrl = 'https://njoya.pythonanywhere.com') {
-        this.baseUrl = baseUrl;
+    constructor(baseUrl = UTILS_NORMALIZED_DEFAULT_API_BASE) {
+        this.baseUrl = (baseUrl || UTILS_NORMALIZED_DEFAULT_API_BASE).replace(/\/$/, '');
         this.authToken = this.getAuthToken();
     }
 

@@ -1,3 +1,25 @@
+const resolveDashboardApiBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        if (typeof window.getChopsmoApiBaseUrl === 'function') {
+            const resolved = window.getChopsmoApiBaseUrl();
+            if (resolved) return resolved;
+        }
+        if (typeof window.buildChopsmoUrl === 'function') {
+            return window.buildChopsmoUrl();
+        }
+        if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+            return window.CHOPSMO_CONFIG.API_BASE_URL;
+        }
+    }
+    return 'http://56.228.22.20';
+};
+
+const DASHBOARD_API_BASE_URL = resolveDashboardApiBaseUrl();
+const NORMALIZED_DASHBOARD_API_BASE = DASHBOARD_API_BASE_URL.replace(/\/$/, '');
+const PROFILE_ENDPOINT = (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function')
+    ? window.buildChopsmoApiUrl('/api/users/profile/')
+    : `${NORMALIZED_DASHBOARD_API_BASE}/api/users/profile/`;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize verification badge
     if (typeof initializeVerificationBadge === 'function') {
@@ -41,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         try {
-            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+            const response = await fetch(PROFILE_ENDPOINT, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Token ${token}`,

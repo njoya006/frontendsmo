@@ -1,9 +1,36 @@
+const resolveVerificationCleanApiBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        if (typeof window.getChopsmoApiBaseUrl === 'function') {
+            const resolved = window.getChopsmoApiBaseUrl();
+            if (resolved) return resolved;
+        }
+        if (typeof window.buildChopsmoUrl === 'function') {
+            return window.buildChopsmoUrl();
+        }
+        if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+            return window.CHOPSMO_CONFIG.API_BASE_URL;
+        }
+    }
+    return 'http://56.228.22.20';
+};
+
+const VERIFICATION_CLEAN_API_BASE_URL = resolveVerificationCleanApiBaseUrl();
+const VERIFICATION_CLEAN_NORMALIZED_API_BASE = VERIFICATION_CLEAN_API_BASE_URL.replace(/\/$/, '');
+const buildVerificationCleanApiUrl = (path = '') => {
+    if (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function') {
+        return window.buildChopsmoApiUrl(path);
+    }
+    if (!path) return VERIFICATION_CLEAN_NORMALIZED_API_BASE;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${VERIFICATION_CLEAN_NORMALIZED_API_BASE}${normalizedPath}`;
+};
+
 // ChopSmo User Verification System - Clean Working Version
 // Handles verification applications, status checking, and admin review
 
 class VerificationSystem {
     constructor() {
-        this.baseUrl = 'https://njoya.pythonanywhere.com';
+    this.baseUrl = VERIFICATION_CLEAN_NORMALIZED_API_BASE;
         this.authToken = this.getAuthToken();
         this.currentUser = null;
         this.isAdmin = false;

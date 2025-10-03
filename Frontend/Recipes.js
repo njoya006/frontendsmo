@@ -6,6 +6,30 @@ document.addEventListener('DOMContentLoaded', function() {
     let verificationCheckInterval = null; // For periodic checks
     let currentVerificationStatus = null; // Track current status
 
+    const API_BASE_URL = (typeof window !== 'undefined' && typeof window.getChopsmoApiBaseUrl === 'function')
+        ? window.getChopsmoApiBaseUrl()
+        : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
+            ? window.CHOPSMO_CONFIG.API_BASE_URL
+            : 'http://56.228.22.20');
+    const ADMIN_BASE_URL = (typeof window !== 'undefined' && typeof window.getChopsmoAdminUrl === 'function')
+        ? window.getChopsmoAdminUrl()
+        : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.ADMIN_URL)
+            ? window.CHOPSMO_CONFIG.ADMIN_URL
+            : `${API_BASE_URL.replace(/\/$/, '')}/admin/`);
+
+    function normalizeBase(base) {
+        return base ? base.replace(/\/$/, '') : '';
+    }
+
+    const NORMALIZED_API_BASE = normalizeBase(API_BASE_URL);
+
+    function buildApiUrl(path = '') {
+        if (!path) return NORMALIZED_API_BASE;
+        if (path.startsWith('http')) return path;
+        if (path.startsWith('/')) return `${NORMALIZED_API_BASE}${path}`;
+        return `${NORMALIZED_API_BASE}/${path}`;
+    }
+
     // ======= TOAST NOTIFICATION SYSTEM =======
     
     function showToast(message, backgroundColor = '#333') {
@@ -106,11 +130,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // If it's a relative path, construct the full URL
         if (imageUrl.startsWith('/')) {
-            return `https://njoya.pythonanywhere.com${imageUrl}`;
+            return buildApiUrl(imageUrl);
         }
-        
+
         // If it's just a filename, add the media path
-        return `https://njoya.pythonanywhere.com/media/${imageUrl}`;
+        return buildApiUrl(`media/${imageUrl}`);
     }
     
     // Helper function to get recipe image with fallback
@@ -255,8 +279,9 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchRecipes() {
         const token = localStorage.getItem('authToken');
         
-        console.log('🚀 === STARTING DATABASE RECIPE FETCH ===');
-        console.log('� API URL: https://njoya.pythonanywhere.com/api/recipes/');
+    console.log('🚀 === STARTING DATABASE RECIPE FETCH ===');
+    const recipesEndpoint = buildApiUrl('/api/recipes/');
+    console.log('📡 API URL:', recipesEndpoint);
         console.log('🔍 Auth token present:', token ? 'YES (length: ' + token.length + ')' : 'NO');
         console.log('🔍 Browser online:', navigator.onLine);
         console.log('🔍 Current timestamp:', new Date().toISOString());
@@ -273,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             console.log('📡 Making fetch request...');
-            const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+            const response = await fetch(recipesEndpoint, {
                 method: 'GET',
                 headers: headers,
                 mode: 'cors' // Explicitly set CORS mode
@@ -294,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (response.status === 403 || response.status === 401) {
                     console.error('❌ Authentication error - trying without token');
                     // Try again without token
-                    const retryResponse = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                    const retryResponse = await fetch(recipesEndpoint, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         mode: 'cors'
@@ -708,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchParams = new URLSearchParams();
             searchParams.append('search', searchTerm);
             
-            const searchUrl = `https://njoya.pythonanywhere.com/api/recipes/?${searchParams.toString()}`;
+            const searchUrl = `${buildApiUrl('/api/recipes/')}?${searchParams.toString()}`;
             console.log('🔍 API search URL:', searchUrl);
             
             const response = await fetch(searchUrl, {
@@ -1024,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 page: page.toString()
             });
             
-            const response = await fetch(`https://njoya.pythonanywhere.com/api/recipes/search/?${params}`, {
+            const response = await fetch(`${buildApiUrl('/api/recipes/search/')}?${params}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1213,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Encode name for URL (replace spaces with hyphens)
             const encodedName = encodeURIComponent(name.replace(/\s+/g, '-'));
             
-            const response = await fetch(`https://njoya.pythonanywhere.com/api/recipes/by-name/${encodedName}/`, {
+            const response = await fetch(`${buildApiUrl(`/api/recipes/by-name/${encodedName}/`)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1383,7 +1408,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return { isVerified: false, reason: 'not_logged_in' };
         }
         try {
-            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+            const profileEndpoint = buildApiUrl('/api/users/profile/');
+            const response = await fetch(profileEndpoint, {
                 headers: {
                     'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`,
                     'Content-Type': 'application/json'
@@ -1679,7 +1705,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // Normal recipe loading with better error handling - PRIORITIZE DATABASE RECIPES
             console.log('🌐 STARTING DATABASE RECIPE LOADING PROCESS...');
-            console.log('🔍 API URL: https://njoya.pythonanywhere.com/api/recipes/');
+            const recipesEndpointInfo = buildApiUrl('/api/recipes/');
+            console.log('🔍 API URL:', recipesEndpointInfo);
             console.log('🔍 Current URL:', window.location.href);
             console.log('🔍 Timestamp:', new Date().toISOString());
             
@@ -1693,7 +1720,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span>Loading recipes from your database...</span>
                         </div>
                         <div style="margin-top: 8px; color: #666; font-size: 14px;">
-                            Connecting to: njoya.pythonanywhere.com/api/recipes/
+                            Connecting to: ${recipesEndpointInfo}
                         </div>
                     </div>
                 `;
@@ -1976,7 +2003,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchOptions(endpoint) {
         try {
             console.log(`[DEBUG] Fetching options for: ${endpoint}`);
-            const response = await fetch(`https://njoya.pythonanywhere.com/api/${endpoint}/`, {
+            const response = await fetch(buildApiUrl(`/api/${endpoint}/`), {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -2158,7 +2185,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                const createRecipeEndpoint = buildApiUrl('/api/recipes/');
+                const response = await fetch(createRecipeEndpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

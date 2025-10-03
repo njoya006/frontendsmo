@@ -2,9 +2,26 @@
 // This file prevents 404 errors and provides a basic API interface for the frontend.
 // Replace with real implementation as needed.
 
+function resolveApiBaseUrl() {
+    try {
+        if (typeof window !== 'undefined') {
+            if (typeof window.getChopsmoApiBaseUrl === 'function') {
+                const value = window.getChopsmoApiBaseUrl();
+                if (value) return value;
+            }
+            if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+                return window.CHOPSMO_CONFIG.API_BASE_URL;
+            }
+        }
+    } catch (error) {
+        console.warn('resolveApiBaseUrl fallback triggered:', error);
+    }
+    return 'http://56.228.22.20';
+}
+
 class EnhancedRecipeAPI {
     constructor(baseUrl) {
-        this.baseUrl = baseUrl || 'https://njoya.pythonanywhere.com';
+        this.baseUrl = baseUrl || resolveApiBaseUrl();
         
         // Safe auth token getter
         this.getAuthToken = () => {
@@ -1530,5 +1547,6 @@ class EnhancedRecipeAPI {
 // api.getRecipe('1').then(recipe => console.log('Recipe:', recipe));
 
 // Create the global enhancedRecipeAPI instance automatically when the script is loaded
-window.enhancedRecipeAPI = new EnhancedRecipeAPI('https://njoya.pythonanywhere.com');
-console.log('📦 Enhanced Recipe API initialized', window.enhancedRecipeAPI);
+const __initialApiBase = resolveApiBaseUrl();
+window.enhancedRecipeAPI = new EnhancedRecipeAPI(__initialApiBase);
+console.log(`📦 Enhanced Recipe API initialized with base ${__initialApiBase}`, window.enhancedRecipeAPI);

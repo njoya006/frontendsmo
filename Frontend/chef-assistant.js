@@ -132,11 +132,31 @@
     // Message history with conversation tracking
     let chatHistory = [];
     let currentConversationId = localStorage.getItem('chef_conversation_id');
-    
+
+    const resolveApiBaseUrl = () => {
+        if (typeof window !== 'undefined') {
+            if (typeof window.getChopsmoApiBaseUrl === 'function') {
+                const value = window.getChopsmoApiBaseUrl();
+                if (value) return value;
+            }
+            if (typeof window.buildChopsmoUrl === 'function') {
+                return window.buildChopsmoUrl();
+            }
+            if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+                return window.CHOPSMO_CONFIG.API_BASE_URL;
+            }
+        }
+        return 'http://56.228.22.20';
+    };
+
+    const API_BASE_URL = resolveApiBaseUrl();
+    const NORMALIZED_API_BASE = API_BASE_URL.replace(/\/$/, '');
+    const API_ROOT = `${NORMALIZED_API_BASE}/api`;
+
     // Recipe social features utilities
     const recipeSocial = {
         // Base API URL
-        baseUrl: 'https://njoya.pythonanywhere.com/api',
+        baseUrl: API_ROOT,
         
         // Get authorization headers
         getAuthHeaders() {
@@ -257,7 +277,7 @@
             }
 
             // Debug: Log full request details
-            const apiUrl = 'https://njoya.pythonanywhere.com/api/chef-assistant/';  // Original endpoint path
+            const apiUrl = `${API_ROOT}/chef-assistant/`;  // Derived from config
             console.log('Sending request to:', apiUrl);
             console.log('Request headers:', headers);
             // Parse stored preferences (they might be JSON strings)

@@ -1,10 +1,30 @@
-﻿// ChopSmo Enhanced Recipe API (Professional Placeholder)
+﻿const resolveTestScriptApiBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        if (typeof window.getChopsmoApiBaseUrl === 'function') {
+            const resolved = window.getChopsmoApiBaseUrl();
+            if (resolved) return resolved;
+        }
+        if (typeof window.buildChopsmoUrl === 'function') {
+            return window.buildChopsmoUrl();
+        }
+        if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+            return window.CHOPSMO_CONFIG.API_BASE_URL;
+        }
+    }
+    return 'http://56.228.22.20';
+};
+
+const TEST_SCRIPT_API_BASE_URL = resolveTestScriptApiBaseUrl();
+const TEST_SCRIPT_NORMALIZED_API_BASE = TEST_SCRIPT_API_BASE_URL.replace(/\/$/, '');
+
+// ChopSmo Enhanced Recipe API (Professional Placeholder)
 // This file prevents 404 errors and provides a basic API interface for the frontend.
 // Replace with real implementation as needed.
 
 class EnhancedRecipeAPI {
     constructor(baseUrl) {
-        this.baseUrl = baseUrl || 'https://njoya.pythonanywhere.com';
+        const resolvedBase = baseUrl || TEST_SCRIPT_API_BASE_URL;
+        this.baseUrl = (resolvedBase || 'http://56.228.22.20').replace(/\/$/, '');
         
         // Safe auth token getter
         this.getAuthToken = () => {

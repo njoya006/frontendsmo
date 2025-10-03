@@ -8,7 +8,16 @@
 
 class RecipeRatingSystem {
     constructor() {
-        this.baseUrl = 'https://njoya.pythonanywhere.com/api';
+        const apiBase = (typeof window !== 'undefined' && typeof window.getChopsmoApiBaseUrl === 'function')
+            ? window.getChopsmoApiBaseUrl()
+            : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
+                ? window.CHOPSMO_CONFIG.API_BASE_URL
+                : 'http://56.228.22.20');
+        if (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function') {
+            this.baseUrl = window.buildChopsmoApiUrl('/').replace(/\/$/, '');
+        } else {
+            this.baseUrl = `${apiBase.replace(/\/$/, '')}/api`;
+        }
         this.recipeId = null;
         this.currentPage = 1;
         this.hasMoreComments = false;

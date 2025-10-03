@@ -5,6 +5,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     console.log('Profile page loaded, checking for elements...');
+
+    const resolveApiBaseUrl = () => {
+        if (typeof window !== 'undefined') {
+            if (typeof window.getChopsmoApiBaseUrl === 'function') {
+                const resolved = window.getChopsmoApiBaseUrl();
+                if (resolved) return resolved;
+            }
+            if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+                return window.CHOPSMO_CONFIG.API_BASE_URL;
+            }
+            if (typeof window.buildChopsmoUrl === 'function') {
+                return window.buildChopsmoUrl();
+            }
+        }
+        return 'http://56.228.22.20';
+    };
+
+    const API_BASE_URL = resolveApiBaseUrl();
+    const NORMALIZED_API_BASE = API_BASE_URL.replace(/\/$/, '');
+    const buildApiUrl = (path = '') => {
+        if (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function') {
+            return window.buildChopsmoApiUrl(path);
+        }
+        if (!path) return API_BASE_URL;
+        const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+        return `${NORMALIZED_API_BASE}/${normalizedPath}`;
+    };
     
     // Debug: Check if critical elements exist
     const criticalElements = [
@@ -129,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             const data = await fetchWithSpinnerToast(
-                'https://njoya.pythonanywhere.com/api/users/profile/',
+                buildApiUrl('/api/users/profile/'),
                 {
                     method: 'GET',
                     headers: {
@@ -225,10 +252,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
                         // Full URL - use as is
                     } else if (photoUrl.startsWith('/media/')) {
-                        photoUrl = `https://njoya.pythonanywhere.com${photoUrl}`;
+                        photoUrl = `${NORMALIZED_API_BASE}${photoUrl}`;
                     } else if (photoUrl) {
                         // Relative path or filename
-                        photoUrl = `https://njoya.pythonanywhere.com/media/${photoUrl.replace(/^media\/?/, '')}`;
+                        photoUrl = `${NORMALIZED_API_BASE}/media/${photoUrl.replace(/^media\/?/, '')}`;
                     }
 
                     // Set the image with error handling
@@ -519,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Submit form data
                 const data = await fetchWithSpinnerToast(
-                    'https://njoya.pythonanywhere.com/api/users/profile/',
+                    buildApiUrl('/api/users/profile/'),
                     {
                         method: 'PATCH',
                         headers: {
@@ -632,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const allergies = Array.from(dietaryForm.querySelectorAll('input[name="allergies"]:checked')).map(cb => cb.value).join(',');
             const dislikes = document.getElementById('dislikes').value;
             try {
-                const response = await fetch('https://njoya.pythonanywhere.com/api/users/preferences/', {
+                const response = await fetch(buildApiUrl('/api/users/preferences/'), {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -871,7 +898,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Fetch profile for up-to-date status
             const token = localStorage.getItem('authToken');
-            const response = await fetch('https://njoya.pythonanywhere.com/api/users/profile/', {
+            const response = await fetch(buildApiUrl('/api/users/profile/'), {
                 headers: { 'Authorization': `Token ${token}` }
             });
             const data = await response.json();

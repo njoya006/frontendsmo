@@ -1,4 +1,9 @@
-const API_BASE_URL = 'https://njoya.pythonanywhere.com';
+const API_BASE_URL = (typeof window !== 'undefined' && typeof window.getChopsmoApiBaseUrl === 'function')
+    ? window.getChopsmoApiBaseUrl()
+    : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
+        ? window.CHOPSMO_CONFIG.API_BASE_URL
+        : 'http://56.228.22.20');
+const NORMALIZED_API_BASE = API_BASE_URL.replace(/\/$/, '');
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize verification badge
@@ -110,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let plansToReturn = []; 
 
         try {
-            const fetchUrl = `${API_BASE_URL}/api/planner/meal-plan/`;
+            const fetchUrl = `${NORMALIZED_API_BASE}/api/planner/meal-plan/`;
 
             const response = await fetch(fetchUrl, {
                 headers: { 'Authorization': `Token ${token}` }
@@ -164,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("MealPlan.js: fetchRecipesForModal CALLED."); // MODAL_LOG_1
         const token = localStorage.getItem('authToken');
         try {
-            const fetchUrl = `${API_BASE_URL}/api/recipes/`;
+            const fetchUrl = `${NORMALIZED_API_BASE}/api/recipes/`;
             console.log("MealPlan.js: Fetching recipes from URL:", fetchUrl);
             console.log("MealPlan.js: Using auth token:", token ? "Present" : "Missing");
             
@@ -332,9 +337,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (plan.recipe.image.startsWith('http')) {
                         recipeImage = plan.recipe.image;
                     } else if (plan.recipe.image.startsWith('/')) {
-                        recipeImage = `${API_BASE_URL}${plan.recipe.image}`;
+                        recipeImage = `${NORMALIZED_API_BASE}${plan.recipe.image}`;
                     } else {
-                        recipeImage = `${API_BASE_URL}/${plan.recipe.image}`;
+                        recipeImage = `${NORMALIZED_API_BASE}/${plan.recipe.image}`;
                     }
                     console.log("MealPlan.js: Constructed recipe image URL:", recipeImage);
                 } else if (plan.image) {
@@ -342,9 +347,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (plan.image.startsWith('http')) {
                         recipeImage = plan.image;
                     } else if (plan.image.startsWith('/')) {
-                        recipeImage = `${API_BASE_URL}${plan.image}`;
+                        recipeImage = `${NORMALIZED_API_BASE}${plan.image}`;
                     } else {
-                        recipeImage = `${API_BASE_URL}/${plan.image}`;
+                        recipeImage = `${NORMALIZED_API_BASE}/${plan.image}`;
                     }
                     console.log("MealPlan.js: Constructed plan image URL:", recipeImage);
                 } else {
@@ -534,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showSpinner();
         try {
-            const response = await fetch(`${API_BASE_URL}/api/planner/meal-plan/${mealPlanId}/`, {
+            const response = await fetch(`${NORMALIZED_API_BASE}/api/planner/meal-plan/${mealPlanId}/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -711,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showSpinner();
         let createdPlan = null;
         try {
-            const fetchUrl = `${API_BASE_URL}/api/planner/meal-plan/`;
+            const fetchUrl = `${NORMALIZED_API_BASE}/api/planner/meal-plan/`;
 
             // Add detailed logging of the request data for debugging
             console.log("MealPlan.js: Sending POST request to:", fetchUrl);
@@ -795,7 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let success = false;
 
         try {
-            const fetchUrl = `${API_BASE_URL}/api/planner/meal-plan/${mealPlanId}/`;
+            const fetchUrl = `${NORMALIZED_API_BASE}/api/planner/meal-plan/${mealPlanId}/`;
 
             const response = await fetch(fetchUrl, {
                 method: 'DELETE',
@@ -1407,7 +1412,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (end) params.set('end', end);
         if (servings) params.set('servings', servings);
         if (format) params.set('format', format);
-        const url = `${API_BASE_URL}/api/planner/mealplans/grocery-list/?${params}`;
+    const url = `${NORMALIZED_API_BASE}/api/planner/mealplans/grocery-list/?${params}`;
 
         gResultsInner.innerHTML = '<p class="muted">Loading...</p>';
         gDownloadCsv.disabled = true;

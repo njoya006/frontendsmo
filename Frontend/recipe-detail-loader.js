@@ -1,4 +1,10 @@
 // Initialize recipe detail page with comprehensive error handling
+const RECIPE_DETAIL_API_BASE = (typeof window !== 'undefined' && typeof window.getChopsmoApiBaseUrl === 'function')
+    ? window.getChopsmoApiBaseUrl()
+    : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
+        ? window.CHOPSMO_CONFIG.API_BASE_URL
+        : 'http://56.228.22.20');
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Recipe Detail Page DOM loaded');
     
@@ -17,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         if (!window.enhancedRecipeAPI) {
             console.log('⚙️ Initializing Enhanced Recipe API');
-            window.enhancedRecipeAPI = new EnhancedRecipeAPI('https://njoya.pythonanywhere.com');
+            window.enhancedRecipeAPI = new EnhancedRecipeAPI(RECIPE_DETAIL_API_BASE);
             console.log('✅ Enhanced Recipe API initialized');
         }
     } catch (error) {
@@ -32,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const timeoutId = setTimeout(() => controller.abort(), 3000); // Shorter timeout
         let apiTest;
         try {
-            apiTest = await fetch('https://njoya.pythonanywhere.com/api/', {
+            apiTest = await fetch(`${RECIPE_DETAIL_API_BASE}/api/`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' },
                 signal: controller.signal,

@@ -1,6 +1,11 @@
 (function(){
     // Simple grocery list UI integration
-    const apiBase = 'https://njoya.pythonanywhere.com';
+    const apiBase = (typeof window !== 'undefined' && typeof window.getChopsmoApiBaseUrl === 'function')
+        ? window.getChopsmoApiBaseUrl()
+        : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
+            ? window.CHOPSMO_CONFIG.API_BASE_URL
+            : 'http://56.228.22.20');
+    const normalizedApiBase = apiBase.replace(/\/$/, '');
     const generateBtn = document.getElementById('generateBtn');
     const csvBtn = document.getElementById('csvBtn');
     const resultsInner = document.getElementById('resultsInner');
@@ -27,7 +32,7 @@
         if (start) params.set('start', start);
         if (end) params.set('end', end);
         if (servings) params.set('servings', servings);
-        return `${apiBase}/api/planner/meal-plan/grocery-list/?${params.toString()}`;
+    return `${normalizedApiBase}/api/planner/meal-plan/grocery-list/?${params.toString()}`;
     }
 
     function renderList(data) {
@@ -203,7 +208,7 @@
                 if (end) csvParams.set('end', end);
                 if (servings) csvParams.set('servings', servings);
                 csvParams.set('format', 'csv');
-                const csvUrl = `${apiBase}/api/planner/meal-plan/grocery-list/?${csvParams.toString()}`;
+                const csvUrl = `${normalizedApiBase}/api/planner/meal-plan/grocery-list/?${csvParams.toString()}`;
                 // open CSV in new tab so browser downloads or displays it
                 window.open(csvUrl, '_blank');
                 return;

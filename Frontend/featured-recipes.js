@@ -1,9 +1,36 @@
+const resolveFeaturedRecipesEndpoint = () => {
+    const base = (() => {
+        if (typeof window !== 'undefined') {
+            if (typeof window.buildChopsmoApiUrl === 'function') {
+                return null; // we'll handle via helper below
+            }
+            if (typeof window.getChopsmoApiBaseUrl === 'function') {
+                const resolved = window.getChopsmoApiBaseUrl();
+                if (resolved) return resolved;
+            }
+            if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+                return window.CHOPSMO_CONFIG.API_BASE_URL;
+            }
+        }
+        return 'http://56.228.22.20';
+    })();
+
+    if (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function') {
+        return window.buildChopsmoApiUrl('/api/recipes/featured/');
+    }
+
+    const normalizedBase = (base || 'http://56.228.22.20').replace(/\/$/, '');
+    return `${normalizedBase}/api/recipes/featured/`;
+};
+
+const FEATURED_RECIPES_ENDPOINT = resolveFeaturedRecipesEndpoint();
+
 // Fetch and render featured recipes with verification badge
 // Assumes universalVerification is loaded globally
 
 async function fetchFeaturedRecipes() {
     try {
-        const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/featured/');
+        const response = await fetch(FEATURED_RECIPES_ENDPOINT);
         if (!response.ok) throw new Error('Failed to fetch featured recipes');
         const recipes = await response.json();
         return recipes;

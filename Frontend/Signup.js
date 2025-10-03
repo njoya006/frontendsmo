@@ -1,4 +1,24 @@
-const API_BASE_URL = 'https://njoya.pythonanywhere.com/';
+const resolveSignupApiBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        if (typeof window.getChopsmoApiBaseUrl === 'function') {
+            const resolved = window.getChopsmoApiBaseUrl();
+            if (resolved) return resolved;
+        }
+        if (typeof window.buildChopsmoUrl === 'function') {
+            return window.buildChopsmoUrl();
+        }
+        if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+            return window.CHOPSMO_CONFIG.API_BASE_URL;
+        }
+    }
+    return 'http://56.228.22.20';
+};
+
+const SIGNUP_API_BASE_URL = resolveSignupApiBaseUrl();
+const NORMALIZED_SIGNUP_API_BASE = SIGNUP_API_BASE_URL.replace(/\/$/, '');
+const REGISTER_ENDPOINT = (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function')
+    ? window.buildChopsmoApiUrl('/api/users/register/')
+    : `${NORMALIZED_SIGNUP_API_BASE}/api/users/register/`;
 document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Toggle (same as index.js)
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');
@@ -85,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
             try {
                 let response;
                 try {
-                    response = await fetch(`${API_BASE_URL}api/users/register/`, {
+                    response = await fetch(REGISTER_ENDPOINT, {
                         method: 'POST',
                         credentials: 'include',  // Important for cookies/sessions
                         headers: {
@@ -100,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
                 } catch (corsError) {
                     console.log('CORS error detected, trying fallback approach...');
                     // Fallback: try without credentials for CORS-restricted environments
-                    response = await fetch(`${API_BASE_URL}api/users/register/`, {
+                    response = await fetch(REGISTER_ENDPOINT, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

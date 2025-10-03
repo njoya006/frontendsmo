@@ -1,4 +1,10 @@
 // Enhanced Recipe Detail JavaScript
+const RECIPE_DETAIL_API_BASE = (typeof window !== 'undefined' && typeof window.getChopsmoApiBaseUrl === 'function')
+    ? window.getChopsmoApiBaseUrl()
+    : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
+        ? window.CHOPSMO_CONFIG.API_BASE_URL
+        : 'http://56.228.22.20');
+
 class RecipeDetailManager {
     // Render ingredients list in the UI
     // ...existing code...
@@ -185,7 +191,7 @@ class RecipeDetailManager {
             }
             
             // Use production URL only
-            this.baseUrl = 'https://njoya.pythonanywhere.com';
+            this.baseUrl = RECIPE_DETAIL_API_BASE;
             this.recipeAPI = new RecipeAPI(this.baseUrl);
             this.useAPI = true;
             
@@ -193,7 +199,7 @@ class RecipeDetailManager {
         } catch (error) {
             this.logError('RecipeAPI initialization failed', error);
             this.useAPI = false;
-            this.baseUrl = 'https://njoya.pythonanywhere.com';
+            this.baseUrl = RECIPE_DETAIL_API_BASE;
         }
         
         try {

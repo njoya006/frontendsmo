@@ -1,3 +1,36 @@
+const resolveMealSuggestionApiBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        if (typeof window.getChopsmoApiBaseUrl === 'function') {
+            const resolved = window.getChopsmoApiBaseUrl();
+            if (resolved) return resolved;
+        }
+        if (typeof window.buildChopsmoUrl === 'function') {
+            return window.buildChopsmoUrl();
+        }
+        if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+            return window.CHOPSMO_CONFIG.API_BASE_URL;
+        }
+    }
+    return 'http://56.228.22.20';
+};
+
+const MEAL_SUGGESTION_API_BASE_URL = resolveMealSuggestionApiBaseUrl();
+const MEAL_SUGGESTION_NORMALIZED_API_BASE = MEAL_SUGGESTION_API_BASE_URL.replace(/\/$/, '');
+const buildMealSuggestionApiUrl = (path = '') => {
+    if (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function') {
+        return window.buildChopsmoApiUrl(path);
+    }
+    if (!path) return MEAL_SUGGESTION_NORMALIZED_API_BASE;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${MEAL_SUGGESTION_NORMALIZED_API_BASE}${normalizedPath}`;
+};
+
+const MEAL_SUGGESTION_ENDPOINTS = Object.freeze({
+    suggestByIngredients: buildMealSuggestionApiUrl('/api/recipes/suggest-by-ingredients/'),
+    recipes: buildMealSuggestionApiUrl('/api/recipes/'),
+    ingredients: buildMealSuggestionApiUrl('/api/ingredients/')
+});
+
 // --- Ingredient Validation and Autocomplete ---
 var validIngredientNames = [];
 
@@ -186,7 +219,7 @@ function getFilteredMeals() {
 async function fetchMealSuggestionsByIngredients(ingredientNames) {
     const token = localStorage.getItem('authToken');
     try {
-        const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/suggest-by-ingredients/', {
+    const response = await fetch(MEAL_SUGGESTION_ENDPOINTS.suggestByIngredients, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -667,7 +700,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Fallback to regular API
             if (!recipes || recipes.length === 0) {
                 console.log('📡 Using fallback API');
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                const response = await fetch(MEAL_SUGGESTION_ENDPOINTS.recipes, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -872,7 +905,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function loadValidIngredients() {
         try {
-            const response = await fetch('https://njoya.pythonanywhere.com/api/ingredients/', {
+            const response = await fetch(MEAL_SUGGESTION_ENDPOINTS.ingredients, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -932,7 +965,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // Fallback to regular API call
             if (!recipes || recipes.length === 0) {
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                const response = await fetch(MEAL_SUGGESTION_ENDPOINTS.recipes, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': localStorage.getItem('authToken') ? 

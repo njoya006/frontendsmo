@@ -1,10 +1,37 @@
+const resolveUniversalApiBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+        if (typeof window.getChopsmoApiBaseUrl === 'function') {
+            const resolved = window.getChopsmoApiBaseUrl();
+            if (resolved) return resolved;
+        }
+        if (typeof window.buildChopsmoUrl === 'function') {
+            return window.buildChopsmoUrl();
+        }
+        if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+            return window.CHOPSMO_CONFIG.API_BASE_URL;
+        }
+    }
+    return 'http://56.228.22.20';
+};
+
+const UNIVERSAL_API_BASE_URL = resolveUniversalApiBaseUrl();
+const UNIVERSAL_NORMALIZED_API_BASE = UNIVERSAL_API_BASE_URL.replace(/\/$/, '');
+const buildUniversalApiUrl = (path = '') => {
+    if (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function') {
+        return window.buildChopsmoApiUrl(path);
+    }
+    if (!path) return UNIVERSAL_NORMALIZED_API_BASE;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${UNIVERSAL_NORMALIZED_API_BASE}${normalizedPath}`;
+};
+
 // ChopSmo Universal Verification Logic
 // Production-ready verification system that works for all users
 // Handles all possible backend verification patterns and flags
 
 class UniversalVerification {
     constructor() {
-        this.baseUrl = 'https://njoya.pythonanywhere.com';
+        this.baseUrl = UNIVERSAL_NORMALIZED_API_BASE;
         this.authToken = this.getAuthToken();
         this.verificationCache = new Map();
         this.cacheExpiration = 30 * 1000; // 30 seconds for more responsive updates

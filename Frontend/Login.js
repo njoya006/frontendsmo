@@ -1,6 +1,28 @@
 document.addEventListener('DOMContentLoaded', function () {
     console.log('ChopSmo Login Page Loaded');
     
+    const resolveLoginApiBaseUrl = () => {
+        if (typeof window !== 'undefined') {
+            if (typeof window.getChopsmoApiBaseUrl === 'function') {
+                const resolved = window.getChopsmoApiBaseUrl();
+                if (resolved) return resolved;
+            }
+            if (typeof window.buildChopsmoUrl === 'function') {
+                return window.buildChopsmoUrl();
+            }
+            if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL) {
+                return window.CHOPSMO_CONFIG.API_BASE_URL;
+            }
+        }
+        return 'http://56.228.22.20';
+    };
+
+    const LOGIN_API_BASE_URL = resolveLoginApiBaseUrl();
+    const NORMALIZED_LOGIN_API_BASE = LOGIN_API_BASE_URL.replace(/\/$/, '');
+    const LOGIN_ENDPOINT = (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function')
+        ? window.buildChopsmoApiUrl('/api/users/login/')
+        : `${NORMALIZED_LOGIN_API_BASE}/api/users/login/`;
+
     const loginForm = document.getElementById('loginForm');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
@@ -163,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // First try with standard headers and credentials
             let response;
             try {
-                response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+                response = await fetch(LOGIN_ENDPOINT, {
                     method: 'POST',
                     credentials: 'include',  // Important for cookies/sessions
                     headers: {
@@ -175,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (corsError) {
                 console.log('CORS error detected, trying fallback approach...');
                 // Fallback: try without credentials for CORS-restricted environments
-                response = await fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+                response = await fetch(LOGIN_ENDPOINT, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
