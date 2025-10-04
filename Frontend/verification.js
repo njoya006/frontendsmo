@@ -11,7 +11,7 @@ const resolveVerificationApiBaseUrl = () => {
             return window.CHOPSMO_CONFIG.API_BASE_URL;
         }
     }
-    return 'http://56.228.22.20';
+    return 'https://api.chopsmo.site';
 };
 
 const VERIFICATION_API_BASE_URL = resolveVerificationApiBaseUrl();

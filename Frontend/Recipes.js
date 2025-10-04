@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ? window.getChopsmoApiBaseUrl()
         : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
             ? window.CHOPSMO_CONFIG.API_BASE_URL
-            : 'http://56.228.22.20');
+            : 'https://api.chopsmo.site');
     const ADMIN_BASE_URL = (typeof window !== 'undefined' && typeof window.getChopsmoAdminUrl === 'function')
         ? window.getChopsmoAdminUrl()
         : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.ADMIN_URL)

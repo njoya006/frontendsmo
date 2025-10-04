@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return window.buildChopsmoUrl();
             }
         }
-        return 'http://56.228.22.20';
+    return 'https://api.chopsmo.site';
     };
 
     const API_BASE_URL = resolveApiBaseUrl();

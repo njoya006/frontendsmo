@@ -16,7 +16,7 @@ function resolveApiBaseUrl() {
     } catch (error) {
         console.warn('resolveApiBaseUrl fallback triggered:', error);
     }
-    return 'http://56.228.22.20';
+    return 'https://api.chopsmo.site';
 }
 
 class EnhancedRecipeAPI {

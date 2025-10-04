@@ -4,7 +4,7 @@
         ? window.getChopsmoApiBaseUrl()
         : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
             ? window.CHOPSMO_CONFIG.API_BASE_URL
-            : 'http://56.228.22.20');
+            : 'https://api.chopsmo.site');
     const normalizedApiBase = apiBase.replace(/\/$/, '');
     const generateBtn = document.getElementById('generateBtn');
     const csvBtn = document.getElementById('csvBtn');

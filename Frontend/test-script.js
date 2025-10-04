@@ -11,7 +11,7 @@
             return window.CHOPSMO_CONFIG.API_BASE_URL;
         }
     }
-    return 'http://56.228.22.20';
+    return 'https://api.chopsmo.site';
 };
 
 const TEST_SCRIPT_API_BASE_URL = resolveTestScriptApiBaseUrl();
@@ -24,7 +24,7 @@ const TEST_SCRIPT_NORMALIZED_API_BASE = TEST_SCRIPT_API_BASE_URL.replace(/\/$/, 
 class EnhancedRecipeAPI {
     constructor(baseUrl) {
         const resolvedBase = baseUrl || TEST_SCRIPT_API_BASE_URL;
-        this.baseUrl = (resolvedBase || 'http://56.228.22.20').replace(/\/$/, '');
+    this.baseUrl = (resolvedBase || 'https://api.chopsmo.site').replace(/\/$/, '');
         
         // Safe auth token getter
         this.getAuthToken = () => {

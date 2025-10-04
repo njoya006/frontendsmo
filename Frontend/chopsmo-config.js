@@ -1,14 +1,23 @@
 (function initChopsmoConfig() {
+    const DEFAULT_API_BASE = 'https://api.chopsmo.site';
     const defaultConfig = Object.freeze({
-        API_BASE_URL: 'http://56.228.22.20',
-        ADMIN_URL: 'http://56.228.22.20/admin/'
+        API_BASE_URL: DEFAULT_API_BASE,
+        ADMIN_URL: `${DEFAULT_API_BASE.replace(/\/$/, '')}/admin/`
     });
 
     // Preserve any pre-existing configuration but fall back to defaults where needed.
     const existingConfig = (typeof window !== 'undefined' && window.CHOPSMO_CONFIG) || {};
+    function preferHttps(url) {
+        if (typeof url !== 'string') return url;
+        if (typeof window !== 'undefined' && window.location && window.location.protocol === 'https:' && url.startsWith('http://')) {
+            return url.replace('http://', 'https://');
+        }
+        return url;
+    }
+
     const mergedConfig = Object.freeze({
-        API_BASE_URL: existingConfig.API_BASE_URL || defaultConfig.API_BASE_URL,
-        ADMIN_URL: existingConfig.ADMIN_URL || defaultConfig.ADMIN_URL
+        API_BASE_URL: preferHttps(existingConfig.API_BASE_URL || defaultConfig.API_BASE_URL),
+        ADMIN_URL: preferHttps(existingConfig.ADMIN_URL || defaultConfig.ADMIN_URL)
     });
 
     if (typeof window !== 'undefined') {

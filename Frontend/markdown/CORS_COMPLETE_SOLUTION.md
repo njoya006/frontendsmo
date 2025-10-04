@@ -1,11 +1,11 @@
 # CORS Issues Resolution Guide - ChopSmo Frontend
 
 ## 🚨 Current Issue
-**Error:** `Access to fetch at 'https://njoya.pythonanywhere.com/api/users/login/' from origin 'https://frontendsmo.vercel.app' has been blocked by CORS policy`
+**Error:** `Access to fetch at 'https://api.chopsmo.site/api/users/login/' from origin 'https://www.chopsmo.site' has been blocked by CORS policy`
 
 This is a **CORS (Cross-Origin Resource Sharing)** issue that occurs when:
-- Frontend domain: `https://frontendsmo.vercel.app`
-- Backend domain: `https://njoya.pythonanywhere.com`
+- Frontend domain: `https://www.chopsmo.site`
+- Backend domain: `https://api.chopsmo.site`
 - The backend doesn't have proper CORS headers configured
 
 ## ✅ Frontend Fixes Applied
@@ -34,7 +34,7 @@ This is a **CORS (Cross-Origin Resource Sharing)** issue that occurs when:
 - ✅ Added `enhanced-recipe-api.js` to `Login.html`
 - ✅ Added `enhanced-recipe-api.js` to `SignUp.html`
 
-## 🔧 Backend Changes Required (Django/PythonAnywhere)
+## 🔧 Backend Changes Required (Django on API host)
 
 The **main fix needs to be done on the backend**. Here's what needs to be configured:
 
@@ -60,7 +60,8 @@ MIDDLEWARE = [
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
-    "https://frontendsmo.vercel.app",  # Your frontend domain
+    "https://www.chopsmo.site",  # Primary frontend domain
+    # "https://frontendsmo.vercel.app",  # Legacy deployment (uncomment if still serving traffic)
     "http://localhost:3000",          # For local development
     "http://127.0.0.1:3000",         # For local development
 ]
@@ -142,7 +143,7 @@ While waiting for backend CORS configuration:
 - [ ] Verify preflight OPTIONS requests work
 
 ### Verification
-- [ ] Test login from `https://frontendsmo.vercel.app`
+- [ ] Test login from `https://www.chopsmo.site`
 - [ ] Test registration from frontend
 - [ ] Verify all API endpoints work with CORS
 - [ ] Test from different browsers
@@ -152,7 +153,7 @@ While waiting for backend CORS configuration:
 ### Check CORS Headers (Browser DevTools)
 ```javascript
 // In browser console
-fetch('https://njoya.pythonanywhere.com/api/users/login/', {
+fetch('https://api.chopsmo.site/api/users/login/', {
     method: 'OPTIONS'
 }).then(response => {
     console.log('CORS Headers:', response.headers);
@@ -162,11 +163,11 @@ fetch('https://njoya.pythonanywhere.com/api/users/login/', {
 ### Test API Directly
 ```bash
 # Test if API is accessible
-curl -H "Origin: https://frontendsmo.vercel.app" \
+curl -H "Origin: https://www.chopsmo.site" \
      -H "Access-Control-Request-Method: POST" \
      -H "Access-Control-Request-Headers: content-type" \
      -X OPTIONS \
-     https://njoya.pythonanywhere.com/api/users/login/
+    https://api.chopsmo.site/api/users/login/
 ```
 
 ---

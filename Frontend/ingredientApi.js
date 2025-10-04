@@ -5,7 +5,7 @@ const API_BASE_URL = (typeof window !== 'undefined' && typeof window.getChopsmoA
     ? window.getChopsmoApiBaseUrl()
     : ((typeof window !== 'undefined' && window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.API_BASE_URL)
         ? window.CHOPSMO_CONFIG.API_BASE_URL
-        : 'http://56.228.22.20');
+    : 'https://api.chopsmo.site');
 const INGREDIENTS_ENDPOINT = `${API_BASE_URL.replace(/\/$/, '')}/api/ingredients/`;
 
 export async function fetchAllIngredientNames() {

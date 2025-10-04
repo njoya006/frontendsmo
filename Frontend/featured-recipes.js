@@ -12,14 +12,14 @@ const resolveFeaturedRecipesEndpoint = () => {
                 return window.CHOPSMO_CONFIG.API_BASE_URL;
             }
         }
-        return 'http://56.228.22.20';
+    return 'https://api.chopsmo.site';
     })();
 
     if (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function') {
         return window.buildChopsmoApiUrl('/api/recipes/featured/');
     }
 
-    const normalizedBase = (base || 'http://56.228.22.20').replace(/\/$/, '');
+    const normalizedBase = (base || 'https://api.chopsmo.site').replace(/\/$/, '');
     return `${normalizedBase}/api/recipes/featured/`;
 };
 
