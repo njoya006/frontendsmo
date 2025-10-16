@@ -161,6 +161,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Enhanced form submission with multiple fallback strategies
+    // Helper to read cookies by name
+    function getCookie(name) {
+        if (typeof document === 'undefined' || !document.cookie) return null;
+        const match = document.cookie.match(new RegExp('(^|; )' + name.replace(/([.$?*|{}()\[\]\\/+^])/g,'\\$1') + '=([^;]*)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    // Create a small debug pane to show server responses (visible on mobile when failures occur)
+    const debugPane = document.createElement('pre');
+    debugPane.id = 'loginDebugPane';
+    debugPane.style.display = 'none';
+    debugPane.style.position = 'fixed';
+    debugPane.style.bottom = '10px';
+    debugPane.style.left = '10px';
+    debugPane.style.right = '10px';
+    debugPane.style.maxHeight = '40vh';
+    debugPane.style.overflow = 'auto';
+    debugPane.style.background = 'rgba(0,0,0,0.8)';
+    debugPane.style.color = '#fff';
+    debugPane.style.padding = '12px';
+    debugPane.style.zIndex = 99999;
+    debugPane.style.fontSize = '12px';
+    document.body.appendChild(debugPane);
+
     loginForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         clearErrors();
@@ -179,32 +203,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
         setLoading(true);
 
-        try {
+            try {
             console.log('Attempting login...');
             
             // First try with standard headers and credentials
             let response;
             try {
-                response = await fetch(LOGIN_ENDPOINT, {
-                    method: 'POST',
-                    credentials: 'include',  // Important for cookies/sessions
-                    headers: {
+                    // Build headers and include CSRF token when using credentials
+                    const headersWithCsrf = {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
+                    };
+                    const csrfToken = getCookie('csrftoken') || getCookie('CSRF-TOKEN') || null;
+                    if (csrfToken) headersWithCsrf['X-CSRFToken'] = csrfToken;
+
+                    response = await fetch(LOGIN_ENDPOINT, {
+                        method: 'POST',
+                        credentials: 'include',  // Important for cookies/sessions
+                        headers: headersWithCsrf,
+                        body: JSON.stringify({ email, password })
+                    });
             } catch (corsError) {
                 console.log('CORS error detected, trying fallback approach...');
                 // Fallback: try without credentials for CORS-restricted environments
-                response = await fetch(LOGIN_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
+                    response = await fetch(LOGIN_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
             }
             
             console.log('Response status:', response.status);
@@ -260,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 showToast(errorMessage, 'error');
                 shakeForm();
             }
-        } catch (err) {
+            } catch (err) {
             console.error('Login error:', err);
             
             let errorMessage = 'Connection failed.';
@@ -275,7 +304,14 @@ document.addEventListener('DOMContentLoaded', function () {
             
             showToast(errorMessage, 'error');
             shakeForm();
-        } finally {
+                // Show debug pane when there's an error
+                try {
+                    debugPane.style.display = 'block';
+                    debugPane.textContent = 'Error: ' + (err && err.message ? err.message : JSON.stringify(err));
+                } catch (dE) {
+                    console.warn('Failed to show debug pane', dE);
+                }
+            } finally {
             setLoading(false);
         }
     });
