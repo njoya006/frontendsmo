@@ -211,12 +211,14 @@ document.addEventListener('DOMContentLoaded', function () {
             
             const data = await response.json();
             if (response.ok) {
-                // Store the authentication token
-                if (data.token) {
-                    localStorage.setItem('authToken', data.token);
+                // Store the authentication token (accept multiple possible fields)
+                const rawToken = data.token || data.key || data.auth_token || data.access || null;
+                if (rawToken) {
+                    const normalized = rawToken.startsWith('Token ') ? rawToken : `Token ${rawToken}`;
+                    localStorage.setItem('authToken', normalized);
                     console.log('Authentication token stored successfully');
                 } else {
-                    console.warn('No token received in login response:', data);
+                    console.warn('No token-like field received in login response:', data);
                 }
                 
                 showToast('Login successful! Redirecting...', 'success');

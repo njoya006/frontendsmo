@@ -29,7 +29,7 @@ class EnhancedRecipeAPI {
         // Safe auth token getter
         this.getAuthToken = () => {
             try {
-                return typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') || '' : '';
+                return window.getAuthToken && window.getAuthToken() || '';
             } catch (e) {
                 console.warn('localStorage access error:', e);
                 return '';

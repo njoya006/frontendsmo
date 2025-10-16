@@ -41,7 +41,7 @@ class UniversalVerification {
 
     // Get auth token from storage
     getAuthToken() {
-        return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    return window.getAuthToken && window.getAuthToken();
     }
 
     // Get authorization headers

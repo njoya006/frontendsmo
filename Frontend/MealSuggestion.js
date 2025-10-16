@@ -217,14 +217,10 @@ function getFilteredMeals() {
 
 // --- Fetch meal suggestions from backend based on ingredients ---
 async function fetchMealSuggestionsByIngredients(ingredientNames) {
-    const token = localStorage.getItem('authToken');
     try {
     const response = await fetch(MEAL_SUGGESTION_ENDPOINTS.suggestByIngredients, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Token ${token}` } : {})
-            },
+            headers: window.authHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ ingredient_names: ingredientNames })
         });
         const data = await response.json();
@@ -966,11 +962,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Fallback to regular API call
             if (!recipes || recipes.length === 0) {
                 const response = await fetch(MEAL_SUGGESTION_ENDPOINTS.recipes, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': localStorage.getItem('authToken') ? 
-                                       `Token ${localStorage.getItem('authToken')}` : ''
-                    }
+                    headers: window.authHeaders({ 'Content-Type': 'application/json' })
                 });
                 
                 if (response.ok) {

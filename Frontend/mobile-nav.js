@@ -304,7 +304,7 @@ class MobileNavigation {
     }
 
     checkLoginState() {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    const token = window.getAuthToken && window.getAuthToken();
         const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true' || sessionStorage.getItem('isLoggedIn') === 'true';
         

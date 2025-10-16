@@ -149,9 +149,11 @@ document.addEventListener('DOMContentLoaded', function() {    // Mobile Menu Tog
                     return;
                 }
 
-                // Save token if present in response
-                if (data.token) {
-                    localStorage.setItem('authToken', data.token);
+                // Save token if present in response (accept several possible fields)
+                const rawToken = data.token || data.key || data.auth_token || data.access || null;
+                if (rawToken) {
+                    const normalized = rawToken.startsWith('Token ') ? rawToken : `Token ${rawToken}`;
+                    localStorage.setItem('authToken', normalized);
                 }
 
                 alert('Account created successfully! Redirecting to dashboard...');

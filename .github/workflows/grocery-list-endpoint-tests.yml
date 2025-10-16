@@ -17,11 +17,11 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq curl
 
       - name: Test JSON response (date range)
-        env:
-          API_BASE: ${{ secrets.API_BASE }}
-          API_TOKEN: ${{ secrets.API_TOKEN }}
         run: |
           set -euo pipefail
+          # Load secrets into shell variables (empty if not set)
+          API_TOKEN="${{ secrets.API_TOKEN }}"
+          API_BASE="${{ secrets.API_BASE }}"
           # Default to the production API if secret not provided
           API_BASE=${API_BASE:-https://api.chopsmo.site}
           START=2025-08-01
@@ -53,11 +53,11 @@ jobs:
           echo "JSON response contains $ITEMS_COUNT aggregated items"
 
       - name: Test CSV response (ids)
-        env:
-          API_BASE: ${{ secrets.API_BASE }}
-          API_TOKEN: ${{ secrets.API_TOKEN }}
         run: |
           set -euo pipefail
+          # Load secrets into shell variables (empty if not set)
+          API_TOKEN="${{ secrets.API_TOKEN }}"
+          API_BASE="${{ secrets.API_BASE }}"
           API_BASE=${API_BASE:-https://api.chopsmo.site}
           IDS=12,13
           URL="$API_BASE/api/planner/meal-plan/grocery-list/?ids=$IDS&format=csv"

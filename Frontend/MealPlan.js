@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchMealPlansForWeekRange(startDateStr, endDateStr) {
-        const token = localStorage.getItem('authToken');
+        const token = window.getAuthToken && window.getAuthToken();
 
         if (!token) {
             showToast("Authentication token not found. Please log in.", true);
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fetchUrl = `${NORMALIZED_API_BASE}/api/planner/meal-plan/`;
 
             const response = await fetch(fetchUrl, {
-                headers: { 'Authorization': `Token ${token}` }
+                headers: window.authHeaders({})
             });
 
             if (!response.ok) {
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchRecipesForModal() {
         console.log("MealPlan.js: fetchRecipesForModal CALLED."); // MODAL_LOG_1
-        const token = localStorage.getItem('authToken');
+        const token = window.getAuthToken && window.getAuthToken();
         try {
             const fetchUrl = `${NORMALIZED_API_BASE}/api/recipes/`;
             console.log("MealPlan.js: Fetching recipes from URL:", fetchUrl);
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const response = await fetch(fetchUrl, { // Assuming general recipe endpoint
                 method: 'GET',
-                headers: token ? { 'Authorization': `Token ${token}` } : {},
+                headers: window.authHeaders(),
             });
             
             console.log("MealPlan.js: Response status:", response.status);
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 if (currentModalDate && currentModalMealType && recipe.id) {
-                    const authToken = localStorage.getItem('authToken');
+                    const authToken = window.getAuthToken && window.getAuthToken();
                     await createMealPlanEntry({
                         recipe_title: recipe.title || recipe.name,
                         date: currentModalDate,
@@ -531,22 +531,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add update meal plan entry function for drag and drop
     async function updateMealPlanEntry(mealPlanId, updateData) {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            showToast("Authentication token not found. Please log in.", true);
-            return null;
-        }
+        const token = window.getAuthToken && window.getAuthToken();
+            if (!token) {
+                showToast("Authentication token not found. Please log in.", true);
+                return null;
+            }
 
-        showSpinner();
-        try {
-            const response = await fetch(`${NORMALIZED_API_BASE}/api/planner/meal-plan/${mealPlanId}/`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${token}`
-                },
-                body: JSON.stringify(updateData)
-            });
+            showSpinner();
+            try {
+                const response = await fetch(`${NORMALIZED_API_BASE}/api/planner/meal-plan/${mealPlanId}/`, {
+                    method: 'PATCH',
+                    headers: window.authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(updateData)
+                });
 
             if (!response.ok) {
                 throw new Error(`Failed to update meal plan: ${response.status}`);
@@ -786,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Modal could offer to change recipe (PUT/PATCH) or delete (DELETE)
     }
     async function deleteMealPlanEntry(mealPlanId) {
-        const token = localStorage.getItem('authToken');
+    const token = window.getAuthToken && window.getAuthToken();
 
         if (!token) {
             showToast("Authentication token not found. Please log in.", true);
@@ -1120,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     recipe_title: plan.recipe ? plan.recipe.title : plan.recipe_title,
                     date: formatDateForAPI(planDate),
                     meal_type: plan.meal_type
-                }, localStorage.getItem('authToken'));
+                }, window.getAuthToken && window.getAuthToken());
             }
             
             showToast(`Successfully copied ${currentMealPlans.length} meals to next week!`);
@@ -1406,7 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchGroceryList({start, end, servings, format}) {
-        const token = localStorage.getItem('authToken');
+    const token = window.getAuthToken && window.getAuthToken();
         const params = new URLSearchParams();
         if (start) params.set('start', start);
         if (end) params.set('end', end);

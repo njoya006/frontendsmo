@@ -43,7 +43,7 @@ class VerificationSystem {
     // Get auth token from storage with refresh capability
     getAuthToken() {
         // Refresh token from storage each time to catch login/logout changes
-        this.authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    this.authToken = window.getAuthToken && window.getAuthToken();
         return this.authToken;
     }
 

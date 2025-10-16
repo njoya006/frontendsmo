@@ -88,22 +88,8 @@
         resultsInner.innerHTML = '<p class="muted">Loading...</p>';
         csvBtn.disabled = true;
         try {
-            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-            // For GET requests avoid sending Content-Type; use Accept instead
-            const headers = { 'Accept': 'application/json' };
-            if (token) {
-                // If token already contains a scheme (e.g. "Token ..." or "Bearer ..."), use it as-is.
-                if (token.includes(' ')) {
-                    headers['Authorization'] = token;
-                } else if (token.split('.').length === 3) {
-                    // Likely a JWT
-                    headers['Authorization'] = `Bearer ${token}`;
-                } else {
-                    // Fallback to Token scheme used by some backends
-                    headers['Authorization'] = `Token ${token}`;
-                }
-            }
-
+            // Build headers using auth helper to ensure consistent Authorization format
+            const headers = window.authHeaders({ 'Accept': 'application/json' });
             console.log('grocery-list: Fetching URL', url, 'with headers', headers);
             const res = await fetch(url, { method: 'GET', headers });
 

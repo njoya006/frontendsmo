@@ -26,9 +26,9 @@ class RecipeRatingSystem {
         this.commentsPerPage = 5;
         this.isSubmitting = false;
         
-        // Check authentication status
-        this.authToken = localStorage.getItem('authToken');
-        this.isAuthenticated = !!this.authToken;
+    // Check authentication status (normalized)
+    this.authToken = window.getAuthToken && window.getAuthToken();
+    this.isAuthenticated = !!this.authToken;
         
         // Initialize when document is ready
         document.addEventListener('DOMContentLoaded', () => {

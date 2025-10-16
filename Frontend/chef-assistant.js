@@ -1,3 +1,5 @@
+
+            
 /*
  * Advanced Chef Assistant Chat UI for ChopSmo
  * - Modern, floating, draggable chat widget
@@ -160,15 +162,7 @@
         
         // Get authorization headers
         getAuthHeaders() {
-            const authToken = localStorage.getItem('authToken');
-            const headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            };
-            if (authToken) {
-                headers['Authorization'] = `Token ${authToken}`;
-            }
-            return headers;
+            return window.authHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' });
         },
         
         // Get ratings for a recipe
@@ -266,15 +260,8 @@
     // API call with improved error handling
     async function askChefAssistant(prompt) {
         try {
-            // Get auth token if user is logged in
-            const authToken = localStorage.getItem('authToken');
-            const headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            };
-            if (authToken) {
-                headers['Authorization'] = `Token ${authToken}`;
-            }
+            // Build headers using auth helper
+            const headers = window.authHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' });
 
             // Debug: Log full request details
             const apiUrl = `${API_ROOT}/chef-assistant/`;  // Derived from config
@@ -460,7 +447,7 @@
     });
 
     // Start with a contextual welcome message including social feature info
-    let welcomeMessage = localStorage.getItem('authToken') 
+    let welcomeMessage = window.getAuthToken && window.getAuthToken()
         ? '👋 Welcome back! I remember your preferences and our previous conversations. Ask me anything about cooking, especially Cameroonian cuisine!' 
         : '👋 Hi! I am your Chef Assistant, specializing in Cameroonian and international cuisine. Log in to get personalized cooking tips!';
     

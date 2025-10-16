@@ -23,12 +23,12 @@ class EnhancedRecipeAPI {
     constructor(baseUrl) {
         this.baseUrl = baseUrl || resolveApiBaseUrl();
         
-        // Safe auth token getter
+        // Safe auth token getter (use shared helper when available)
         this.getAuthToken = () => {
             try {
-                return typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') || '' : '';
+                return (window.getAuthToken && window.getAuthToken()) || '';
             } catch (e) {
-                console.warn('localStorage access error:', e);
+                console.warn('getAuthToken access error:', e);
                 return '';
             }
         };

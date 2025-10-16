@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch recipes from backend
     async function fetchRecipes() {
-        const token = localStorage.getItem('authToken');
+        const token = window.getAuthToken && window.getAuthToken();
         
     console.log('🚀 === STARTING DATABASE RECIPE FETCH ===');
     const recipesEndpoint = buildApiUrl('/api/recipes/');
@@ -289,13 +289,8 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('🔄 Initializing fetch request to database API...');
             
-            const headers = {
-                'Content-Type': 'application/json'
-            };
-            if (token) {
-                headers['Authorization'] = `Token ${token}`;
-                console.log('🔐 Added authorization header');
-            }
+            const headers = window.authHeaders({ 'Content-Type': 'application/json' });
+            if (headers.Authorization) console.log('🔐 Added authorization header');
             
             console.log('📡 Making fetch request...');
             const response = await fetch(recipesEndpoint, {
@@ -740,9 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(localStorage.getItem('authToken') && {
-                        'Authorization': `Token ${localStorage.getItem('authToken')}`
-                    })
+                    ...window.authHeaders()
                 }
             });
             
@@ -1402,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function checkUserVerification() {
         console.log('🔍 Checking user verification with new is_verified_contributor field...');
         // Get auth token
-        const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const authToken = window.getAuthToken && window.getAuthToken();
         if (!authToken) {
             console.log('❌ No auth token found');
             return { isVerified: false, reason: 'not_logged_in' };
@@ -1623,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Show the refresh button for logged-in users
-        const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const authToken = window.getAuthToken && window.getAuthToken();
         if (authToken) {
             refreshVerificationBtn.style.display = 'inline-flex';
         }
@@ -1686,8 +1679,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ RecipesGrid element found, proceeding with recipe loading...');
         
         // Check for force flags from diagnostic tool
-        const forceLoad = localStorage.getItem('forceLoadRecipes');
-        const loadFallback = localStorage.getItem('loadFallbackRecipes');
+    const forceLoad = localStorage.getItem('forceLoadRecipes');
+    const loadFallback = localStorage.getItem('loadFallbackRecipes');
         
         if (forceLoad === 'true') {
             console.log('🔧 Force load flag detected - forcing recipe load');
@@ -2178,7 +2171,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             // Auth token
-            const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            const authToken = window.getAuthToken && window.getAuthToken();
             if (!authToken) {
                 showToast('You must be logged in to create a recipe.', '#f44336');
                 return;
@@ -2186,18 +2179,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 const createRecipeEndpoint = buildApiUrl('/api/recipes/');
+
+                // Detect file inputs for multipart upload
+                const fileInput = document.getElementById('recipeImage');
+                const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+                // Build headers using centralized helper to avoid double-prefix issues
+                const headers = window.authHeaders ? window.authHeaders() : {};
+                if (!hasFile) headers['Content-Type'] = 'application/json';
+
+                let body;
+                if (hasFile) {
+                    // Use FormData for multipart uploads. Do NOT set Content-Type header; browser will set the boundary.
+                    const formData = new FormData();
+                    // Append simple fields
+                    if (recipeData.title) formData.append('title', recipeData.title);
+                    if (recipeData.name) formData.append('name', recipeData.name);
+                    if (recipeData.description) formData.append('description', recipeData.description);
+                    if (recipeData.instructions) formData.append('instructions', recipeData.instructions);
+                    if (recipeData.estimated_cost !== null && recipeData.estimated_cost !== undefined) formData.append('estimated_cost', recipeData.estimated_cost);
+
+                    // Append complex fields as JSON strings (backend should parse them)
+                    formData.append('ingredients', JSON.stringify(recipeData.ingredients || []));
+                    formData.append('categories', JSON.stringify(recipeData.categories || []));
+                    formData.append('cuisines', JSON.stringify(recipeData.cuisines || []));
+                    formData.append('tags', JSON.stringify(recipeData.tags || []));
+
+                    // Append file (single image)
+                    formData.append('image', fileInput.files[0]);
+
+                    body = formData;
+                } else {
+                    headers['Content-Type'] = 'application/json';
+                    body = JSON.stringify(recipeData);
+                }
+
                 const response = await fetch(createRecipeEndpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authToken.startsWith('Token ') ? authToken : `Token ${authToken}`
-                    },
-                    body: JSON.stringify(recipeData)
+                    headers: headers,
+                    body: body
                 });
+
                 if (response.ok) {
                     showToast('Recipe created successfully!', '#4CAF50');
                     // Optionally close modal and refresh recipes
-                    document.getElementById('createRecipeModal').style.display = 'none';
+                    const modalEl = document.getElementById('createRecipeModal');
+                    if (modalEl) modalEl.style.display = 'none';
                     document.body.style.overflow = 'auto';
                     setTimeout(() => fetchRecipes().then(recipes => {
                         allRecipes = recipes;
@@ -2205,8 +2232,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         displayRecipes(recipes);
                     }), 1000);
                 } else {
-                    const errorData = await response.json();
-                    showToast('Failed to create recipe: ' + (errorData.detail || JSON.stringify(errorData)), '#f44336');
+                    let errorText = '';
+                    try {
+                        const errorData = await response.json();
+                        errorText = errorData.detail || JSON.stringify(errorData);
+                    } catch (parseErr) {
+                        errorText = `${response.status} ${response.statusText}`;
+                    }
+                    showToast('Failed to create recipe: ' + errorText, '#f44336');
                 }
             } catch (err) {
                 showToast('Error creating recipe: ' + err.message, '#f44336');

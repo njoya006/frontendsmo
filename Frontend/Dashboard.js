@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load User Data from backend
     async function loadUserDataFromBackend() {
-        const token = localStorage.getItem('authToken');
+        const token = window.getAuthToken && window.getAuthToken();
         if (!token) {
             alert('You are not logged in.');
             window.location.href = 'Login.html';
@@ -65,10 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(PROFILE_ENDPOINT, {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Token ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: window.authHeaders({ 'Content-Type': 'application/json' }),
                 credentials: 'same-origin' // Always send cookies for session auth if present
             });
             const data = await response.json();
@@ -102,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Only fetch user data after DOM is ready and token is present
     function waitForTokenAndLoadUserData(retries = 10) {
-        const token = localStorage.getItem('authToken');
+        const token = window.getAuthToken && window.getAuthToken();
         if (!token) {
             if (retries > 0) {
                 setTimeout(() => waitForTokenAndLoadUserData(retries - 1), 100);

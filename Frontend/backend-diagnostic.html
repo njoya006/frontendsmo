@@ -127,25 +127,22 @@
         }
         
         async function testWithAuth() {
-            const token = localStorage.getItem('authToken');
-            appendResult('info', `🔐 Testing with auth token: ${token ? 'Present' : 'Not found'}`);
+            const token = window.getAuthToken && window.getAuthToken();
+                appendResult('info', `🔐 Testing with auth token: ${token ? 'Present' : 'Not found'}`);
             
-            if (!token) {
-                appendResult('warning', '⚠️ No auth token found - testing without authentication');
-                testBasicConnection();
-                return;
-            }
+                if (!token) {
+                    appendResult('warning', '⚠️ No auth token found - testing without authentication');
+                    testBasicConnection();
+                    return;
+                }
             
-            try {
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Authorization': `Token ${token}`
-                    },
-                    mode: 'cors'
-                });
+                try {
+                    const headers = window.authHeaders ? window.authHeaders({ 'Accept': 'application/json', 'Content-Type': 'application/json' }) : { 'Accept': 'application/json', 'Content-Type': 'application/json' };
+                    const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                        method: 'GET',
+                        headers: headers,
+                        mode: 'cors'
+                    });
                 
                 appendResult('info', `📡 Auth Response Status: ${response.status} ${response.statusText}`);
                 

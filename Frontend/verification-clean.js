@@ -43,7 +43,7 @@ class VerificationSystem {
     // Get auth token from storage with refresh capability
     getAuthToken() {
         // Refresh token from storage each time to catch login/logout changes
-        this.authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    this.authToken = window.getAuthToken && window.getAuthToken();
         return this.authToken;
     }
 
@@ -556,7 +556,7 @@ window.debugVerificationStatus = async function() {
     console.log('🔧 === VERIFICATION DEBUG REPORT ===');
     
     // Check auth token
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const token = window.getAuthToken && window.getAuthToken();
     console.log('🔑 Auth token present:', !!token);
     console.log('🔑 Token length:', token ? token.length : 0);
     

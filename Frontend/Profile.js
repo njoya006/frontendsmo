@@ -147,23 +147,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }    // Load User Data from backend
     async function loadUserDataFromBackend() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            showToast('You are not logged in. Redirecting...', '#f44336');
-            setTimeout(() => window.location.href = 'Login.html', 2000);
-            return;
-        }
-        
-        try {
-            const data = await fetchWithSpinnerToast(
-                buildApiUrl('/api/users/profile/'),
-                {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Token ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                },
+        const token = window.getAuthToken && window.getAuthToken();
+            if (!token) {
+                showToast('You are not logged in. Redirecting...', '#f44336');
+                setTimeout(() => window.location.href = 'Login.html', 2000);
+                return;
+            }
+
+            try {
+                const data = await fetchWithSpinnerToast(
+                    buildApiUrl('/api/users/profile/'),
+                    {
+                        method: 'GET',
+                        headers: window.authHeaders({ 'Content-Type': 'application/json' })
+                    },
                 null, // No success message for loading
                 'Failed to load profile data'
             );
@@ -306,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }    // Only fetch user data after DOM is ready and token is present
     function waitForTokenAndLoadUserData(retries = 10) {
-        const token = localStorage.getItem('authToken');
+        const token = window.getAuthToken && window.getAuthToken();
         if (!token) {
             if (retries > 0) {
                 setTimeout(() => waitForTokenAndLoadUserData(retries - 1), 100);
@@ -473,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
         personalInfoForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const token = localStorage.getItem('authToken');
+            const token = window.getAuthToken && window.getAuthToken();
             if (!token) {
                 showToast('You are not logged in. Please login again.', '#f44336');
                 setTimeout(() => window.location.href = 'Login.html', 2000);
@@ -549,9 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     buildApiUrl('/api/users/profile/'),
                     {
                         method: 'PATCH',
-                        headers: {
-                            'Authorization': `Token ${token}`
-                        },
+                        headers: window.authHeaders(),
                         body: formData
                     },
                     'Profile updated successfully! 🎉',
@@ -648,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dietaryForm) {
         dietaryForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const token = localStorage.getItem('authToken');
+            const token = window.getAuthToken && window.getAuthToken();
             if (!token) {
                 alert('You are not logged in.');
                 window.location.href = 'Login.html';
@@ -897,9 +892,9 @@ document.addEventListener('DOMContentLoaded', function() {
         badge.classList.remove('active', 'not-verified', 'verified');
         try {
             // Fetch profile for up-to-date status
-            const token = localStorage.getItem('authToken');
+            const token = window.getAuthToken && window.getAuthToken();
             const response = await fetch(buildApiUrl('/api/users/profile/'), {
-                headers: { 'Authorization': `Token ${token}` }
+                headers: window.authHeaders({ 'Content-Type': 'application/json' })
             });
             const data = await response.json();
             if (data.is_verified_contributor && data.verified_badge) {

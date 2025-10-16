@@ -1039,16 +1039,8 @@ class RecipeDetailManager {
     }
 
     getHeaders() {
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const headers = {
-            'Content-Type': 'application/json',
-        };
-
-        if (token) {
-            headers['Authorization'] = token.startsWith('Token ') ? token : `Token ${token}`;
-        }
-
-        return headers;
+        // Use global auth helper which normalizes token scheme
+        return window.authHeaders({ 'Content-Type': 'application/json' });
     }
 
     getMockRecipe(id) {

@@ -27,7 +27,7 @@ class RecipeAPI {
 
     // Get auth token from storage
     getAuthToken() {
-        return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    return window.getAuthToken && window.getAuthToken();
     }
 
     // Set auth token
