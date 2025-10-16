@@ -206,10 +206,27 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
             console.log('Attempting login...');
             
-            // First try with standard headers and credentials
+            // Try token-based login first (no credentials) to avoid CSRF requirement
             let response;
             try {
-                    // Build headers and include CSRF token when using credentials
+                response = await fetch(LOGIN_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                // If server responded with 403 (CSRF) or the response indicates CSRF is required,
+                // retry using credentialed request including X-CSRFToken header (if available).
+                if (response && response.status === 403) {
+                    // read body for debug
+                    let bodyText = '';
+                    try { bodyText = await response.text(); } catch (e) { bodyText = ''; }
+                    console.log('Initial non-credentialed login returned 403, body:', bodyText);
+
+                    // Build headers for credentialed attempt
                     const headersWithCsrf = {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
@@ -219,21 +236,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     response = await fetch(LOGIN_ENDPOINT, {
                         method: 'POST',
-                        credentials: 'include',  // Important for cookies/sessions
+                        credentials: 'include',
                         headers: headersWithCsrf,
                         body: JSON.stringify({ email, password })
                     });
-            } catch (corsError) {
-                console.log('CORS error detected, trying fallback approach...');
-                // Fallback: try without credentials for CORS-restricted environments
+                }
+            } catch (networkError) {
+                console.log('Network/CORS error on non-credentialed attempt, trying credentialed fallback...', networkError);
+                // Fallback to credentialed request (may require CSRF cookie)
+                const headersWithCsrf = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                const csrfToken = getCookie('csrftoken') || getCookie('CSRF-TOKEN') || null;
+                if (csrfToken) headersWithCsrf['X-CSRFToken'] = csrfToken;
+                try {
                     response = await fetch(LOGIN_ENDPOINT, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
+                        credentials: 'include',
+                        headers: headersWithCsrf,
                         body: JSON.stringify({ email, password })
                     });
+                } catch (e2) {
+                    console.error('Credentialed fallback also failed', e2);
+                    throw e2;
+                }
             }
             
             console.log('Response status:', response.status);
