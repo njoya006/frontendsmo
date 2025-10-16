@@ -1,0 +1,87 @@
+name: Grocery List Endpoint Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1' # weekly on Monday at 03:00 UTC
+
+jobs:
+  test-grocery-endpoint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq and curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Test JSON response (date range)
+        env:
+          API_BASE: ${{ secrets.API_BASE }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Default to the production API if secret not provided
+          API_BASE=${API_BASE:-https://api.chopsmo.site}
+          START=2025-08-01
+          END=2025-08-07
+          URL="$API_BASE/api/planner/meal-plan/grocery-list/?start=$START&end=$END&servings=2"
+          echo "Testing URL: $URL"
+
+          # Build auth header if token provided
+          AUTH_HEADER=( )
+          if [ -n "${API_TOKEN:-}" ]; then
+            AUTH_HEADER+=( -H "Authorization: Token ${API_TOKEN}" )
+          fi
+
+          HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" "${AUTH_HEADER[@]}" "$URL")
+          echo "HTTP status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Expected 200 OK, got $HTTP_STATUS"
+            cat response.json
+            exit 1
+          fi
+
+          jq '.' response.json > /dev/null
+          ITEMS_COUNT=$(jq '.items | length' response.json)
+          if [ -z "$ITEMS_COUNT" ]; then
+            echo "Response JSON missing items array"
+            cat response.json
+            exit 1
+          fi
+          echo "JSON response contains $ITEMS_COUNT aggregated items"
+
+      - name: Test CSV response (ids)
+        env:
+          API_BASE: ${{ secrets.API_BASE }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          set -euo pipefail
+          API_BASE=${API_BASE:-https://api.chopsmo.site}
+          IDS=12,13
+          URL="$API_BASE/api/planner/meal-plan/grocery-list/?ids=$IDS&format=csv"
+          echo "Testing CSV URL: $URL"
+
+          AUTH_HEADER=( )
+          if [ -n "${API_TOKEN:-}" ]; then
+            AUTH_HEADER+=( -H "Authorization: Token ${API_TOKEN}" )
+          fi
+
+          HTTP_STATUS=$(curl -s -o response.csv -w "%{http_code}" -H "Accept: text/csv" "${AUTH_HEADER[@]}" "$URL")
+          echo "HTTP status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Expected 200 OK for CSV, got $HTTP_STATUS"
+            cat response.csv || true
+            exit 1
+          fi
+
+          LINE_COUNT=$(wc -l < response.csv || echo 0)
+          if [ "$LINE_COUNT" -lt 1 ]; then
+            echo "CSV appears empty"
+            exit 1
+          fi
+          echo "CSV returned with $LINE_COUNT lines"
+
+      - name: Success
+        run: echo "Grocery list endpoint tests completed successfully"

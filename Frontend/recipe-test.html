@@ -20,7 +20,8 @@
             statusDiv.innerHTML = '<p>Testing API...</p>';
             
             try {
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/');
+                const API_BASE = typeof resolveApiBase === 'function' ? resolveApiBase() : 'https://api.chopsmo.site';
+                const response = await fetch(`${API_BASE}/api/recipes/`);
                 const data = await response.json();
                 statusDiv.innerHTML = `<p>API Response: ${response.status}, Recipes: ${data.length}</p>`;
             } catch (error) {

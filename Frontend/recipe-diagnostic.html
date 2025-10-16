@@ -17,8 +17,9 @@
             resultsDiv.innerHTML = '<p>Testing recipe API...</p>';
             
             try {
-                console.log('Testing recipe fetch...');
-                const response = await fetch('https://njoya.pythonanywhere.com/api/recipes/', {
+                const API_BASE = typeof resolveApiBase === 'function' ? resolveApiBase() : 'https://api.chopsmo.site';
+                console.log('Testing recipe fetch to', API_BASE + '/api/recipes/');
+                const response = await fetch(`${API_BASE}/api/recipes/`, {
                     method: 'GET',
                     headers: {}
                 });

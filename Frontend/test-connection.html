@@ -48,6 +48,7 @@
     <div id="results"></div>
 
     <!-- Load our scripts -->
+    <script src="diagnostic-config.js"></script>
     <script src="enhanced-recipe-api.js"></script>
     
     <script>
@@ -71,7 +72,8 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
                 
-                const response = await fetch('https://njoya.pythonanywhere.com/api/', {
+                const API_BASE = resolveApiBase();
+                const response = await fetch(`${API_BASE}/api/`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' },
                     signal: controller.signal
