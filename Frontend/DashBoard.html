@@ -1153,7 +1153,12 @@
                 <p>&copy; 2025 ChopSmo. All rights reserved.</p>
             </div>
         </div>
-    </footer>    <script src="mobile-nav.js?v=6"></script>
+    </footer>    <!-- Load config and auth helpers before Dashboard.js -->
+    <script src="chopsmo-config.js"></script>
+    <script src="auth-utils.js"></script>
+    <script src="csrf-helpers.js"></script>
+    
+    <script src="mobile-nav.js?v=6"></script>
     <script src="universal-verification.js"></script>
     <script src="verification-badge-util.js"></script>
     <script src="Dashboard.js"></script>
