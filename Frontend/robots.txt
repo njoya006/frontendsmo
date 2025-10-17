@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.chopsmo.site/sitemap.xml
+
+# Disallow test pages
+Disallow: /*-test.html
+Disallow: /diagnostic*.html
+Disallow: /api-validation.html
+Disallow: /backend-diagnostic.html
+Disallow: /cors-test.html
+Disallow: /login-test.html
+Disallow: /contributor-test.html
+Disallow: /rate-limit-test.html
+Disallow: /recipe-diagnostic.html
+Disallow: /recipe-fix-tools.html
+Disallow: /test-connection.html

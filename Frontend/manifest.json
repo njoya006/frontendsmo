@@ -1,0 +1,35 @@
+{
+  "name": "ChopSmo - Smart Meal Planning",
+  "short_name": "ChopSmo",
+  "description": "Smart meal planning and recipe discovery platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6b6b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "lifestyle", "health"],
+  "shortcuts": [
+    {
+      "name": "Recipes",
+      "short_name": "Recipes",
+      "description": "Browse recipes",
+      "url": "/Recipes.html",
+      "icons": [{ "src": "favicon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Meal Plans",
+      "short_name": "Meals",
+      "description": "View meal plans",
+      "url": "/MealPlans.html",
+      "icons": [{ "src": "favicon.svg", "sizes": "96x96" }]
+    }
+  ]
+}
