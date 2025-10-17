@@ -23,4 +23,36 @@
         if (token) headers['Authorization'] = token;
         return headers;
     };
+
+    // Read cookie by name (robust helper)
+    window.getCookie = function (name) {
+        try {
+            if (typeof document === 'undefined' || !document.cookie) return null;
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    // Return the CSRF token from cookies if present
+    window.getCsrfToken = function () {
+        try {
+            return window.getCookie('csrftoken') || window.getCookie('CSRF-TOKEN') || null;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    // Inject CSRF token into headers object if available and not already set
+    window.csrfHeaders = function (extraHeaders) {
+        const headers = Object.assign({}, extraHeaders || {});
+        const csrf = window.getCsrfToken && window.getCsrfToken();
+        if (csrf && !Object.keys(headers).some(k => k.toLowerCase() === 'x-csrftoken')) {
+            headers['X-CSRFToken'] = csrf;
+        }
+        return headers;
+    };
 })();
