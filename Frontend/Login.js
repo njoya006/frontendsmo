@@ -160,6 +160,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 500);
     }
 
+    // Ensure CSRF cookie is requested on load (best-effort)
+    try {
+        if (window && window.csrfHelpers && typeof window.csrfHelpers.ensureCsrf === 'function') {
+            // don't await here; do a best-effort background fetch
+            window.csrfHelpers.ensureCsrf().then(token => {
+                console.log('csrfHelpers.ensureCsrf() returned token?', !!token);
+            }).catch(e => console.warn('ensureCsrf failed', e));
+        }
+    } catch (e) {
+        console.warn('csrfHelpers not available yet', e);
+    }
+
     // Enhanced form submission with multiple fallback strategies
     // Helper to read cookies by name
     function getCookie(name) {
@@ -227,36 +239,53 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log('Initial non-credentialed login returned 403, body:', bodyText);
 
                     // Build headers for credentialed attempt
-                    const headersWithCsrf = {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    };
-                    const csrfToken = getCookie('csrftoken') || getCookie('CSRF-TOKEN') || null;
-                    if (csrfToken) headersWithCsrf['X-CSRFToken'] = csrfToken;
+                    // Use csrfHelpers.fetchWithCsrf if available so we force-fetch the cookie before sending
+                    if (window && window.csrfHelpers && typeof window.csrfHelpers.fetchWithCsrf === 'function') {
+                        response = await window.csrfHelpers.fetchWithCsrf(LOGIN_ENDPOINT, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({ email, password })
+                        });
+                    } else {
+                        const headersWithCsrf = {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        };
+                        const csrfToken = getCookie('csrftoken') || getCookie('CSRF-TOKEN') || null;
+                        if (csrfToken) headersWithCsrf['X-CSRFToken'] = csrfToken;
 
-                    response = await fetch(LOGIN_ENDPOINT, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: headersWithCsrf,
-                        body: JSON.stringify({ email, password })
-                    });
+                        response = await fetch(LOGIN_ENDPOINT, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: headersWithCsrf,
+                            body: JSON.stringify({ email, password })
+                        });
+                    }
                 }
             } catch (networkError) {
                 console.log('Network/CORS error on non-credentialed attempt, trying credentialed fallback...', networkError);
-                // Fallback to credentialed request (may require CSRF cookie)
-                const headersWithCsrf = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                };
-                const csrfToken = getCookie('csrftoken') || getCookie('CSRF-TOKEN') || null;
-                if (csrfToken) headersWithCsrf['X-CSRFToken'] = csrfToken;
+                // Fallback to credentialed request (may require CSRF cookie). Prefer csrfHelpers.fetchWithCsrf when available.
                 try {
-                    response = await fetch(LOGIN_ENDPOINT, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: headersWithCsrf,
-                        body: JSON.stringify({ email, password })
-                    });
+                    if (window && window.csrfHelpers && typeof window.csrfHelpers.fetchWithCsrf === 'function') {
+                        response = await window.csrfHelpers.fetchWithCsrf(LOGIN_ENDPOINT, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({ email, password })
+                        });
+                    } else {
+                        const headersWithCsrf = {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        };
+                        const csrfToken = getCookie('csrftoken') || getCookie('CSRF-TOKEN') || null;
+                        if (csrfToken) headersWithCsrf['X-CSRFToken'] = csrfToken;
+                        response = await fetch(LOGIN_ENDPOINT, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: headersWithCsrf,
+                            body: JSON.stringify({ email, password })
+                        });
+                    }
                 } catch (e2) {
                     console.error('Credentialed fallback also failed', e2);
                     throw e2;
