@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test (Fresh CSRF)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        #status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        #status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        #debug {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h2>Login Test (with CSRF)</h2>
+    <p style="font-size: 12px; color: #666;">This page forces a fresh CSRF cookie fetch before login.</p>
+    
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" required>
+        </div>
+        <button type="submit" id="loginBtn">Login</button>
+    </form>
+
+    <div id="status"></div>
+    <div id="debug"></div>
+
+    <!-- Load helpers with cache bust -->
+    <script src="chopsmo-config.js?v=<?php echo time(); ?>"></script>
+    <script src="auth-utils.js?v=<?php echo time(); ?>"></script>
+    <script src="csrf-helpers.js?v=<?php echo time(); ?>"></script>
+
+    <script>
+        const debugEl = document.getElementById('debug');
+        const statusEl = document.getElementById('status');
+        const loginBtn = document.getElementById('loginBtn');
+        const form = document.getElementById('loginForm');
+
+        function log(msg) {
+            debugEl.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        function showStatus(msg, isError) {
+            statusEl.textContent = msg;
+            statusEl.className = isError ? 'error' : 'success';
+            statusEl.style.display = 'block';
+        }
+
+        // Helper to get API base
+        function getApiBase() {
+            if (typeof window.buildChopsmoApiUrl === 'function') {
+                return window.buildChopsmoApiUrl('').replace(/\/$/, '');
+            }
+            if (window.CHOPSMO_CONFIG && window.CHOPSMO_CONFIG.apiBase) {
+                return window.CHOPSMO_CONFIG.apiBase.replace(/\/$/, '');
+            }
+            return 'https://api.chopsmo.site';
+        }
+
+        function getCookie(name) {
+            if (!document.cookie) return null;
+            const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+            return match ? decodeURIComponent(match[1]) : null;
+        }
+
+        // Ensure CSRF cookie on page load
+        (async () => {
+            log('Page loaded. Checking for csrftoken...');
+            log('document.cookie: ' + document.cookie);
+            
+            let token = getCookie('csrftoken');
+            if (token) {
+                log('csrftoken already present: ' + token.substring(0, 20) + '...');
+                return;
+            }
+
+            log('csrftoken missing. Calling ensureCsrf...');
+            if (window.csrfHelpers && typeof window.csrfHelpers.ensureCsrf === 'function') {
+                try {
+                    token = await window.csrfHelpers.ensureCsrf();
+                    log('ensureCsrf returned: ' + (token ? token.substring(0, 20) + '...' : 'null'));
+                    log('document.cookie after ensureCsrf: ' + document.cookie);
+                } catch (e) {
+                    log('ensureCsrf failed: ' + e.message);
+                }
+            } else {
+                log('csrfHelpers not available');
+                // Fallback: direct fetch
+                try {
+                    const apiBase = getApiBase();
+                    const resp = await fetch(apiBase + '/api/csrf-debug/', { credentials: 'include', mode: 'cors' });
+                    log('Direct fetch to /api/csrf-debug/ status: ' + resp.status);
+                    setTimeout(() => {
+                        log('document.cookie after direct fetch: ' + document.cookie);
+                    }, 300);
+                } catch (e) {
+                    log('Direct fetch failed: ' + e.message);
+                }
+            }
+        })();
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            statusEl.style.display = 'none';
+            
+            log('\n=== Login attempt ===');
+            log('Email: ' + email);
+            
+            try {
+                const apiBase = getApiBase();
+                const loginUrl = apiBase + '/api/users/login/';
+                
+                log('Login URL: ' + loginUrl);
+                log('document.cookie before POST: ' + document.cookie);
+                
+                const csrftoken = getCookie('csrftoken');
+                log('csrftoken extracted: ' + (csrftoken ? csrftoken.substring(0, 20) + '...' : 'null'));
+                
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (csrftoken) {
+                    headers['X-CSRFToken'] = csrftoken;
+                    log('Added X-CSRFToken header');
+                } else {
+                    log('WARNING: No csrftoken to send!');
+                }
+                
+                const resp = await fetch(loginUrl, {
+                    method: 'POST',
+                    credentials: 'include',
+                    mode: 'cors',
+                    headers: headers,
+                    body: JSON.stringify({ email, password })
+                });
+                
+                log('Response status: ' + resp.status);
+                
+                const data = await resp.json();
+                log('Response body: ' + JSON.stringify(data, null, 2));
+                
+                if (resp.ok) {
+                    showStatus('Login successful!', false);
+                    if (data.token) {
+                        localStorage.setItem('authToken', 'Token ' + data.token);
+                        log('Token stored in localStorage');
+                    }
+                } else {
+                    showStatus('Login failed: ' + (data.detail || data.message || 'Unknown error'), true);
+                }
+                
+            } catch (err) {
+                log('Error: ' + err.message);
+                showStatus('Connection error: ' + err.message, true);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        });
+    </script>
+</body>
+</html>
