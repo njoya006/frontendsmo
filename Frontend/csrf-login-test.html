@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSRF Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>CSRF Login Test</h1>
+    <p><strong>This page tests the CSRF cookie flow locally.</strong></p>
+    
+    <div id="status"></div>
+    
+    <h3>Step 1: Get CSRF Cookie</h3>
+    <button onclick="getCsrfCookie()">Request CSRF Cookie</button>
+    <div id="csrf-result"></div>
+    
+    <h3>Step 2: Login</h3>
+    <div style="margin: 10px 0;">
+        <input type="email" id="email" placeholder="Email" value="njoyaperfect06@gmail.com" style="padding: 8px; width: 250px;">
+        <input type="password" id="password" placeholder="Password" style="padding: 8px; width: 250px;">
+    </div>
+    <button onclick="attemptLogin()">Login</button>
+    <div id="login-result"></div>
+
+    <script>
+        const API_BASE = 'https://api.chopsmo.site';
+        
+        function getCookie(name) {
+            if (!document.cookie) return null;
+            const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+            return match ? decodeURIComponent(match[1]) : null;
+        }
+
+        function showStatus(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function getCsrfCookie() {
+            showStatus('csrf-result', 'Requesting CSRF cookie...', 'info');
+            
+            try {
+                const resp = await fetch(`${API_BASE}/api/csrf-debug/`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    mode: 'cors'
+                });
+                
+                const data = await resp.json();
+                const token = getCookie('csrftoken');
+                
+                if (token) {
+                    showStatus('csrf-result', 
+                        `✓ CSRF cookie received!<br>Token: ${token.substring(0, 20)}...<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        'success'
+                    );
+                } else {
+                    showStatus('csrf-result', 
+                        `⚠ Response OK but cookie not in document.cookie (may be blocked by browser privacy settings).<br>Response: <pre>${JSON.stringify(data, null, 2)}</pre><br>Try opening <a href="${API_BASE}/api/csrf-debug/" target="_blank">this link</a> in a new tab, then return here.`, 
+                        'error'
+                    );
+                }
+            } catch (err) {
+                showStatus('csrf-result', `✗ Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function attemptLogin() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showStatus('login-result', 'Please enter email and password', 'error');
+                return;
+            }
+
+            const token = getCookie('csrftoken');
+            
+            if (!token) {
+                showStatus('login-result', '⚠ No CSRF token found. Click "Request CSRF Cookie" first.', 'error');
+                return;
+            }
+
+            showStatus('login-result', 'Attempting login...', 'info');
+            
+            try {
+                const resp = await fetch(`${API_BASE}/api/users/login/`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': token
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await resp.json();
+                
+                if (resp.ok) {
+                    showStatus('login-result', 
+                        `✓ Login successful!<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        'success'
+                    );
+                } else {
+                    showStatus('login-result', 
+                        `✗ Login failed (${resp.status})<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        'error'
+                    );
+                }
+            } catch (err) {
+                showStatus('login-result', `✗ Error: ${err.message}`, 'error');
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            const token = getCookie('csrftoken');
+            if (token) {
+                showStatus('status', `✓ CSRF token already present: ${token.substring(0, 20)}...`, 'success');
+            } else {
+                showStatus('status', '⚠ No CSRF token found. Click "Request CSRF Cookie" below.', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
