@@ -172,6 +172,102 @@ document.addEventListener('DOMContentLoaded', function () {
         console.warn('csrfHelpers not available yet', e);
     }
 
+    // If the browser blocks third-party cookies, the csrftoken may not appear in document.cookie.
+    // Provide a small banner with a one-click flow that opens the CSRF endpoint in a new tab/window
+    // (top-level navigation). That lets the API set the cookie as a first-party interaction.
+    (function setupCsrfPopupBanner(){
+        function hasCsrf() {
+            return !!getCookie('csrftoken');
+        }
+
+        if (hasCsrf()) return; // already present
+
+        const banner = document.createElement('div');
+        banner.id = 'csrfPopupBanner';
+        banner.style.position = 'fixed';
+        banner.style.top = '0';
+        banner.style.left = '0';
+        banner.style.right = '0';
+        banner.style.background = '#fff3cd';
+        banner.style.color = '#66512c';
+        banner.style.borderBottom = '1px solid #ffeeba';
+        banner.style.padding = '10px';
+        banner.style.zIndex = '99998';
+        banner.style.display = 'flex';
+        banner.style.alignItems = 'center';
+        banner.style.justifyContent = 'space-between';
+
+        const text = document.createElement('div');
+        text.style.flex = '1';
+        text.style.fontSize = '14px';
+        text.textContent = 'Login requires a security cookie. Click "Enable login" to open the API in a new tab which will set the cookie; then return here and try again.';
+
+        const actions = document.createElement('div');
+        actions.style.marginLeft = '12px';
+
+        const enableBtn = document.createElement('button');
+        enableBtn.textContent = 'Enable login';
+        enableBtn.style.background = '#007bff';
+        enableBtn.style.color = '#fff';
+        enableBtn.style.border = 'none';
+        enableBtn.style.padding = '8px 12px';
+        enableBtn.style.borderRadius = '4px';
+        enableBtn.style.cursor = 'pointer';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Dismiss';
+        closeBtn.style.marginLeft = '8px';
+        closeBtn.style.background = 'transparent';
+        closeBtn.style.border = '1px solid #c2b280';
+        closeBtn.style.padding = '6px 10px';
+        closeBtn.style.borderRadius = '4px';
+        closeBtn.style.cursor = 'pointer';
+
+        actions.appendChild(enableBtn);
+        actions.appendChild(closeBtn);
+        banner.appendChild(text);
+        banner.appendChild(actions);
+
+        document.body.appendChild(banner);
+
+        const CSRF_POPUP_URL = (typeof window !== 'undefined' && typeof window.buildChopsmoApiUrl === 'function')
+            ? window.buildChopsmoApiUrl('/api/csrf-debug/')
+            : `${NORMALIZED_LOGIN_API_BASE}/api/csrf-debug/`;
+
+        let pollId = null;
+
+        enableBtn.addEventListener('click', function () {
+            // Open in a new tab/window so the API is first-party for that navigation and can set cookies
+            try {
+                window.open(CSRF_POPUP_URL, '_blank', 'noopener');
+            } catch (e) {
+                // some browsers may block programmatic open; provide a fallback by changing location
+                window.location.href = CSRF_POPUP_URL;
+                return;
+            }
+
+            // Poll for cookie for a short period
+            let attempts = 0;
+            pollId = setInterval(() => {
+                if (hasCsrf()) {
+                    clearInterval(pollId);
+                    banner.parentElement && banner.parentElement.removeChild(banner);
+                    console.log('csrftoken detected after popup');
+                }
+                attempts++;
+                if (attempts > 60) { // ~30 seconds
+                    clearInterval(pollId);
+                    console.warn('csrftoken not detected after popup');
+                }
+            }, 500);
+        });
+
+        closeBtn.addEventListener('click', function () {
+            banner.parentElement && banner.parentElement.removeChild(banner);
+            if (pollId) clearInterval(pollId);
+        });
+    })();
+
     // Enhanced form submission with multiple fallback strategies
     // Helper to read cookies by name
     function getCookie(name) {
