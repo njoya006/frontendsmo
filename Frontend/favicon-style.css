@@ -1,0 +1,40 @@
+/* Favicon Logo Styling - Makes logo appear as rounded icon */
+/* Add this to index.css or create a separate favicon-style.css */
+
+/* Style the favicon when used in any context */
+link[rel="icon"],
+link[rel="apple-touch-icon"] {
+    border-radius: 50%; /* Fully rounded for circular logo */
+}
+
+/* For when logo is displayed as image (like in headers) */
+.logo img,
+.site-logo,
+.brand-logo {
+    border-radius: 50%; /* Circular logo */
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Alternative: Rounded corners (not fully circular) */
+.logo-rounded {
+    border-radius: 20%; /* Rounded square */
+    object-fit: cover;
+}
+
+/* For header/nav logo displays */
+.logo-container img,
+header .logo img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 107, 107, 0.2); /* Subtle border in brand color */
+}
+
+/* PWA icon styling (when installed on mobile) */
+@media (display-mode: standalone) {
+    :root {
+        --logo-border-radius: 22%; /* iOS-style rounded square for PWA */
+    }
+}

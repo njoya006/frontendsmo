@@ -1,0 +1,100 @@
+/* ========================================
+   ROUNDED LOGO FAVICON STYLING
+   ======================================== */
+
+/* 
+   This CSS makes your logo appear as a professional rounded icon
+   wherever it's displayed on your site.
+*/
+
+/* Round any logo/favicon image displayed on pages */
+img[src*="favicon"],
+img[src*="logo"],
+img[alt*="logo" i],
+img[alt*="chopsmo" i],
+.site-logo,
+.brand-logo,
+.logo-img {
+    border-radius: 50% !important; /* Perfect circle */
+    object-fit: cover !important;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Header/Navigation logo styling */
+header .logo img,
+nav .logo img,
+.navbar-brand img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: white;
+    padding: 2px;
+    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+header .logo img:hover,
+nav .logo img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+/* Alternative: Rounded square (iOS style) - uncomment if preferred */
+/*
+.logo-rounded-square img {
+    border-radius: 20% !important;
+}
+*/
+
+/* Small icon sizes (for favicons in content) */
+img[width="16"],
+img[width="32"],
+img[width="48"],
+img[height="16"],
+img[height="32"],
+img[height="48"] {
+    border-radius: 50% !important;
+    padding: 1px;
+    background: white;
+}
+
+/* For link previews and social sharing cards */
+meta[property="og:image"],
+meta[name="twitter:image"] {
+    /* These can't be styled but documented for reference */
+    /* The actual images should be created as rounded PNGs */
+}
+
+/* PWA and mobile home screen */
+@media (display-mode: standalone) {
+    .logo img {
+        border-radius: 22%; /* iOS-style rounded square for PWA */
+    }
+}
+
+/* Print styling */
+@media print {
+    .logo img {
+        border-radius: 50%;
+        background: white;
+    }
+}
+
+/* High resolution displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .logo img {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Fallback for older browsers */
+.logo img {
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    -ms-border-radius: 50%;
+    -o-border-radius: 50%;
+    border-radius: 50%;
+}
