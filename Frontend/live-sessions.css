@@ -471,13 +471,14 @@ body.live-body {
     background: var(--live-overlay);
     backdrop-filter: blur(12px);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     padding: 24px;
     z-index: 10000;
     opacity: 0;
     pointer-events: none;
     transition: opacity 200ms ease;
+    overflow-y: auto;
 }
 
 .modal-overlay.active {
@@ -494,6 +495,14 @@ body.live-body {
     padding: 32px;
     color: var(--live-text);
     box-shadow: 0 32px 64px rgba(10, 15, 28, 0.6);
+    max-height: min(90vh, 720px);
+    overflow-y: auto;
+}
+
+@media (min-height: 720px) {
+    .modal-overlay {
+        align-items: center;
+    }
 }
 
 .modal header {
