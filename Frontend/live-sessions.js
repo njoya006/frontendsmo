@@ -108,11 +108,24 @@ function cacheSessionMetadata(session, data) {
         external_room_data: data.external_room_data
             || data.external_room
             || session.external_room_data
+            || null,
+        has_active_room: data.has_active_room
+            || data.is_live
+            || data.active
+            || data.is_active
+            || data.external_room?.is_live
+            || session.has_active_room
+            || session.is_live
             || null
     };
 
     state.sessionMeta.set(session.id, meta);
     Object.assign(session, meta);
+
+    if (meta.has_active_room && !session.ended_at) {
+        session.is_live = true;
+        session.status = 'live';
+    }
 }
 
 function applyCachedMetadata(sessions = []) {
@@ -126,7 +139,7 @@ function getSessionStatus(session) {
     if (!session) return 'upcoming';
 
     if (session.ended_at) return 'past';
-    if (session.is_live) return 'live';
+    if (session.is_live || session.has_active_room || session.active_room || session.active || session.is_active) return 'live';
 
     const raw = (session.status || session.state || session.lifecycle || '').toString().toLowerCase();
 
@@ -136,7 +149,18 @@ function getSessionStatus(session) {
         if (['upcoming', 'scheduled', 'pending', 'created', 'draft', 'ready', 'waiting'].includes(raw)) return 'upcoming';
     }
 
-    if (session.started_at) return 'live';
+    const hasLiveSignal = Boolean(
+        session.started_at
+        || session.start_time
+        || session.external_room_url
+        || session.external_room?.url
+        || session.external_room_data?.url
+        || state.sessionMeta.get(session.id)?.external_room_url
+    );
+
+    if (hasLiveSignal && !session.ended_at) {
+        return 'live';
+    }
 
     return 'upcoming';
 }
