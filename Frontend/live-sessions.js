@@ -292,7 +292,6 @@ async function fetchSessions() {
 
     try {
         const url = new URL(ENDPOINTS.list());
-        if (state.filter) url.searchParams.set('status', state.filter);
         if (state.searchTerm) url.searchParams.set('search', state.searchTerm);
 
         const response = await fetch(url.toString(), {
