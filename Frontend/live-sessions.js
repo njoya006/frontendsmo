@@ -123,10 +123,21 @@ function applyCachedMetadata(sessions = []) {
 }
 
 function getSessionStatus(session) {
-    if (session.status) return session.status;
+    if (!session) return 'upcoming';
+
+    if (session.ended_at) return 'past';
     if (session.is_live) return 'live';
-    if (session.ended_at) return 'ended';
+
+    const raw = (session.status || session.state || session.lifecycle || '').toString().toLowerCase();
+
+    if (raw) {
+        if (['live', 'active', 'started', 'running', 'in_progress'].includes(raw)) return 'live';
+        if (['ended', 'complete', 'completed', 'archived', 'cancelled', 'canceled', 'finished', 'past'].includes(raw)) return 'past';
+        if (['upcoming', 'scheduled', 'pending', 'created', 'draft', 'ready', 'waiting'].includes(raw)) return 'upcoming';
+    }
+
     if (session.started_at) return 'live';
+
     return 'upcoming';
 }
 
@@ -135,10 +146,10 @@ function filterSessions() {
     const filter = state.filter;
 
     return state.sessions.filter((session) => {
-        const status = getSessionStatus(session);
-        if (filter === 'live' && status !== 'live') return false;
-        if (filter === 'upcoming' && status !== 'upcoming') return false;
-        if (filter === 'past' && !['ended', 'past'].includes(status)) return false;
+    const status = getSessionStatus(session);
+    if (filter === 'live' && status !== 'live') return false;
+    if (filter === 'upcoming' && status !== 'upcoming') return false;
+    if (filter === 'past' && status !== 'past') return false;
 
         if (!searchTerm) return true;
 
@@ -394,6 +405,10 @@ async function submitSessionForm(event) {
 
         cacheSessionMetadata(data, data.external_room_data || data);
 
+        data.is_host = true;
+        data.can_start = true;
+        data.permissions = { ...(data.permissions || {}), can_start: true };
+
         const hostJoinUrl = data.host_join_url || data.join_url || data.url;
         if (hostJoinUrl) {
             window.open(hostJoinUrl, '_blank', 'noopener');
@@ -442,6 +457,14 @@ async function handleStartTransition(session) {
     session.status = 'live';
     session.is_live = true;
     renderSessions();
+        if (state.filter !== 'live') {
+            state.filter = 'live';
+            if (filterChipsEl) {
+                [...filterChipsEl.querySelectorAll('.filter-chip')].forEach((chip) => {
+                    chip.classList.toggle('active', chip.dataset.filter === 'live');
+                });
+            }
+        }
     fetchSessions();
 
         if (hostUrl && hostToken) {
