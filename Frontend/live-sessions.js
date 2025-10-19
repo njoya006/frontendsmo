@@ -3,8 +3,9 @@ const NORMALIZED_BASE = BASE_URL.replace(/\/$/, '');
 const ENDPOINTS = {
     list: () => `${NORMALIZED_BASE}/api/live-sessions/`,
     create: () => `${NORMALIZED_BASE}/api/live-sessions/`,
-    start: (sessionId) => `${NORMALIZED_BASE}/api/live-sessions/${sessionId}/start/`,
-    token: (sessionId) => `${NORMALIZED_BASE}/api/live-sessions/${sessionId}/token/`
+    start: (slug) => `${NORMALIZED_BASE}/api/live-sessions/${slug}/start/`,
+    token: (slug) => `${NORMALIZED_BASE}/api/live-sessions/${slug}/token/`,
+    join: (slug) => `${NORMALIZED_BASE}/api/live-sessions/${slug}/join/`
 };
 
 const statusBannerEl = document.getElementById('statusBanner');
@@ -28,6 +29,17 @@ const state = {
     pollingId: null,
     sessionMeta: new Map()
 };
+
+function getSessionKeys(session) {
+    if (!session) return [];
+    const keys = [session.slug, session.id, session.uuid, session.pk, session.identifier].filter(Boolean);
+    return [...new Set(keys.map((key) => key.toString()))];
+}
+
+function getSessionKey(session) {
+    const keys = getSessionKeys(session);
+    return keys.length ? keys[0] : null;
+}
 
 function setStatus(message, isError = false) {
     if (!statusBannerEl) return;
@@ -90,7 +102,8 @@ function normalizeSessions(payload) {
 }
 
 function cacheSessionMetadata(session, data) {
-    if (!session || !session.id || !data) return;
+    const key = getSessionKey(session);
+    if (!key || !data) return;
 
     const meta = {
         external_room_name: data.external_room_name
@@ -119,7 +132,9 @@ function cacheSessionMetadata(session, data) {
             || null
     };
 
-    state.sessionMeta.set(session.id, meta);
+    getSessionKeys(session).forEach((identifier) => {
+        state.sessionMeta.set(identifier, meta);
+    });
     Object.assign(session, meta);
 
     if (meta.has_active_room && !session.ended_at) {
@@ -130,8 +145,14 @@ function cacheSessionMetadata(session, data) {
 
 function applyCachedMetadata(sessions = []) {
     sessions.forEach((session) => {
-        const meta = state.sessionMeta.get(session.id);
-        if (meta) Object.assign(session, meta);
+        const keys = getSessionKeys(session);
+        for (let i = 0; i < keys.length; i += 1) {
+            const cached = state.sessionMeta.get(keys[i]);
+            if (cached) {
+                Object.assign(session, cached);
+                break;
+            }
+        }
     });
 }
 
@@ -327,7 +348,18 @@ async function handleJoinSession(session) {
             ? window.authHeaders(window.csrfHeaders({ 'Content-Type': 'application/json', Accept: 'application/json' }))
             : { 'Content-Type': 'application/json', Accept: 'application/json' };
 
-        const response = await fetch(ENDPOINTS.token(session.id), {
+        const key = getSessionKey(session);
+        if (!key) throw new Error('Missing session identifier for join');
+
+        // Fire-and-forget join call to increment view count when available
+        fetch(ENDPOINTS.join(key), {
+            method: 'POST',
+            headers,
+            credentials: 'include',
+            body: JSON.stringify({})
+        }).catch((err) => console.debug('Join counter request failed:', err));
+
+        const response = await fetch(ENDPOINTS.token(key), {
             method: 'POST',
             headers,
             credentials: 'include',
@@ -428,7 +460,7 @@ async function submitSessionForm(event) {
 
         cacheSessionMetadata(data, data.external_room_data || data);
 
-        data.is_host = true;
+    data.is_host = true;
         data.can_start = true;
         data.permissions = { ...(data.permissions || {}), can_start: true };
 
@@ -439,7 +471,7 @@ async function submitSessionForm(event) {
 
         closeModal();
         sessionForm.reset();
-        state.sessions.unshift(data);
+    state.sessions.unshift(data);
         applyCachedMetadata(state.sessions);
         renderSessions();
     } catch (error) {
@@ -453,11 +485,14 @@ async function handleStartTransition(session) {
     try {
         setStatus('Starting live session...');
 
+        const key = getSessionKey(session);
+        if (!key) throw new Error('Missing session identifier for start');
+
         const headers = window.authHeaders
             ? window.authHeaders(window.csrfHeaders({ 'Content-Type': 'application/json', Accept: 'application/json' }))
             : { 'Content-Type': 'application/json', Accept: 'application/json' };
 
-        const response = await fetch(ENDPOINTS.start(session.id), {
+        const response = await fetch(ENDPOINTS.start(key), {
             method: 'POST',
             headers,
             credentials: 'include'
