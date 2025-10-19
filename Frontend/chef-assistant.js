@@ -154,6 +154,11 @@
     const API_BASE_URL = resolveApiBaseUrl();
     const NORMALIZED_API_BASE = API_BASE_URL.replace(/\/$/, '');
     const API_ROOT = `${NORMALIZED_API_BASE}/api`;
+    const LIVE_CHAT_ENDPOINT_CANDIDATES = [
+        `${API_ROOT}/live-chat/messages/`,
+        `${API_ROOT}/live-chat/assistant/`,
+        `${API_ROOT}/chef-assistant/`
+    ];
 
     // Recipe social features utilities
     const recipeSocial = {
@@ -264,8 +269,6 @@
             const headers = window.authHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' });
 
             // Debug: Log full request details
-            const apiUrl = `${API_ROOT}/chef-assistant/`;  // Derived from config
-            console.log('Sending request to:', apiUrl);
             console.log('Request headers:', headers);
             // Parse stored preferences (they might be JSON strings)
             let dietary_preferences = [];
@@ -286,7 +289,11 @@
 
             // Simplify request structure to exactly match API expectations
             const requestBody = { 
-                prompt: prompt
+                prompt: prompt,
+                message: prompt,
+                content: prompt,
+                source: 'frontend',
+                include_context: true
             };
             
             // Only add conversation_id if it exists
@@ -296,89 +303,102 @@
             }
             console.log('Request body:', requestBody);
 
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(requestBody)
-            });
-            
-            // Detailed debugging
-            console.log('Raw request sent:', JSON.stringify(requestBody));
+            let lastErrorResponse = null;
 
-            console.log('Response status:', response.status);
-            
-            // Debug: Log full response details
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-            
-            if (!response.ok) {
-                // Get response as text first for debugging
-                const responseText = await response.text();
-                console.log('Error response text:', responseText);
-                console.log('Response status:', response.status);
-                console.log('Response status text:', response.statusText);
-                
-                let errorData = {};
+            for (const apiUrl of LIVE_CHAT_ENDPOINT_CANDIDATES) {
+                console.log('Sending request to:', apiUrl);
                 try {
-                    errorData = JSON.parse(responseText);
-                    console.log('Parsed error data:', errorData);
-                } catch (e) {
-                    console.log('Failed to parse error response as JSON:', e.message);
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+                    if (response.ok) {
+                        const responseText = await response.text();
+                        console.log('Raw response:', responseText);
+
+                        let data;
+                        try {
+                            data = JSON.parse(responseText);
+                            console.log('Parsed response data:', data);
+                        } catch (e) {
+                            console.error('Error parsing JSON response:', e);
+                            throw new Error('Invalid JSON response from Chef Assistant');
+                        }
+
+                        if (data.conversation_id) {
+                            localStorage.setItem('chef_conversation_id', data.conversation_id);
+                            console.log('Stored conversation ID:', data.conversation_id);
+                        }
+
+                        if (data.error) {
+                            console.error('Chef Assistant API error:', data.error);
+                            if (data.fallback_suggestion) {
+                                return `${data.error}\n\nHere's a helpful suggestion: ${data.fallback_suggestion}`;
+                            }
+                            throw new Error(data.error);
+                        }
+
+                        return data.suggestion || data.response;
+                    }
+
+                    if (response.status === 404 || response.status === 405) {
+                        console.warn(`Endpoint ${apiUrl} returned ${response.status}, trying next candidate...`);
+                        lastErrorResponse = response;
+                        continue;
+                    }
+
+                    const responseText = await response.text();
+                    console.log('Error response text:', responseText);
+
+                    let errorData = {};
+                    try {
+                        errorData = JSON.parse(responseText);
+                        console.log('Parsed error data:', errorData);
+                    } catch (e) {
+                        console.log('Failed to parse error response as JSON:', e.message);
+                    }
+
+                    const errorMsg = errorData.detail || errorData.message || 'Error communicating with Chef Assistant';
+
+                    if (response.status === 400) {
+                        console.error('Request format error:', errorData);
+                        return 'I had trouble understanding your request. Try rephrasing your question about cooking or recipes.';
+                    } else if (response.status === 401) {
+                        return 'Please log in to use the Chef Assistant. This will help me provide personalized cooking suggestions based on your preferences.';
+                    } else if (response.status === 429) {
+                        return 'I\'m getting a lot of requests right now. While you wait, here\'s a tip: For Cameroonian dishes, freshly ground spices like pebe (African white pepper) and garlic make a huge difference in flavor.';
+                    } else if (response.status === 503) {
+                        return 'The Chef Assistant is taking a short break. While you wait, remember that the key to perfect Ndolé is to blanch the leaves twice to remove bitterness.';
+                    } else if (response.status === 500) {
+                        return 'I encountered a technical issue. While our team fixes it, here\'s a tip: When making Achu soup, use limestone (kanwa) to achieve that perfect smooth texture.';
+                    }
+
+                    if (errorData.fallback_suggestion) {
+                        return `${errorMsg}\n\nIn the meantime, here's a helpful tip: ${errorData.fallback_suggestion}`;
+                    }
+
+                    throw new Error(`${errorMsg} (Status: ${response.status})`);
+                } catch (requestError) {
+                    console.warn(`Request to ${apiUrl} failed:`, requestError.message);
+                    lastErrorResponse = requestError;
+                    continue;
                 }
-                
-                const errorMsg = errorData.detail || errorData.message || 'Error communicating with Chef Assistant';
-                
-                // Enhanced error handling with fallbacks
-                if (response.status === 400) {
-                    console.error('Request format error:', errorData);
-                    return 'I had trouble understanding your request. Try rephrasing your question about cooking or recipes.';
-                } else if (response.status === 401) {
-                    return 'Please log in to use the Chef Assistant. This will help me provide personalized cooking suggestions based on your preferences.';
-                } else if (response.status === 429) {
-                    return 'I\'m getting a lot of requests right now. While you wait, here\'s a tip: For Cameroonian dishes, freshly ground spices like pebe (African white pepper) and garlic make a huge difference in flavor.';
-                } else if (response.status === 503) {
-                    return 'The Chef Assistant is taking a short break. While you wait, remember that the key to perfect Ndolé is to blanch the leaves twice to remove bitterness.';
-                } else if (response.status === 500) {
-                    return 'I encountered a technical issue. While our team fixes it, here\'s a tip: When making Achu soup, use limestone (kanwa) to achieve that perfect smooth texture.';
-                }
-                
-                // If we have fallback suggestions in the error response, use them
-                if (errorData.fallback_suggestion) {
-                    return `${errorMsg}\n\nIn the meantime, here's a helpful tip: ${errorData.fallback_suggestion}`;
-                }
-                
-                throw new Error(`${errorMsg} (Status: ${response.status})`);
             }
 
-            // Get response text first to avoid JSON parsing errors
-            const responseText = await response.text();
-            console.log('Raw response:', responseText);
-            
-            // Parse JSON manually after logging the raw text
-            let data;
-            try {
-                data = JSON.parse(responseText);
-                console.log('Parsed response data:', data);
-            } catch (e) {
-                console.error('Error parsing JSON response:', e);
-                throw new Error('Invalid JSON response from Chef Assistant');
-            }
-            
-            // Store conversation ID for context
-            if (data.conversation_id) {
-                localStorage.setItem('chef_conversation_id', data.conversation_id);
-                console.log('Stored conversation ID:', data.conversation_id);
+            if (lastErrorResponse instanceof Response) {
+                throw new Error(`Chef assistant endpoints unavailable (last status ${lastErrorResponse.status})`);
             }
 
-            // Enhanced response handling
-            if (data.error) {
-                console.error('Chef Assistant API error:', data.error);
-                if (data.fallback_suggestion) {
-                    return `${data.error}\n\nHere's a helpful suggestion: ${data.fallback_suggestion}`;
-                }
-                throw new Error(data.error);
+            if (lastErrorResponse) {
+                throw lastErrorResponse;
             }
 
-            return data.suggestion || data.response;
+            throw new Error('Unable to reach Chef Assistant service.');
         } catch (err) {
             console.error('Chef Assistant error:', err);
             // More user-friendly error message

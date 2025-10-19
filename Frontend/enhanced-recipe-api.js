@@ -1365,10 +1365,22 @@ class EnhancedRecipeAPI {
             // Try to get suggestions from real API first
             if (this.apiStatus.isAvailable) {
                 const endpoints = [
+                    `/api/live-chat/suggest-by-budget/`,
+                    `/api/live-chat/budget/`,
                     `/api/recipes/suggest-by-budget/`,
                     `/api/budget-suggestions/`,
                     `/api/recipes/budget/`
                 ];
+
+                const payload = {
+                    budget,
+                    budget_amount: budget,
+                    budget_value: budget,
+                    currency,
+                    currency_code: currency,
+                    include_summary: true,
+                    source: 'frontend'
+                };
                 
                 for (const endpoint of endpoints) {
                     try {
@@ -1386,10 +1398,7 @@ class EnhancedRecipeAPI {
                                 'Authorization': `Token ${this.getAuthToken()}`
                             },
                             signal: controller.signal,
-                            body: JSON.stringify({
-                                budget: budget,
-                                currency: currency
-                            })
+                            body: JSON.stringify(payload)
                         });
                         
                         clearTimeout(timeoutId);
@@ -1468,6 +1477,385 @@ class EnhancedRecipeAPI {
                 ? `Found ${suggestions.length} recipes within your budget of ${budget} ${currency}`
                 : `No recipes found within your budget of ${budget} ${currency}. Try increasing your budget.`
         };
+    }
+
+    // Ingredient-based recipe suggestions
+    async getRecipeSuggestions(ingredientNames = [], options = {}) {
+        const cleanedIngredients = Array.isArray(ingredientNames)
+            ? ingredientNames.map(name => (name || '').trim()).filter(Boolean)
+            : [];
+
+        if (cleanedIngredients.length === 0) {
+            return {
+                success: false,
+                recipes: [],
+                missing_ingredients: [],
+                message: 'Please provide at least one ingredient.'
+            };
+        }
+
+        const minimumCount = options.minIngredients || 4;
+        if (cleanedIngredients.length < minimumCount) {
+            return {
+                success: false,
+                recipes: [],
+                missing_ingredients: [],
+                message: `Please provide at least ${minimumCount} ingredients for accurate matches.`
+            };
+        }
+
+        const endpoints = [
+            `/api/live-chat/suggest-by-ingredients/`,
+            `/api/live-chat/ingredients/`,
+            `/api/recipes/suggest-by-ingredients/`,
+            `/api/recipes/suggest-ingredients/`
+        ];
+
+        const payload = {
+            ingredient_names: cleanedIngredients,
+            ingredients: cleanedIngredients,
+            ingredient_list: cleanedIngredients,
+            ingredients_list: cleanedIngredients,
+            include_missing: options.includeMissing !== false,
+            include_substitutions: options.includeSubstitutions !== false,
+            include_details: true,
+            limit: options.limit || 10,
+            source: 'frontend'
+        };
+
+        if (options.dietaryPreferences) {
+            payload.dietary_preferences = options.dietaryPreferences;
+        }
+
+        if (options.excludeIngredients) {
+            payload.exclude_ingredients = options.excludeIngredients;
+        }
+
+        try {
+            if (this.apiStatus.isAvailable) {
+                for (const endpoint of endpoints) {
+                    const url = `${this.baseUrl}${endpoint}`;
+                    console.log(`🥕 Trying ingredient suggestions from: ${url}`);
+
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'Authorization': `Token ${this.getAuthToken()}`
+                            },
+                            signal: controller.signal,
+                            body: JSON.stringify(payload)
+                        });
+
+                        clearTimeout(timeoutId);
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('✅ Ingredient suggestions received from API:', data);
+                            const normalized = this.normalizeIngredientSuggestionsResponse(data, cleanedIngredients);
+                            return { success: true, ...normalized };
+                        }
+
+                        // Some endpoints may enforce validation via 400s; capture details
+                        if (response.status === 400) {
+                            try {
+                                const errorData = await response.clone().json();
+                                console.warn('Ingredient suggestions validation error:', errorData);
+                                return {
+                                    success: false,
+                                    recipes: [],
+                                    missing_ingredients: errorData.missing_ingredients || [],
+                                    message: errorData.detail || errorData.message || 'Unable to generate suggestions with the provided ingredients.'
+                                };
+                            } catch (parseErr) {
+                                console.warn('Unable to parse ingredient validation error.', parseErr);
+                            }
+                        }
+
+                        console.warn(`⚠️ Ingredient suggestions from ${endpoint} failed: ${response.status}`);
+                    } catch (endpointError) {
+                        console.warn(`⚠️ Error with ingredient endpoint ${endpoint}:`, endpointError.message);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error getting ingredient suggestions from API:', error);
+        }
+
+        console.log('🔄 Using mock data for ingredient suggestions');
+        const mock = this.getMockIngredientSuggestions(cleanedIngredients);
+        return { success: true, ...mock };
+    }
+
+    normalizeIngredientSuggestionsResponse(data, ingredientNames = []) {
+        const response = {
+            raw: data,
+            message: data?.message || data?.detail || '',
+            info: data?.info || null,
+            missing_ingredients: data?.missing_ingredients || data?.missingIngredients || [],
+            substitutions: data?.substitutions || data?.suggested_substitutions || {},
+            recipes: [],
+            suggestions: []
+        };
+
+        if (Array.isArray(data?.suggestions)) {
+            response.suggestions = data.suggestions;
+            response.recipes = data.suggestions
+                .map(entry => entry?.recipe || entry)
+                .filter(Boolean);
+        }
+
+        const recipeCollections = [data?.recipes, data?.suggested_recipes, data?.results, data?.recommendations];
+        for (const collection of recipeCollections) {
+            if (Array.isArray(collection) && collection.length) {
+                response.recipes = collection;
+                break;
+            }
+        }
+
+        if (!response.recipes.length && data?.best_match) {
+            response.recipes = [data.best_match];
+        }
+
+        response.ingredient_context = data?.ingredient_context || {
+            provided: ingredientNames,
+            matched: data?.matched_ingredients || [],
+            missing: response.missing_ingredients
+        };
+
+        return response;
+    }
+
+    getMockIngredientSuggestions(ingredientNames = []) {
+        const allRecipes = Object.values(this.mockData.recipes);
+        const lowered = ingredientNames.map(name => name.toLowerCase());
+
+        const recipes = allRecipes
+            .map(recipe => {
+                const recipeIngredients = (recipe.ingredients || []).map(ing => (
+                    (ing.ingredient_name || ing.name || '').toLowerCase()
+                ));
+
+                const matches = lowered.filter(ing => recipeIngredients.some(recipeIng => recipeIng.includes(ing)));
+                const missing = lowered.filter(ing => !matches.includes(ing));
+
+                return {
+                    recipe,
+                    matches,
+                    missing
+                };
+            })
+            .filter(entry => entry.matches.length > 0)
+            .sort((a, b) => b.matches.length - a.matches.length);
+
+        return {
+            recipes: recipes.map(entry => ({
+                ...entry.recipe,
+                match_score: entry.matches.length,
+                missing_ingredients: entry.missing
+            })),
+            suggestions: recipes.map(entry => ({
+                recipe: entry.recipe,
+                match_score: entry.matches.length,
+                missing_ingredients: entry.missing
+            })),
+            missing_ingredients: [],
+            substitutions: {},
+            message: 'Using offline ingredient suggestions',
+            info: {
+                source: 'mock',
+                provided: ingredientNames,
+                timestamp: new Date().toISOString()
+            }
+        };
+    }
+
+    async searchRecipes(query = '', options = {}) {
+        const cleanedQuery = (query || '').trim();
+        const filters = options.filters || {};
+        const limit = options.limit || 20;
+        const page = options.page || 1;
+        const ordering = options.ordering || '';
+
+        const buildQueryParams = () => {
+            const params = new URLSearchParams();
+            if (cleanedQuery) params.set('search', cleanedQuery);
+            if (limit) params.set('page_size', limit);
+            if (page) params.set('page', page);
+            if (ordering) params.set('ordering', ordering);
+
+            const filterEntries = Object.entries(filters);
+            filterEntries.forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    value.filter(Boolean).forEach(item => params.append(key, item));
+                } else if (value !== undefined && value !== null && value !== '') {
+                    params.set(key, value);
+                }
+            });
+
+            if (options.maxCookTime) params.set('max_cook_time', options.maxCookTime);
+            if (options.dietaryPreferences) params.set('dietary_preferences', options.dietaryPreferences);
+            if (options.cuisine) params.set('cuisine', options.cuisine);
+            if (options.mealType) params.set('meal_type', options.mealType);
+
+            return params;
+        };
+
+        const params = buildQueryParams();
+
+        if (this.apiStatus.isAvailable === null) {
+            try {
+                await this.checkApiStatus();
+            } catch (statusError) {
+                console.warn('Recipe search status check failed:', statusError.message);
+            }
+        }
+
+        const liveChatPayload = {
+            query: cleanedQuery,
+            search_term: cleanedQuery,
+            limit,
+            page,
+            ordering,
+            filters,
+            include_ingredients: options.includeIngredients,
+            include_meal_types: options.includeMealTypes,
+            include_dietary_preferences: options.includeDietaryPreferences,
+            cuisine: options.cuisine,
+            meal_type: options.mealType,
+            max_cook_time: options.maxCookTime,
+            dietary_preferences: options.dietaryPreferences,
+            source: 'frontend'
+        };
+
+        const candidateEndpoints = [
+            { url: `${this.baseUrl}/api/live-chat/search-recipes/`, method: 'POST', payload: liveChatPayload },
+            { url: `${this.baseUrl}/api/recipes/search/?${params.toString()}`, method: 'GET' },
+            { url: `${this.baseUrl}/api/recipes/?${params.toString()}`, method: 'GET' }
+        ];
+
+        if (this.apiStatus.isAvailable) {
+            for (const candidate of candidateEndpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                    const response = await fetch(candidate.url, {
+                        method: candidate.method,
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Authorization': `Token ${this.getAuthToken()}`
+                        },
+                        signal: controller.signal,
+                        body: candidate.method === 'POST' ? JSON.stringify(candidate.payload) : undefined
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const results = this.normalizeRecipeSearchResults(data);
+                        return results;
+                    } else {
+                        console.warn(`⚠️ Recipe search failed at ${candidate.url}: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Error searching recipes at ${candidate.url}:`, error.message);
+                }
+            }
+        }
+
+        return this.getMockSearchResults(cleanedQuery, filters, limit);
+    }
+
+    normalizeRecipeSearchResults(raw) {
+        if (!raw) return [];
+
+        if (Array.isArray(raw.results)) {
+            return raw.results;
+        }
+
+        if (Array.isArray(raw.recipes)) {
+            return raw.recipes;
+        }
+
+        if (Array.isArray(raw.suggestions)) {
+            return raw.suggestions
+                .map(item => item?.recipe || item)
+                .filter(Boolean);
+        }
+
+        if (Array.isArray(raw)) {
+            return raw;
+        }
+
+        if (raw.best_match) {
+            return [raw.best_match];
+        }
+
+        return [];
+    }
+
+    getMockSearchResults(query = '', filters = {}, limit = 20) {
+        const term = (query || '').toLowerCase();
+        let results = Object.values(this.mockData.recipes);
+
+        if (term) {
+            results = results.filter(recipe => {
+                const titleMatch = (recipe.title || '').toLowerCase().includes(term);
+                const descriptionMatch = (recipe.description || '').toLowerCase().includes(term);
+                const ingredientMatch = (recipe.ingredients || []).some(ing => (
+                    (ing.ingredient_name || ing.name || '').toLowerCase().includes(term)
+                ));
+                return titleMatch || descriptionMatch || ingredientMatch;
+            });
+        }
+
+        if (filters.cuisine) {
+            const cuisines = (Array.isArray(filters.cuisine) ? filters.cuisine : [filters.cuisine])
+                .map(value => (value || '').toLowerCase());
+            results = results.filter(recipe => cuisines.includes((recipe.cuisine || '').toLowerCase()));
+        }
+
+        if (filters.meal_type || filters.mealType) {
+            const mealFilters = filters.meal_type || filters.mealType;
+            const mealTypes = (Array.isArray(mealFilters) ? mealFilters : [mealFilters])
+                .map(value => (value || '').toLowerCase());
+            results = results.filter(recipe => (
+                recipe.tags || []
+            ).some(tag => mealTypes.includes((tag || '').toLowerCase())));
+        }
+
+        if (filters.max_cook_time || filters.maxCookTime) {
+            const maxTime = parseInt(filters.max_cook_time || filters.maxCookTime, 10);
+            if (!Number.isNaN(maxTime)) {
+                results = results.filter(recipe => {
+                    const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+                    return totalTime <= maxTime;
+                });
+            }
+        }
+
+        if (filters.currency) {
+            const currencies = (Array.isArray(filters.currency) ? filters.currency : [filters.currency])
+                .map(value => (value || '').toUpperCase());
+            results = results.filter(recipe => currencies.includes((recipe.currency || '').toUpperCase()));
+        }
+
+        if (filters.max_cost || filters.maxCost) {
+            const maxCost = parseFloat(filters.max_cost ?? filters.maxCost);
+            if (!Number.isNaN(maxCost)) {
+                results = results.filter(recipe => (recipe.estimated_cost || 0) <= maxCost);
+            }
+        }
+
+        return results.slice(0, limit);
     }
 
     // Get all recipes for browsing

@@ -179,25 +179,49 @@ class RecipeAPI {
 
     // Get recipe suggestions by ingredients
     async getRecipeSuggestions(ingredientNames) {
-        try {
-            const response = await fetch(`${this.baseUrl}/api/recipes/suggest-by-ingredients/`, {
-                method: 'POST',
-                headers: this.getHeaders(),
-                credentials: 'include',
-                body: JSON.stringify({
-                    ingredient_names: ingredientNames
-                })
-            });
+        const payload = {
+            ingredient_names: ingredientNames,
+            ingredients: ingredientNames,
+            ingredient_list: ingredientNames,
+            ingredients_list: ingredientNames,
+            include_missing: true,
+            include_substitutions: true,
+            include_details: true,
+            source: 'frontend'
+        };
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+        const endpoints = [
+            `${this.baseUrl}/api/live-chat/suggest-by-ingredients/`,
+            `${this.baseUrl}/api/recipes/suggest-by-ingredients/`
+        ];
+
+        const headers = { ...this.getHeaders() };
+
+        let lastError = null;
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers,
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    return await response.json();
+                }
+
+                lastError = await response.json().catch(() => ({ status: response.status }));
+            } catch (error) {
+                lastError = { message: error.message };
             }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Recipe suggestions error:', error);
-            throw error;
         }
+
+        const errorMessage = lastError?.detail || lastError?.message || `Unable to retrieve recipe suggestions.`;
+        const statusInfo = lastError?.status ? ` (status ${lastError.status})` : '';
+        const error = new Error(`${errorMessage}${statusInfo}`);
+        console.error('Recipe suggestions error:', error);
+        throw error;
     }
 
     // Get all categories

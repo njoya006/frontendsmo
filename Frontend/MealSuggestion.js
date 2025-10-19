@@ -26,7 +26,7 @@ const buildMealSuggestionApiUrl = (path = '') => {
 };
 
 const MEAL_SUGGESTION_ENDPOINTS = Object.freeze({
-    suggestByIngredients: buildMealSuggestionApiUrl('/api/recipes/suggest-by-ingredients/'),
+    suggestByIngredients: buildMealSuggestionApiUrl('/api/live-chat/suggest-by-ingredients/'),
     recipes: buildMealSuggestionApiUrl('/api/recipes/'),
     ingredients: buildMealSuggestionApiUrl('/api/ingredients/')
 });
@@ -92,32 +92,22 @@ async function performSearch() {
     try {
         let results = [];
         
-        // Use enhanced recipe API if available
         if (window.enhancedRecipeAPI && searchTerm) {
             console.log('🚀 Using enhanced recipe API for search');
-            
-            // Get current filter values
             const filters = {
                 meal_type: mealTypeFilter?.value || 'all',
                 cuisine: cuisineFilter?.value || 'all',
                 max_cooking_time: cookingTimeFilter?.value || 'all'
             };
-            
-            // Remove 'all' values
             Object.keys(filters).forEach(key => {
-                if (filters[key] === 'all') {
-                    delete filters[key];
-                }
+                if (filters[key] === 'all') delete filters[key];
             });
-            
             results = await window.enhancedRecipeAPI.searchRecipes(searchTerm, {
                 includeIngredients: true,
                 limit: 20,
                 filters: filters
             });
-            
             console.log('✅ Search results from API:', results);
-            
         } else if (searchTerm) {
             // Fallback to local search if API not available
             console.log('📋 Using local search fallback');
@@ -216,83 +206,121 @@ function getFilteredMeals() {
 }
 
 // --- Fetch meal suggestions from backend based on ingredients ---
+function normalizeIngredientSuggestionResponse(data = {}, ingredientNames = []) {
+    const missing = Array.isArray(data.missing_ingredients)
+        ? data.missing_ingredients
+        : (Array.isArray(data.missingIngredients) ? data.missingIngredients : []);
+
+    const normalized = {
+        recipes: [],
+        suggestions: [],
+        missing_ingredients: missing,
+        substitutions: data.substitutions || data.suggested_substitutions || {},
+        message: data.message || data.detail || '',
+        info: data.info || null,
+        ingredient_context: {
+            provided: ingredientNames,
+            matched: data.matched_ingredients || [],
+            missing: missing
+        }
+    };
+
+    if (Array.isArray(data.suggestions)) {
+        normalized.suggestions = data.suggestions;
+        normalized.recipes = data.suggestions
+            .map(entry => entry?.recipe || entry)
+            .filter(Boolean);
+    }
+
+    const candidateCollections = [data.recipes, data.suggested_recipes, data.results, data.recommendations];
+    for (const collection of candidateCollections) {
+        if (Array.isArray(collection) && collection.length) {
+            normalized.recipes = collection;
+            break;
+        }
+    }
+
+    if (!normalized.recipes.length && data.best_match) {
+        normalized.recipes = [data.best_match];
+    }
+
+    return normalized;
+}
+
 async function fetchMealSuggestionsByIngredients(ingredientNames) {
     try {
-    const response = await fetch(MEAL_SUGGESTION_ENDPOINTS.suggestByIngredients, {
+        const payload = {
+            ingredient_names: ingredientNames,
+            ingredients: ingredientNames,
+            ingredient_list: ingredientNames,
+            ingredients_list: ingredientNames,
+            include_missing: true,
+            include_substitutions: true,
+            include_details: true,
+            source: 'frontend'
+        };
+
+        const response = await fetch(MEAL_SUGGESTION_ENDPOINTS.suggestByIngredients, {
             method: 'POST',
             headers: window.authHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ ingredient_names: ingredientNames })
+            body: JSON.stringify(payload)
         });
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
+
+        const normalized = normalizeIngredientSuggestionResponse(data, ingredientNames);
+
         if (!response.ok) {
-            // If backend provides suggestions or corrected ingredients, show them
-            let errorMsg = 'Failed to load meal suggestions.';
-            if (data.suggestions && typeof data.suggestions === 'object') {
-                // Build a user-friendly message for each ingredient
-                let suggestionLines = [];
-                for (const [input, suggestion] of Object.entries(data.suggestions)) {
-                    if (Array.isArray(suggestion) && suggestion.length === 0) {
-                        suggestionLines.push(`No match found for: ${input}`);
-                    } else if (typeof suggestion === 'string' && suggestion) {
-                        suggestionLines.push(`Did you mean: ${suggestion} instead of ${input}?`);
-                    } else if (Array.isArray(suggestion) && suggestion.length > 0) {
-                        suggestionLines.push(`Did you mean: ${suggestion.join(', ')} instead of ${input}?`);
-                    }
-                }
-                errorMsg = suggestionLines.join('\n');
-            } else if (data.suggestions || data.corrected_ingredients) {
-                let suggestionList = data.suggestions || data.corrected_ingredients;
-                if (Array.isArray(suggestionList) && suggestionList.length > 0) {
-                    errorMsg =
-                        'Some ingredients were not recognized.\n' +
-                        'Did you mean: ' + suggestionList.join(', ') + '?';
-                }
-            } else if (data.detail) errorMsg = data.detail;
-            else if (data.error) errorMsg = data.error;
-            else if (data.message) errorMsg = data.message;
-            else if (typeof data === 'string') errorMsg = data;
-            alert(errorMsg);
-            return [];
+            const errorMsg = normalized.message || data.error || data.detail || 'Failed to load meal suggestions.';
+            return {
+                success: false,
+                error: errorMsg,
+                ...normalized
+            };
         }
-        // The backend should return an array of suggested recipes
-        return data.suggested_recipes || [];
+
+        return {
+            success: normalized.recipes.length > 0,
+            ...normalized
+        };
     } catch (error) {
-        alert('Network error. Please try again later.');
-        return [];
+        return {
+            success: false,
+            error: 'Network error. Please try again later.',
+            recipes: [],
+            suggestions: [],
+            missing_ingredients: [],
+            substitutions: {},
+            message: error.message
+        };
     }
 }
 
 // --- Enhanced ingredient-based meal suggestions ---
 async function handleIngredientSuggestion() {
     console.log('🥘 Starting ingredient-based suggestion process...');
-    
-    // Collect ingredient names from the UI
+
     const ingredientTags = document.querySelectorAll('.ingredient-tag');
     let ingredientNames = Array.from(ingredientTags).map(tag => tag.dataset.name || tag.textContent.trim());
-    
-    // Also check input field
+
     const input = document.getElementById('ingredientInput');
     if (input && input.value) {
         const inputIngredients = input.value.split(',').map(s => s.trim()).filter(Boolean);
         ingredientNames = [...ingredientNames, ...inputIngredients];
     }
-    
-    // Remove duplicates
+
     ingredientNames = [...new Set(ingredientNames.filter(name => name && name.length > 0))];
-    
     console.log('🥬 Collected ingredients:', ingredientNames);
-    
+
     if (ingredientNames.length === 0) {
         alert('Please add some ingredients first to get suggestions.');
         return;
     }
-    
+
     if (ingredientNames.length < 4) {
         alert('Please provide at least 4 ingredients for better suggestions. This ensures more accurate recipe matches.');
         return;
     }
-    
-    // Show loading state
+
     const suggestionsGrid = document.querySelector('.suggestions-grid');
     if (suggestionsGrid) {
         suggestionsGrid.innerHTML = `
@@ -303,44 +331,58 @@ async function handleIngredientSuggestion() {
             </div>
         `;
     }
-    
+
     try {
-        let suggestions;
-        
-        // Use enhanced API if available
-        if (window.enhancedRecipeAPI) {
+        let suggestionResult = null;
+
+        if (window.enhancedRecipeAPI && typeof window.enhancedRecipeAPI.getRecipeSuggestions === 'function') {
             console.log('🚀 Using enhanced recipe API for ingredient suggestions');
-            suggestions = await window.enhancedRecipeAPI.getRecipeSuggestions(ingredientNames, {
+            suggestionResult = await window.enhancedRecipeAPI.getRecipeSuggestions(ingredientNames, {
                 limit: 15,
-                includeMissing: true
+                includeMissing: true,
+                includeSubstitutions: true
             });
-            
-            if (suggestions.success && suggestions.recipes.length > 0) {
-                console.log('✅ Enhanced API suggestions received:', suggestions);
-                displayIngredientSuggestions(suggestions.recipes, ingredientNames);
-            } else {
-                console.log('⚠️ Enhanced API returned no results, trying fallback');
-                displaySuggestionError(suggestions.error, suggestions.suggestions, ingredientNames);
-            }
-        } else {
-            // Fallback to original API
-            console.log('📡 Using fallback ingredient API');
-            const fallbackSuggestions = await fetchMealSuggestionsByIngredients(ingredientNames);
-            
-            if (fallbackSuggestions && fallbackSuggestions.length > 0) {
-                displayIngredientSuggestions(fallbackSuggestions, ingredientNames);
-            } else {
-                displayNoIngredientMatches(ingredientNames);
-            }
         }
-        
+
+        if (!suggestionResult) {
+            console.log('📡 Using fallback ingredient API');
+            suggestionResult = await fetchMealSuggestionsByIngredients(ingredientNames);
+        }
+
+        const hasSuggestions = suggestionResult && (
+            (Array.isArray(suggestionResult.suggestions) && suggestionResult.suggestions.length > 0) ||
+            (Array.isArray(suggestionResult.recipes) && suggestionResult.recipes.length > 0)
+        );
+
+        if (suggestionResult && suggestionResult.success && hasSuggestions) {
+            const suggestionList = Array.isArray(suggestionResult.suggestions) && suggestionResult.suggestions.length > 0
+                ? suggestionResult.suggestions
+                : suggestionResult.recipes;
+
+            console.log('✅ Ingredient suggestions received:', suggestionResult);
+            displayIngredientSuggestions(suggestionList, ingredientNames, suggestionResult);
+            return;
+        }
+
+        const missing = suggestionResult?.missing_ingredients || [];
+        if (missing.length) {
+            displaySuggestionError(suggestionResult?.message || suggestionResult?.error, missing, ingredientNames);
+            return;
+        }
+
+        if (suggestionResult?.error || suggestionResult?.message) {
+            displaySuggestionError(suggestionResult.error || suggestionResult.message, suggestionResult?.suggestions, ingredientNames);
+            return;
+        }
+
+        displayNoIngredientMatches(ingredientNames);
     } catch (error) {
         console.error('❌ Error getting ingredient suggestions:', error);
         displaySuggestionError(error.message, {}, ingredientNames);
     }
 }
 
-function displayIngredientSuggestions(suggestions, userIngredients) {
+function displayIngredientSuggestions(suggestions, userIngredients, context = {}) {
     console.log('🍽️ Displaying ingredient-based suggestions:', suggestions);
     
     const suggestionsGrid = document.querySelector('.suggestions-grid');
@@ -358,16 +400,24 @@ function displayIngredientSuggestions(suggestions, userIngredients) {
             <p style="margin: 0; color: #666;">
                 <strong>Your ingredients:</strong> ${userIngredients.join(', ')}
             </p>
+            ${context.message ? `<p style="margin: 8px 0 0; color: #555;">${context.message}</p>` : ''}
+            ${Array.isArray(context.missing_ingredients) && context.missing_ingredients.length ? `
+                <p style="margin: 6px 0 0; color: #b36b00; font-size: 13px;">
+                    <i class="fas fa-info-circle"></i> Pantry gaps: ${context.missing_ingredients.join(', ')}
+                </p>
+            ` : ''}
         </div>
     `;
     
     // Process and display suggestions
     suggestions.forEach((suggestion, index) => {
-        const recipe = suggestion.recipe || suggestion;
-        const message = suggestion.message || '';
-        const missingIngredients = suggestion.missing_ingredients || [];
-        const substitutions = suggestion.substitutions || {};
-        const matchPercentage = suggestion.match_percentage || '';
+    const recipe = suggestion.recipe || suggestion;
+    const message = suggestion.message || '';
+    const missingIngredients = suggestion.missing_ingredients || context?.ingredient_context?.missing || [];
+    const substitutions = suggestion.substitutions || context?.substitutions || {};
+    const matchScore = suggestion.match_score || 0;
+    const calculatedMatch = matchScore && userIngredients.length ? Math.round((matchScore / userIngredients.length) * 100) : '';
+    const matchPercentage = suggestion.match_percentage || calculatedMatch;
         
         const title = recipe.title || recipe.name || 'Untitled Recipe';
         const description = recipe.description || 'No description available';
@@ -462,13 +512,23 @@ function displayIngredientSuggestions(suggestions, userIngredients) {
     console.log('✅ Ingredient suggestions displayed successfully');
 }
 
-function displaySuggestionError(error, suggestions, userIngredients) {
+function displaySuggestionError(error, details, userIngredients) {
     const suggestionsGrid = document.querySelector('.suggestions-grid');
     if (!suggestionsGrid) return;
     
     let suggestionText = '';
-    if (suggestions && Object.keys(suggestions).length > 0) {
-        suggestionText = Object.entries(suggestions).map(([input, suggestion]) => {
+    if (Array.isArray(details) && details.length > 0) {
+        if (details.every(item => typeof item === 'string')) {
+            suggestionText = `<strong>Missing ingredients:</strong> ${details.join(', ')}`;
+        } else if (details.every(item => item && typeof item === 'object')) {
+            suggestionText = details.map(entry => {
+                const recipeTitle = entry.recipe?.title || entry.recipe?.name || 'Recipe';
+                const missing = Array.isArray(entry.missing_ingredients) ? entry.missing_ingredients.join(', ') : 'ingredients not matched';
+                return `${recipeTitle}: missing ${missing}`;
+            }).join('<br>');
+        }
+    } else if (details && typeof details === 'object' && Object.keys(details).length > 0) {
+        suggestionText = Object.entries(details).map(([input, suggestion]) => {
             if (Array.isArray(suggestion) && suggestion.length > 0) {
                 return `Did you mean "${suggestion.join(', ')}" instead of "${input}"?`;
             } else if (typeof suggestion === 'string' && suggestion) {
@@ -483,6 +543,7 @@ function displaySuggestionError(error, suggestions, userIngredients) {
             <i class="fas fa-exclamation-circle" style="font-size: 50px; color: #f39c12; margin-bottom: 20px;"></i>
             <h3>Unable to find recipe suggestions</h3>
             <p><strong>Your ingredients:</strong> ${userIngredients.join(', ')}</p>
+            ${error ? `<p style="color:#b94a48;">${error}</p>` : ''}
             ${suggestionText ? `<div style="margin: 20px 0; padding: 15px; background: #fff3cd; border-radius: 8px;"><strong>Suggestions:</strong><br>${suggestionText}</div>` : ''}
             <p>Try:</p>
             <ul style="text-align: left; display: inline-block; margin-top: 15px;">

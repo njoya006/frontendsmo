@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChopSmo Live Sessions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-olYw4N7s7xC5EvhczHxVn9Yx8RJWb1x1o1t4bm/FvSX8eK3opgDdGztqKqRR3YKHyCuXapnwYfKHu9Gf4XxCgA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="live-sessions.css">
+</head>
+<body class="live-body">
+    <div class="live-wrapper">
+        <section class="live-hero">
+            <article class="hero-content">
+                <div>
+                    <span class="media-badge"><i class="fas fa-bolt"></i> Live Cooking Network</span>
+                </div>
+                <h1>Broadcast Your Kitchen. Inspire the ChopSmo Community.</h1>
+                <p>Host hands-on cooking sessions, discover creators in real time, and build loyal fans across Cameroon and beyond.</p>
+                <div class="hero-cta">
+                    <button class="primary" id="startSessionBtn">
+                        <i class="fas fa-video"></i>
+                        Start Live Session
+                    </button>
+                    <button class="secondary" id="learnMoreBtn">
+                        <i class="fas fa-info-circle"></i>
+                        Learn How Hosting Works
+                    </button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Monthly Viewers</div>
+                        <div class="stat-value" id="statViewers">12.4k</div>
+                        <div class="stat-foot">Across the ChopSmo network</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Sessions Hosted</div>
+                        <div class="stat-value" id="statSessions">486</div>
+                        <div class="stat-foot">Since January 2025</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Creator Satisfaction</div>
+                        <div class="stat-value" id="statRating">97%</div>
+                        <div class="stat-foot">Rated 4.8/5 by hosts</div>
+                    </div>
+                </div>
+                <p class="status-banner" id="statusBanner">Checking live session availability...</p>
+            </article>
+            <aside class="hero-media">
+                <div class="hero-media-content">
+                    <div class="media-badge"><i class="fas fa-pepper-hot"></i> Featured Stream</div>
+                    <h2 style="margin:0;font-size:1.45rem;">Savor Saturday: Chef Mariam's Ndolé Masterclass</h2>
+                    <div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,0.75);">
+                        <i class="fas fa-user-friends"></i>
+                        842 viewers tuned in last weekend
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="live-dashboard">
+            <div class="sessions-toolbar">
+                <div class="search-field">
+                    <input type="search" id="searchInput" placeholder="Search hosts, cuisines, or titles">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="filter-chips" id="filterChips">
+                    <button class="filter-chip active" data-filter="live">Live Now</button>
+                    <button class="filter-chip" data-filter="upcoming">Upcoming</button>
+                    <button class="filter-chip" data-filter="past">Past</button>
+                </div>
+            </div>
+            <div id="sessionGrid" class="session-grid">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+        </section>
+    </div>
+
+    <button id="startSessionFab" title="Start a live session">
+        <i class="fas fa-broadcast-tower"></i>
+    </button>
+
+    <div class="modal-overlay" id="sessionModal">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sessionModalTitle">
+            <header>
+                <h2 class="modal-title" id="sessionModalTitle">Schedule a Live Cooking Session</h2>
+                <button class="modal-close" id="closeModalBtn" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            <form id="sessionForm">
+                <div class="form-field">
+                    <label for="sessionTitle">Session Title</label>
+                    <input type="text" id="sessionTitle" name="title" placeholder="e.g., Bold Flavors: Street Food Tour" required>
+                </div>
+                <div class="form-field">
+                    <label for="sessionDescription">Description</label>
+                    <textarea id="sessionDescription" name="description" placeholder="Tell viewers what they will learn and the ingredients to prep." required></textarea>
+                </div>
+                <div class="form-field">
+                    <label for="sessionCuisine">Cuisine Focus</label>
+                    <input type="text" id="sessionCuisine" name="cuisine_focus" placeholder="Cameroonian, Nigerian, Fusion...">
+                </div>
+                <div class="form-field">
+                    <label for="sessionStart">Start Time</label>
+                    <input type="datetime-local" id="sessionStart" name="scheduled_start">
+                </div>
+                <div class="form-field">
+                    <label for="sessionDuration">Estimated Duration</label>
+                    <select id="sessionDuration" name="estimated_duration">
+                        <option value="45">45 minutes</option>
+                        <option value="60" selected>60 minutes</option>
+                        <option value="90">90 minutes</option>
+                        <option value="120">2 hours</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="sessionTags">Tags (comma separated)</label>
+                    <input type="text" id="sessionTags" name="tags" placeholder="Spicy, Vegetarian, Beginner Friendly">
+                </div>
+                <footer>
+                    <button type="button" class="ghost" id="cancelModalBtn">Cancel</button>
+                    <button type="submit" class="primary">
+                        <i class="fas fa-rocket"></i>
+                        Launch Daily Room
+                    </button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" integrity="sha512-uqYH0eM+c/fi91tIbp/BK+f5pFwchAuC8W9jAq56k97X3CJidb8sRP/6IDdnh3oX1N1pAVccawJgN9zeps2X0w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="chopsmo-config.js"></script>
+    <script src="auth-utils.js"></script>
+    <script type="module" src="live-sessions.js"></script>
+</body>
+</html>

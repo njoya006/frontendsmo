@@ -140,28 +140,67 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to get recipe image with fallback
     function getRecipeImageUrl(recipe) {
         console.log('🎯 getRecipeImageUrl called with recipe:', recipe);
-        // Since backend now returns full URLs in the 'image' field, use it directly
-        const imageUrl = recipe.image;
-        console.log('🔍 Recipe image data:', {
-            recipeId: recipe.id,
-            title: recipe.title,
-            image: recipe.image,
-            imageType: typeof recipe.image,
-            imageLength: recipe.image ? recipe.image.length : 0,
-            startsWithHttp: recipe.image ? recipe.image.startsWith('http') : false
-        });
-        
-        if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('http')) {
-            console.log('✅ Using full backend URL:', imageUrl);
-            return imageUrl;
+        const candidateSources = [];
+        if (recipe) {
+            candidateSources.push(
+                recipe.image,
+                recipe.image_url,
+                recipe.primary_image,
+                recipe.primary_image_url,
+                recipe.cover_image,
+                recipe.hero_image,
+                recipe.image_upload
+            );
+
+            if (recipe.images) {
+                if (Array.isArray(recipe.images)) {
+                    candidateSources.push(...recipe.images);
+                }
+                if (recipe.images.primary) {
+                    candidateSources.push(recipe.images.primary);
+                }
+                if (Array.isArray(recipe.images.gallery)) {
+                    candidateSources.push(...recipe.images.gallery);
+                }
+                if (Array.isArray(recipe.images.ordered)) {
+                    candidateSources.push(...recipe.images.ordered);
+                }
+            }
+
+            if (recipe.media && typeof recipe.media === 'object') {
+                candidateSources.push(recipe.media.primary, recipe.media.cover);
+            }
+
+            if (recipe.media_assets && typeof recipe.media_assets === 'object') {
+                candidateSources.push(recipe.media_assets.primary);
+            }
         }
-        
-        console.log('🔄 No valid image URL found, using fallback. Reason:', {
-            imageUrl,
-            hasImage: !!imageUrl,
-            isString: typeof imageUrl === 'string',
-            startsWithHttp: imageUrl ? imageUrl.startsWith('http') : false
-        });
+
+        for (const candidate of candidateSources) {
+            if (!candidate) continue;
+            let urlCandidate = null;
+
+            if (typeof candidate === 'string') {
+                urlCandidate = candidate;
+            } else if (candidate) {
+                urlCandidate = candidate.url || candidate.image_url || candidate.source || candidate.path;
+            }
+
+            if (!urlCandidate || typeof urlCandidate !== 'string') continue;
+
+            if (urlCandidate.startsWith('http')) {
+                console.log('✅ Using backend-provided image URL:', urlCandidate);
+                return urlCandidate;
+            }
+
+            const resolved = getImageUrl(urlCandidate, DEFAULT_RECIPE_IMAGE);
+            if (resolved) {
+                console.log('✅ Resolved relative image URL:', resolved);
+                return resolved;
+            }
+        }
+
+        console.log('🔄 No valid image URL found across primary/gallery sources, using fallback');
         return getRandomRecipeImage();
     }
     
@@ -2117,20 +2156,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (createRecipeForm) {
         createRecipeForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            // Collect ingredient fields
+
             const ingredientNames = Array.from(document.getElementsByName('ingredient_name[]')).map(input => input.value.trim());
             const quantities = Array.from(document.getElementsByName('quantity[]')).map(input => input.value.trim());
             const units = Array.from(document.getElementsByName('unit[]')).map(input => input.value.trim());
             const preparations = Array.from(document.getElementsByName('preparation[]')).map(input => input.value.trim());
-            // Build ingredients array with preparation
+
             const ingredients = ingredientNames.map((name, i) => ({
                 name,
                 quantity: quantities[i] || '',
                 unit: units[i] || '',
-                preparation: preparations[i] || '' // Optional
+                preparation: preparations[i] || ''
             }));
 
-            // Collect other form fields
             const title = document.getElementById('recipeTitle').value.trim();
             const name = document.getElementById('recipeName').value.trim();
             const description = document.getElementById('recipeDescription').value.trim();
@@ -2138,27 +2176,33 @@ document.addEventListener('DOMContentLoaded', function() {
             const estimatedCostInput = document.getElementById('estimated_cost').value;
             const estimated_cost = estimatedCostInput !== '' ? parseFloat(estimatedCostInput) : null;
 
-            // Collect categories, cuisines, tags (multi-select)
+            const splitInstructions = instructions
+                .split(/\r?\n+/)
+                .map(step => step.trim())
+                .filter(Boolean);
+
+            const stepMetadata = splitInstructions.map((description, index) => ({
+                step_index: index + 1,
+                description
+            }));
+
             const getSelectedValues = sel => Array.from(sel.selectedOptions).map(opt => opt.value);
             const categories = getSelectedValues(document.getElementById('recipeCategories'));
             const cuisines = getSelectedValues(document.getElementById('recipeCuisines'));
             const tags = getSelectedValues(document.getElementById('recipeTags'));
 
-            // Validation
             const errors = {};
             if (!title) errors.title = 'Title is required';
             if (!description) errors.description = 'Description is required';
             if (estimatedCostInput !== '' && (isNaN(estimated_cost) || estimated_cost < 0)) {
                 errors.estimated_cost = 'Cost must be a valid positive number';
             }
-            // Add more validation as needed
             if (Object.keys(errors).length > 0) {
                 showToast(Object.values(errors).join('\n'), '#f44336');
                 return;
             }
 
-            // Build recipe data object
-            const recipeData = {
+            const recipePayload = {
                 title,
                 name,
                 description,
@@ -2167,62 +2211,148 @@ document.addEventListener('DOMContentLoaded', function() {
                 ingredients,
                 categories,
                 cuisines,
-                tags
+                tags,
+                step_images_upload: stepMetadata
             };
 
-            // Auth token
             const authToken = window.getAuthToken && window.getAuthToken();
             if (!authToken) {
                 showToast('You must be logged in to create a recipe.', '#f44336');
                 return;
             }
 
-            try {
-                const createRecipeEndpoint = buildApiUrl('/api/recipes/');
+            const createRecipeEndpoint = buildApiUrl('/api/recipes/');
+            const rawHeaders = window.authHeaders ? window.authHeaders() : {};
+            const formHeaders = { ...rawHeaders };
+            if (formHeaders['Content-Type']) delete formHeaders['Content-Type'];
+            const jsonHeaders = { ...rawHeaders, 'Content-Type': 'application/json' };
 
-                // Detect file inputs for multipart upload
-                const fileInput = document.getElementById('recipeImage');
-                const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+            const primaryImageInput = document.getElementById('recipeImage');
+            const galleryInput = document.getElementById('recipeGalleryImages');
+            const stepImagesInput = document.getElementById('recipeStepImages');
 
-                // Build headers using centralized helper to avoid double-prefix issues
-                const headers = window.authHeaders ? window.authHeaders() : {};
-                if (!hasFile) headers['Content-Type'] = 'application/json';
+            const primaryImageFile = primaryImageInput?.files ? primaryImageInput.files[0] : null;
+            const galleryFiles = galleryInput?.files ? Array.from(galleryInput.files) : [];
+            const stepImageFiles = stepImagesInput?.files ? Array.from(stepImagesInput.files) : [];
+            const hasAnyFile = !!primaryImageFile || galleryFiles.length > 0 || stepImageFiles.length > 0;
 
-                let body;
-                if (hasFile) {
-                    // Use FormData for multipart uploads. Do NOT set Content-Type header; browser will set the boundary.
-                    const formData = new FormData();
-                    // Append simple fields
-                    if (recipeData.title) formData.append('title', recipeData.title);
-                    if (recipeData.name) formData.append('name', recipeData.name);
-                    if (recipeData.description) formData.append('description', recipeData.description);
-                    if (recipeData.instructions) formData.append('instructions', recipeData.instructions);
-                    if (recipeData.estimated_cost !== null && recipeData.estimated_cost !== undefined) formData.append('estimated_cost', recipeData.estimated_cost);
-
-                    // Append complex fields as JSON strings (backend should parse them)
-                    formData.append('ingredients', JSON.stringify(recipeData.ingredients || []));
-                    formData.append('categories', JSON.stringify(recipeData.categories || []));
-                    formData.append('cuisines', JSON.stringify(recipeData.cuisines || []));
-                    formData.append('tags', JSON.stringify(recipeData.tags || []));
-
-                    // Append file (single image)
-                    formData.append('image', fileInput.files[0]);
-
-                    body = formData;
+            stepImageFiles.forEach((file, index) => {
+                if (stepMetadata[index]) {
+                    stepMetadata[index].image_name = file.name;
                 } else {
-                    headers['Content-Type'] = 'application/json';
-                    body = JSON.stringify(recipeData);
+                    stepMetadata.push({
+                        step_index: index + 1,
+                        description: '',
+                        image_name: file.name
+                    });
+                }
+            });
+
+            const buildNewSchemaFormData = () => {
+                const formData = new FormData();
+
+                if (recipePayload.title) formData.append('title', recipePayload.title);
+                if (recipePayload.name) formData.append('name', recipePayload.name);
+                if (recipePayload.description) formData.append('description', recipePayload.description);
+                if (recipePayload.instructions) formData.append('instructions', recipePayload.instructions);
+                if (recipePayload.estimated_cost !== null && recipePayload.estimated_cost !== undefined) {
+                    formData.append('estimated_cost', recipePayload.estimated_cost);
                 }
 
-                const response = await fetch(createRecipeEndpoint, {
-                    method: 'POST',
-                    headers: headers,
-                    body: body
+                formData.append('ingredients', JSON.stringify(recipePayload.ingredients || []));
+                formData.append('categories', JSON.stringify(recipePayload.categories || []));
+                formData.append('cuisines', JSON.stringify(recipePayload.cuisines || []));
+                formData.append('tags', JSON.stringify(recipePayload.tags || []));
+
+                if (splitInstructions.length) {
+                    formData.append('step_images_upload', JSON.stringify(stepMetadata));
+                }
+
+                if (primaryImageFile) {
+                    formData.append('image_upload', primaryImageFile);
+                    // Legacy support for older backend versions expecting `image`
+                    formData.append('image', primaryImageFile);
+                }
+
+                galleryFiles.forEach(file => {
+                    formData.append('image_uploads', file);
                 });
 
+                stepImageFiles.forEach(file => {
+                    formData.append('step_image_files', file);
+                });
+
+                return formData;
+            };
+
+            const buildLegacyPayload = () => {
+                if (primaryImageFile) {
+                    const legacyFormData = new FormData();
+                    if (recipePayload.title) legacyFormData.append('title', recipePayload.title);
+                    if (recipePayload.name) legacyFormData.append('name', recipePayload.name);
+                    if (recipePayload.description) legacyFormData.append('description', recipePayload.description);
+                    if (recipePayload.instructions) legacyFormData.append('instructions', recipePayload.instructions);
+                    if (recipePayload.estimated_cost !== null && recipePayload.estimated_cost !== undefined) {
+                        legacyFormData.append('estimated_cost', recipePayload.estimated_cost);
+                    }
+                    legacyFormData.append('ingredients', JSON.stringify(recipePayload.ingredients || []));
+                    legacyFormData.append('categories', JSON.stringify(recipePayload.categories || []));
+                    legacyFormData.append('cuisines', JSON.stringify(recipePayload.cuisines || []));
+                    legacyFormData.append('tags', JSON.stringify(recipePayload.tags || []));
+                    if (stepMetadata.length) {
+                        legacyFormData.append('step_images_upload', JSON.stringify(stepMetadata));
+                    }
+                    legacyFormData.append('image', primaryImageFile);
+                    legacyFormData.append('image_upload', primaryImageFile);
+                    galleryFiles.forEach(file => legacyFormData.append('image_uploads', file));
+                    stepImageFiles.forEach(file => legacyFormData.append('step_image_files', file));
+                    return { headers: { ...formHeaders }, body: legacyFormData };
+                }
+
+                const fallbackJson = {
+                    ...recipePayload,
+                    step_images_upload: stepMetadata
+                };
+                return { headers: jsonHeaders, body: JSON.stringify(fallbackJson) };
+            };
+
+            try {
+                let response;
+                let fallbackUsed = false;
+                const newSchemaFormData = buildNewSchemaFormData();
+
+                response = await fetch(createRecipeEndpoint, {
+                    method: 'POST',
+                    headers: formHeaders,
+                    body: newSchemaFormData
+                });
+
+                if (!response.ok && response.status >= 400 && response.status < 500) {
+                    let errorClone = null;
+                    try {
+                        errorClone = await response.clone().json();
+                        console.warn('Recipe create returned validation error with new schema:', errorClone);
+                    } catch (_) {
+                        console.warn('Recipe create new schema returned status', response.status);
+                    }
+
+                    const legacyPayload = buildLegacyPayload();
+                    if (hasAnyFile || fallbackUsed) {
+                        // Ensure we remove any lingering JSON headers when using FormData fallback
+                        if (legacyPayload.headers['Content-Type']) delete legacyPayload.headers['Content-Type'];
+                    }
+
+                    response = await fetch(createRecipeEndpoint, {
+                        method: 'POST',
+                        headers: legacyPayload.headers,
+                        body: legacyPayload.body
+                    });
+                    fallbackUsed = true;
+                }
+
                 if (response.ok) {
-                    showToast('Recipe created successfully!', '#4CAF50');
-                    // Optionally close modal and refresh recipes
+                    const successLabel = fallbackUsed ? 'Recipe created with legacy upload format.' : 'Recipe created successfully!';
+                    showToast(successLabel, '#4CAF50');
                     const modalEl = document.getElementById('createRecipeModal');
                     if (modalEl) modalEl.style.display = 'none';
                     document.body.style.overflow = 'auto';
@@ -2235,7 +2365,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     let errorText = '';
                     try {
                         const errorData = await response.json();
-                        errorText = errorData.detail || JSON.stringify(errorData);
+                        errorText = errorData.detail || errorData.error || JSON.stringify(errorData);
                     } catch (parseErr) {
                         errorText = `${response.status} ${response.statusText}`;
                     }

@@ -698,8 +698,19 @@
                             <div id="recipeTagsError" class="error-message" style="display:none;"></div>
                         </div>
                         <div class="form-group">
-                            <label for="recipeImage">Recipe Image <span>(optional)</span></label>
-                            <input type="file" id="recipeImage" name="image" accept="image/*">
+                            <label for="recipeImage">Primary Recipe Image <span>(optional)</span></label>
+                            <input type="file" id="recipeImage" name="image_upload" accept="image/*">
+                            <small>Used as the cover image for recipe cards and detail pages.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeGalleryImages">Gallery Images <span>(optional, you can select multiple)</span></label>
+                            <input type="file" id="recipeGalleryImages" name="image_uploads" accept="image/*" multiple>
+                            <small>Additional visuals that will appear in the gallery carousel.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeStepImages">Step Images <span>(optional, order will match your instructions)</span></label>
+                            <input type="file" id="recipeStepImages" name="step_images_upload" accept="image/*" multiple>
+                            <small>Attach photos for cooking steps; they will be linked to each step in order.</small>
                         </div>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-plus-circle"></i>

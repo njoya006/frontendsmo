@@ -60,12 +60,8 @@ img[height="48"] {
     background: white;
 }
 
-/* For link previews and social sharing cards */
-meta[property="og:image"],
-meta[name="twitter:image"] {
-    /* These can't be styled but documented for reference */
-    /* The actual images should be created as rounded PNGs */
-}
+/* For link previews and social sharing cards
+   Note: meta tags cannot be styled via CSS; ensure OG/Twitter images are created as rounded images at the source. */
 
 /* PWA and mobile home screen */
 @media (display-mode: standalone) {
