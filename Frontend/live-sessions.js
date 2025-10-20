@@ -471,10 +471,20 @@ async function handleJoinSession(session) {
         showToast('Launching live session...', 'success');
 
         if (participantToken) {
-            await ensureDailyLoaded();
-            launchEmbeddedRoom({ token: participantToken, roomName, url: joinUrl });
-            setStatus('Connected to the live session. Enjoy!');
-            return;
+            try {
+                await ensureDailyLoaded();
+                launchEmbeddedRoom({ token: participantToken, roomName, url: joinUrl });
+                setStatus('Connected to the live session. Enjoy!');
+                return;
+            } catch (embedError) {
+                console.warn('Daily embed unavailable, falling back to direct link:', embedError);
+                if (joinUrl) {
+                    window.open(joinUrl, '_blank', 'noopener');
+                    setStatus('Opened live room in a new tab. Enjoy!');
+                    return;
+                }
+                throw new Error('Live room token received but the embed library failed to load.');
+            }
         }
 
         if (joinUrl) {
