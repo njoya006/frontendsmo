@@ -59,15 +59,27 @@
             overflow-x: hidden;
         }
 
+        .profile-hero {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 40px;
+            align-items: stretch;
+            margin-bottom: 50px;
+        }
+
         /* 🎨 CUSTOMIZE: Change profile header styling here */
         .profile-header {
-            text-align: center;
-            margin-bottom: 50px;
-            padding: 40px 0;
+            text-align: left;
+            margin: 0;
+            padding: 40px;
             background: var(--white-color);        /* 📋 HEADER BACKGROUND */
             border-radius: 20px;                   /* 📋 HEADER ROUNDNESS */
             box-shadow: var(--shadow-lg);          /* 📋 HEADER SHADOW */
             border-top: 4px solid var(--primary-color); /* 📋 HEADER ACCENT BORDER */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 12px;
         }
 
         .profile-header h1 {
@@ -84,26 +96,18 @@
 
         /* 🎯 CUSTOMIZE: Change profile content grid layout here */
         .profile-content {
-            display: grid;
-            grid-template-columns: 350px 1fr;      /* 🎯 SIDEBAR WIDTH vs MAIN CONTENT */
-            gap: 40px;                              /* 🎯 SPACING BETWEEN SECTIONS */
+            margin-top: 20px;
         }
 
         @media (max-width: 992px) {
-            .profile-page .container {
-                display: flex;
-                flex-direction: column;
+            .profile-hero {
+                grid-template-columns: 1fr;
                 gap: 24px;
             }
 
-            .profile-content {
-                grid-template-columns: 1fr;        /* 🎯 MOBILE: SINGLE COLUMN LAYOUT */
-                order: 1;
-            }
-
             .profile-header {
-                order: 2;
-                margin-bottom: 0;
+                text-align: center;
+                padding: 32px 24px;
             }
         }
 
@@ -934,17 +938,10 @@
                 line-height: 1.5;
             }
 
-            .profile-content {
-                grid-template-columns: 1fr;
-                gap: 25px;
-                max-width: 100%;
-            }
-
             /* Professional User Card Mobile */
             .user-card {
                 padding: 35px 25px;
                 border-radius: 20px;
-                order: -1;
                 background: linear-gradient(135deg, var(--white-color) 0%, #f9fffe 100%);
                 box-shadow: 0 8px 32px rgba(27,94,32,0.08);
                 border: 1px solid rgba(34, 139, 34, 0.1);
@@ -1919,14 +1916,9 @@
 
     <main class="profile-page">
         <div class="container">
-            <section class="profile-header">
-                <h1>My Profile</h1>
-                <p>Manage your account settings and preferences</p>
-            </section>
-
-            <div class="profile-content">
-                <!-- User Card Sidebar -->
-                <aside class="user-card">                    <div class="avatar-section">
+            <section class="profile-hero">
+                <aside class="user-card">
+                    <div class="avatar-section">
                         <div class="avatar-preview">
                             <img src="https://via.placeholder.com/140x140?text=User" alt="Profile Picture" id="avatarImg">
                             <div class="avatar-overlay">
@@ -1941,10 +1933,10 @@
                             <p class="avatar-info">JPG, PNG or GIF. Max size 5MB</p>
                         </div>
                     </div>
-                      <div class="user-info">
+                    <div class="user-info">
                         <h2 id="userName">Loading...</h2>
                         <p class="user-email" id="userEmail">loading@example.com</p>
-                        
+
                         <div class="user-stats">
                             <div class="stat-item">
                                 <div class="stat-number" id="recipesCount">0</div>
@@ -1958,6 +1950,13 @@
                     </div>
                 </aside>
 
+                <div class="profile-header">
+                    <h1>My Profile</h1>
+                    <p>Manage your account settings and preferences</p>
+                </div>
+            </section>
+
+            <div class="profile-content">
                 <!-- Main Content -->
                 <main class="profile-main">
                     <!-- Navigation Tabs -->
