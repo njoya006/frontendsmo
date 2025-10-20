@@ -25,10 +25,20 @@ const state = {
     loading: false,
     sessions: [],
     searchTerm: '',
-    filter: 'live',
+    filter: 'all',
     pollingId: null,
     sessionMeta: new Map()
 };
+
+function asTruthy(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value !== 0;
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        return ['true', '1', 'yes', 'y'].includes(normalized);
+    }
+    return Boolean(value);
+}
 
 function getSessionKeys(session) {
     if (!session) return [];
@@ -122,14 +132,26 @@ function cacheSessionMetadata(session, data) {
             || data.external_room
             || session.external_room_data
             || null,
-        has_active_room: data.has_active_room
-            || data.is_live
-            || data.active
-            || data.is_active
-            || data.external_room?.is_live
-            || session.has_active_room
-            || session.is_live
-            || null
+        has_active_room: [
+            data.has_active_room,
+            data.is_live,
+            data.active,
+            data.is_active,
+            data.external_room?.is_live,
+            session.has_active_room,
+            session.is_live
+        ].some(asTruthy),
+        is_host: [
+            data.is_host,
+            data.permissions && data.permissions.can_start,
+            session.is_host
+        ].some(asTruthy),
+        can_start: [
+            data.can_start,
+            data.permissions?.can_start,
+            session.can_start,
+            session.permissions && session.permissions.can_start
+        ].some(asTruthy)
     };
 
     getSessionKeys(session).forEach((identifier) => {
@@ -140,6 +162,12 @@ function cacheSessionMetadata(session, data) {
     if (meta.has_active_room && !session.ended_at) {
         session.is_live = true;
         session.status = 'live';
+    }
+
+    if (meta.is_host) {
+        session.is_host = true;
+        session.can_start = true;
+        session.permissions = { ...(session.permissions || {}), can_start: true };
     }
 }
 
@@ -160,7 +188,14 @@ function getSessionStatus(session) {
     if (!session) return 'upcoming';
 
     if (session.ended_at) return 'past';
-    if (session.is_live || session.has_active_room || session.active_room || session.active || session.is_active) return 'live';
+    if (asTruthy(session.is_live)
+        || asTruthy(session.isLive)
+        || asTruthy(session.has_active_room)
+        || asTruthy(session.active_room)
+        || asTruthy(session.active)
+        || asTruthy(session.is_active)) {
+        return 'live';
+    }
 
     const raw = (session.status || session.state || session.lifecycle || '').toString().toLowerCase();
 
@@ -170,13 +205,24 @@ function getSessionStatus(session) {
         if (['upcoming', 'scheduled', 'pending', 'created', 'draft', 'ready', 'waiting'].includes(raw)) return 'upcoming';
     }
 
+    let cachedMeta;
+    const keys = getSessionKeys(session);
+    for (let i = 0; i < keys.length; i += 1) {
+        const found = state.sessionMeta.get(keys[i]);
+        if (found) {
+            cachedMeta = found;
+            break;
+        }
+    }
+
     const hasLiveSignal = Boolean(
         session.started_at
         || session.start_time
         || session.external_room_url
         || session.external_room?.url
         || session.external_room_data?.url
-        || state.sessionMeta.get(session.id)?.external_room_url
+        || cachedMeta?.external_room_url
+        || asTruthy(cachedMeta?.has_active_room)
     );
 
     if (hasLiveSignal && !session.ended_at) {
@@ -238,6 +284,16 @@ function createSessionCard(session) {
     const card = document.createElement('article');
     card.className = 'session-card';
 
+    let cachedMeta;
+    const keys = getSessionKeys(session);
+    for (let i = 0; i < keys.length; i += 1) {
+        const candidate = state.sessionMeta.get(keys[i]);
+        if (candidate) {
+            cachedMeta = candidate;
+            break;
+        }
+    }
+
     const status = getSessionStatus(session);
     const pillClass = status === 'live' ? 'live' : status === 'upcoming' ? 'upcoming' : 'past';
     const statusLabel = status === 'live' ? 'Live Now' : status === 'upcoming' ? 'Upcoming' : 'Past Session';
@@ -251,6 +307,20 @@ function createSessionCard(session) {
     const relativeEnded = session.ended_at ? formatRelative(session.ended_at) : '';
     const canStart = Boolean(session.is_host || session.can_start || session.permissions?.can_start);
     const primaryAction = canStart && status !== 'live' ? 'start' : 'join';
+    const canJoinEarly = Boolean(
+        session.external_room_url
+        || session.external_room?.url
+        || session.external_room_data?.url
+        || session.join_url
+        || session.public_url
+        || cachedMeta?.external_room_url
+        || cachedMeta?.external_room?.url
+    );
+    const joinLabel = status === 'live'
+        ? '<i class="fas fa-play"></i> Join Live'
+        : canJoinEarly
+            ? '<i class="fas fa-door-open"></i> Join Room'
+            : '<i class="fas fa-bell"></i> RSVP';
 
     card.innerHTML = `
         <div class="session-header">
@@ -270,11 +340,9 @@ function createSessionCard(session) {
         <div class="session-actions">
             <button class="action-button primary" data-action="${primaryAction}">${primaryAction === 'start'
                 ? '<i class="fas fa-rocket"></i> Start Session'
-                : status === 'live'
-                    ? '<i class="fas fa-play"></i> Join Live'
-                    : status === 'upcoming'
-                        ? '<i class="fas fa-bell"></i> RSVP'
-                        : '<i class="fas fa-play-circle"></i> Replay'}</button>
+                : status === 'past'
+                    ? '<i class="fas fa-play-circle"></i> Replay'
+                    : joinLabel}</button>
             <button class="action-button secondary" data-action="copy"><i class="fas fa-link"></i> Copy Link</button>
         </div>
     `;
@@ -460,7 +528,7 @@ async function submitSessionForm(event) {
 
         cacheSessionMetadata(data, data.external_room_data || data);
 
-    data.is_host = true;
+        data.is_host = true;
         data.can_start = true;
         data.permissions = { ...(data.permissions || {}), can_start: true };
 
@@ -471,7 +539,7 @@ async function submitSessionForm(event) {
 
         closeModal();
         sessionForm.reset();
-    state.sessions.unshift(data);
+        state.sessions.unshift(data);
         applyCachedMetadata(state.sessions);
         renderSessions();
     } catch (error) {
@@ -503,8 +571,11 @@ async function handleStartTransition(session) {
             throw new Error(detail.detail || detail.error || 'Unable to start live session');
         }
 
-        const data = await response.json().catch(() => ({}));
-        cacheSessionMetadata(session, data);
+    const data = await response.json().catch(() => ({}));
+    data.is_live = true;
+    data.has_active_room = true;
+    data.status = data.status || 'live';
+    cacheSessionMetadata(session, data);
 
         const hostUrl = data.external_room_url || data.daily_room_url || data.room_url;
         const roomName = data.external_room_name || data.daily_room_name || data.room_name;
