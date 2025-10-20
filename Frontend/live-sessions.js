@@ -659,14 +659,56 @@ async function handleStartTransition(session) {
 
 async function ensureDailyLoaded() {
     if (window.DailyIframe) return;
-    await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/@daily-co/daily-js/dist/daily-iframe.min.js';
-        script.async = true;
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load Daily embed library.'));
-        document.head.appendChild(script);
-    });
+
+    if (ensureDailyLoaded.loadingPromise) {
+        await ensureDailyLoaded.loadingPromise;
+        if (window.DailyIframe) return;
+    }
+
+    const sources = [
+        'https://unpkg.com/@daily-co/daily-js/dist/daily-iframe.min.js',
+        'https://cdn.jsdelivr.net/npm/@daily-co/daily-js/dist/daily-iframe.min.js',
+        'https://cdn.daily.co/daily-js/daily-iframe.min.js'
+    ];
+
+    ensureDailyLoaded.loadingPromise = (async () => {
+        for (let i = 0; i < sources.length; i += 1) {
+            const src = sources[i];
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await new Promise((resolve, reject) => {
+                    const existing = document.querySelector(`script[src="${src}"]`);
+                    if (existing && existing.dataset.loaded === 'true') {
+                        resolve();
+                        return;
+                    }
+                    const script = existing || document.createElement('script');
+                    script.src = src;
+                    script.async = true;
+                    script.dataset.dailyLoader = 'true';
+                    script.onload = () => {
+                        script.dataset.loaded = 'true';
+                        resolve();
+                    };
+                    script.onerror = () => {
+                        script.remove();
+                        reject(new Error(`Failed to load Daily embed library from ${src}`));
+                    };
+                    if (!existing) {
+                        document.head.appendChild(script);
+                    }
+                });
+                if (window.DailyIframe) {
+                    return;
+                }
+            } catch (error) {
+                console.warn(error.message);
+            }
+        }
+        throw new Error('Failed to load Daily embed library from all sources.');
+    })();
+
+    await ensureDailyLoaded.loadingPromise;
 }
 
 function launchEmbeddedRoom({ token, roomName, url: providedUrl }) {
