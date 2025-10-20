@@ -1786,6 +1786,88 @@
             }
         }
 
+        /* Compact mobile layout tweaks */
+        @media (max-width: 600px) {
+            .profile-page {
+                padding: 80px 0 50px;
+            }
+
+            .profile-header {
+                padding: 24px 16px;
+            }
+
+            .profile-header h1 {
+                font-size: 28px;
+            }
+
+            .profile-header p {
+                font-size: 15px;
+            }
+
+            .user-card {
+                padding: 28px 20px;
+            }
+
+            .user-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .nav-tab {
+                flex: 1 1 100%;
+            }
+
+            .nav-tab button {
+                padding: 14px;
+                font-size: 14px;
+            }
+
+            .tab-content {
+                padding: 28px 18px;
+            }
+
+            .search-tabs {
+                grid-template-columns: 1fr;
+            }
+
+            .search-input-group,
+            .ingredients-input-group {
+                gap: 10px;
+            }
+
+            .search-button {
+                font-size: 14px;
+            }
+
+            .filters-section {
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .results-count {
+                align-self: flex-start;
+            }
+
+            .recipe-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                margin: 20px -20px -30px;
+                padding: 16px;
+            }
+        }
+
         /* ...existing styles continue... */
     </style>
     <link rel="stylesheet" href="logo-rounded.css">`n</head>

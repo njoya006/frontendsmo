@@ -1545,6 +1545,17 @@ footer {
 
 /* Responsive Styles */
 @media (max-width: 992px) {
+    .hero {
+        padding: 120px 0 70px;
+    }
+
+    .features,
+    .how-it-works,
+    .testimonials,
+    .cta {
+        padding: 60px 0;
+    }
+
     .hero .container {
         flex-direction: column;
     }
@@ -1647,6 +1658,140 @@ footer {
         min-width: 44px;
         min-height: 44px;
         padding: 10px;
+    }
+
+    body {
+        font-size: 15px;
+    }
+
+    .container {
+        padding: 0 16px;
+    }
+
+    .hero {
+        padding: 100px 0 48px;
+    }
+
+    .hero .container {
+        align-items: center;
+        text-align: center;
+    }
+
+    .hero-content {
+        padding-right: 0;
+        margin-bottom: 32px;
+    }
+
+    .hero h1 {
+        font-size: 40px;
+        line-height: 1.25;
+    }
+
+    .hero p {
+        font-size: 18px;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .hero-buttons .btn {
+        max-width: 320px;
+        width: 100%;
+    }
+
+    .hero-image {
+        margin: 0 auto;
+        max-width: 420px;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .feature-card {
+        padding: 32px 24px;
+        text-align: center;
+    }
+
+    .step {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .step-number {
+        margin-bottom: 12px;
+    }
+
+    .testimonial {
+        padding: 32px 24px;
+    }
+
+    .testimonial-content p {
+        font-size: 16px;
+    }
+
+    .cta h2 {
+        font-size: 28px;
+    }
+
+    .cta p {
+        font-size: 16px;
+    }
+
+    .cta .btn {
+        width: 100%;
+        max-width: 320px;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .newsletter-form {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .newsletter-form input,
+    .newsletter-form button {
+        border-radius: 8px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero h1 {
+        font-size: 34px;
+    }
+
+    .hero p {
+        font-size: 16px;
+    }
+
+    .feature-card {
+        padding: 28px 20px;
+    }
+
+    .testimonial-author {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .cta h2 {
+        font-size: 24px;
+    }
+
+    .cta p {
+        font-size: 15px;
+    }
+
+    footer {
+        padding: 40px 0 20px;
     }
 }
 
