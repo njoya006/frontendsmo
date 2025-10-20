@@ -489,7 +489,12 @@ async function handleJoinSession(session) {
                 setStatus('Connected to the live session. Enjoy!');
                 return;
             } catch (embedError) {
-                console.warn('Daily embed unavailable, falling back to direct link:', embedError);
+                // Try to surface which CDN(s) failed for diagnostics
+                const diagnostics = (ensureDailyLoaded.lastFailedSources || []).map((f) => `${f.src} -> ${f.reason}`).join('; ') || embedError.message;
+                console.warn('Daily embed unavailable, falling back to direct link:', embedError, diagnostics);
+                console.info('Daily loader diagnostics:', ensureDailyLoaded.lastFailedSources || ensureDailyLoaded.lastSuccessfulSource || 'none');
+                // Show a concise status to the user while preserving details in the console
+                setStatus('Daily embed unavailable; opened the live room in a new tab.', true);
                 if (resolvedJoinUrl) {
                     window.open(resolvedJoinUrl, '_blank', 'noopener');
                     setStatus('Opened live room in a new tab. Enjoy!');
@@ -671,7 +676,68 @@ async function ensureDailyLoaded() {
         'https://cdn.daily.co/daily-js/daily-iframe.min.js'
     ];
 
+    // Quick probe helper: attempt HEAD then fallback to GET (with no-cors) to detect basic reachability
+    async function probeUrl(url, timeoutMs = 4000) {
+        return new Promise((resolve) => {
+            let finished = false;
+            const timer = window.setTimeout(() => {
+                if (finished) return;
+                finished = true;
+                resolve({ url, ok: false, status: 0, error: 'timeout' });
+            }, timeoutMs);
+
+            // Try a HEAD request first for a fast response
+            fetch(url, { method: 'HEAD', cache: 'no-cache', mode: 'cors' })
+                .then((res) => {
+                    if (finished) return;
+                    finished = true;
+                    window.clearTimeout(timer);
+                    resolve({ url, ok: res.ok, status: res.status, statusText: res.statusText });
+                })
+                .catch(() => {
+                    // HEAD may be blocked by CORS; try a GET with no-cors so we at least know the network path succeeded
+                    fetch(url, { method: 'GET', cache: 'no-cache', mode: 'no-cors' })
+                        .then(() => {
+                            if (finished) return;
+                            finished = true;
+                            window.clearTimeout(timer);
+                            // opaque response — can't inspect status, but network reached
+                            resolve({ url, ok: true, status: 0, statusText: 'opaque' });
+                        })
+                        .catch((err) => {
+                            if (finished) return;
+                            finished = true;
+                            window.clearTimeout(timer);
+                            resolve({ url, ok: false, status: 0, error: String(err && err.message ? err.message : err) });
+                        });
+                });
+        });
+    }
+
+    async function testDailySources(sources, perSourceTimeout = 4000) {
+        const results = [];
+        for (let i = 0; i < sources.length; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            const res = await probeUrl(sources[i], perSourceTimeout);
+            results.push(res);
+        }
+        return results;
+    }
+
     ensureDailyLoaded.loadingPromise = (async () => {
+        // Run a quick probe to surface which CDNs are reachable before attempting script injection
+        try {
+            const probe = await testDailySources(sources, 3500);
+            ensureDailyLoaded.probeResults = probe;
+            console.info('Daily CDN probe results:', probe);
+        } catch (probeErr) {
+            console.warn('Daily CDN probe failed:', probeErr);
+        }
+
+        // Try each source with a short per-source timeout and record failures to help diagnostics
+        const perSourceTimeoutMs = 8000;
+        const failures = [];
+
         for (let i = 0; i < sources.length; i += 1) {
             const src = sources[i];
             try {
@@ -682,30 +748,51 @@ async function ensureDailyLoaded() {
                         resolve();
                         return;
                     }
+
                     const script = existing || document.createElement('script');
+                    let timedOut = false;
+                    const timer = window.setTimeout(() => {
+                        timedOut = true;
+                        try { script.remove(); } catch (e) {}
+                        reject(new Error(`Timed out loading Daily embed library from ${src}`));
+                    }, perSourceTimeoutMs);
+
                     script.src = src;
                     script.async = true;
                     script.dataset.dailyLoader = 'true';
                     script.onload = () => {
+                        if (timedOut) return;
+                        window.clearTimeout(timer);
                         script.dataset.loaded = 'true';
                         resolve();
                     };
                     script.onerror = () => {
-                        script.remove();
+                        if (timedOut) return;
+                        window.clearTimeout(timer);
+                        try { script.remove(); } catch (e) {}
                         reject(new Error(`Failed to load Daily embed library from ${src}`));
                     };
                     if (!existing) {
                         document.head.appendChild(script);
                     }
                 });
+
                 if (window.DailyIframe) {
+                    // Success
+                    ensureDailyLoaded.lastSuccessfulSource = src;
                     return;
                 }
+                // If the script loaded but didn't expose DailyIframe, record and continue
+                failures.push({ src, reason: 'loaded-broken' });
             } catch (error) {
-                console.warn(error.message);
+                failures.push({ src, reason: error.message });
+                console.warn('Daily loader:', error.message);
             }
         }
-        throw new Error('Failed to load Daily embed library from all sources.');
+
+        // Attach diagnostic info for higher-level error handling
+        ensureDailyLoaded.lastFailedSources = failures;
+        throw new Error(`Failed to load Daily embed library from all sources. Tried: ${sources.join(', ')}`);
     })();
 
     await ensureDailyLoaded.loadingPromise;
