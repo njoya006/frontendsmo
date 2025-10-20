@@ -209,6 +209,14 @@
     box-sizing: border-box;
 }
 
+html {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
 /* 🌐 GLOBAL PAGE BACKGROUND SETUP
    ===============================================
    💡 EDIT 'background' PROPERTY TO CHANGE ENTIRE SITE BACKGROUND
@@ -221,6 +229,10 @@ body {
     background: var(--bg-gradient-primary);      /* 🌐 MAIN SITE BACKGROUND COLOR */
     font-weight: 400;
     letter-spacing: 0.01em;
+    width: 100%;
+    min-height: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 a {
@@ -234,8 +246,32 @@ ul {
 }
 
 img {
-    width: 100%;
+    max-width: 100%;
     height: auto;
+}
+
+picture,
+video,
+canvas,
+svg,
+iframe {
+    max-width: 100%;
+    height: auto;
+}
+
+main,
+section,
+article,
+aside,
+header,
+footer {
+    min-width: 0;
+}
+
+.responsive-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .container {
