@@ -443,21 +443,43 @@ async function handleJoinSession(session) {
 
         cacheSessionMetadata(session, data);
 
-        const joinUrl = data.external_room_url || data.daily_room_url || data.room_url || data.join_url || data.url;
-        const roomName = data.external_room_name || data.daily_room_name || data.room_name || session.external_room_name;
+    const cachedMeta = key ? state.sessionMeta.get(key) : null;
+
+        const joinUrl = data.external_room_url
+            || data.daily_room_url
+            || data.room_url
+            || data.join_url
+            || data.launch_url
+            || data.start_url
+            || data.url
+            || data.room?.url
+            || cachedMeta?.external_room_url
+            || cachedMeta?.external_room?.url
+            || session.external_room_url
+            || session.external_room?.url
+            || session.join_url
+            || session.public_url;
+        const roomName = data.external_room_name
+            || data.daily_room_name
+            || data.room_name
+            || data.room?.name
+            || cachedMeta?.external_room_name
+            || session.external_room_name
+            || session.room_name;
         const participantToken = data.participant_token || data.provider_token || data.token;
 
         showToast('Launching live session...', 'success');
 
+        if (participantToken) {
+            await ensureDailyLoaded();
+            launchEmbeddedRoom({ token: participantToken, roomName, url: joinUrl });
+            setStatus('Connected to the live session. Enjoy!');
+            return;
+        }
+
         if (joinUrl) {
-            if (participantToken) {
-                await ensureDailyLoaded();
-                launchEmbeddedRoom({ token: participantToken, roomName, url: joinUrl });
-                setStatus('Connected to the live session. Enjoy!');
-            } else {
-                window.open(joinUrl, '_blank', 'noopener');
-                setStatus('Opened live room in a new tab. Enjoy!');
-            }
+            window.open(joinUrl, '_blank', 'noopener');
+            setStatus('Opened live room in a new tab. Enjoy!');
             return;
         }
 
