@@ -671,6 +671,8 @@ async function ensureDailyLoaded() {
     }
 
     const sources = [
+        // Local vendor fallback (place daily-iframe.min.js at this path to avoid CDN failures)
+        '/assets/vendor/daily-iframe.min.js',
         'https://unpkg.com/@daily-co/daily-js/dist/daily-iframe.min.js',
         'https://cdn.jsdelivr.net/npm/@daily-co/daily-js/dist/daily-iframe.min.js',
         'https://cdn.daily.co/daily-js/daily-iframe.min.js'
@@ -840,6 +842,77 @@ function startPolling() {
     }, 60000);
 }
 
+// --- Diagnostic UI for Daily loader (added for easier troubleshooting) ---
+function createDailyDiagnosticUI() {
+    const id = 'dailyDiagContainer';
+    if (document.getElementById(id)) return;
+
+    const container = document.createElement('div');
+    container.id = id;
+    container.style.position = 'fixed';
+    container.style.bottom = '16px';
+    container.style.left = '16px';
+    container.style.zIndex = '100001';
+    container.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial';
+
+    const btn = document.createElement('button');
+    btn.textContent = 'Daily diag';
+    btn.title = 'Run Daily CDN probe and show loader diagnostics';
+    btn.style.padding = '8px 10px';
+    btn.style.borderRadius = '8px';
+    btn.style.border = '1px solid rgba(0,0,0,0.12)';
+    btn.style.background = '#fff';
+    btn.style.boxShadow = '0 6px 18px rgba(2,6,23,0.16)';
+    btn.style.cursor = 'pointer';
+
+    const panel = document.createElement('pre');
+    panel.style.maxWidth = '360px';
+    panel.style.maxHeight = '320px';
+    panel.style.overflow = 'auto';
+    panel.style.marginTop = '8px';
+    panel.style.padding = '8px';
+    panel.style.background = 'rgba(0,0,0,0.03)';
+    panel.style.borderRadius = '8px';
+    panel.style.display = 'none';
+    panel.style.whiteSpace = 'pre-wrap';
+    panel.style.fontSize = '12px';
+
+    btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = 'Probing...';
+        panel.style.display = 'block';
+        panel.textContent = 'Running probe...';
+        try {
+            // Ensure ensureDailyLoaded helper and probe exist
+            if (typeof testDailySources === 'function') {
+                const probe = await testDailySources((ensureDailyLoaded && ensureDailyLoaded.sources) || [
+                    '/assets/vendor/daily-iframe.min.js',
+                    'https://unpkg.com/@daily-co/daily-js/dist/daily-iframe.min.js',
+                    'https://cdn.jsdelivr.net/npm/@daily-co/daily-js/dist/daily-iframe.min.js',
+                    'https://cdn.daily.co/daily-js/daily-iframe.min.js'
+                ], 3500);
+                ensureDailyLoaded.probeResults = probe;
+                panel.textContent = JSON.stringify({ probe, lastFailed: ensureDailyLoaded.lastFailedSources || null, lastSuccess: ensureDailyLoaded.lastSuccessfulSource || null }, null, 2);
+                console.info('Daily diag results:', probe);
+            } else if (ensureDailyLoaded && ensureDailyLoaded.probeResults) {
+                panel.textContent = JSON.stringify({ probe: ensureDailyLoaded.probeResults, lastFailed: ensureDailyLoaded.lastFailedSources || null, lastSuccess: ensureDailyLoaded.lastSuccessfulSource || null }, null, 2);
+            } else {
+                panel.textContent = 'Probe helper not available in this build.';
+            }
+        } catch (err) {
+            panel.textContent = `Probe failed: ${err && err.message ? err.message : String(err)}`;
+            console.warn('Daily diag failed:', err);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Daily diag';
+        }
+    });
+
+    container.appendChild(btn);
+    container.appendChild(panel);
+    document.body.appendChild(container);
+}
+
 function openModal() {
     if (!window.getAuthToken || !window.getAuthToken()) {
         showToast('Log in to host a live session.', 'error');
@@ -930,6 +1003,8 @@ async function init() {
     registerEventListeners();
     fetchSessions();
     startPolling();
+    // Add diagnostic UI for troubleshooting CDN/embed issues
+    try { createDailyDiagnosticUI(); } catch (e) { /* ignore */ }
 }
 
 init().catch((error) => {
