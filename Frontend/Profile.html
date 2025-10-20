@@ -53,9 +53,10 @@
         /* 🎨 CUSTOMIZE: Change profile page background here */
         /* Profile Page Styles */
         .profile-page {
-            padding: 100px 0;
+            padding: 120px 0 80px;
             background: var(--primary-50);         /* 🌐 PROFILE PAGE BACKGROUND */
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         /* 🎨 CUSTOMIZE: Change profile header styling here */
@@ -89,8 +90,20 @@
         }
 
         @media (max-width: 992px) {
+            .profile-page .container {
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+            }
+
             .profile-content {
                 grid-template-columns: 1fr;        /* 🎯 MOBILE: SINGLE COLUMN LAYOUT */
+                order: 1;
+            }
+
+            .profile-header {
+                order: 2;
+                margin-bottom: 0;
             }
         }
 
@@ -894,13 +907,13 @@
         @media (max-width: 768px) {
             /* Professional Mobile Profile Layout */
             .profile-page {
-                padding: 90px 0 60px;
+                padding: 110px 0 60px;
                 background: linear-gradient(180deg, var(--primary-light) 0%, #f8fffe 20%, var(--white-color) 100%);
             }
 
             .profile-header {
-                margin-bottom: 40px;
-                padding: 30px 20px;
+                margin-bottom: 24px;
+                padding: 28px 18px;
                 border-radius: 20px;
                 background: var(--white-color);
                 box-shadow: 0 8px 32px rgba(27,94,32,0.08);
@@ -1743,7 +1756,7 @@
                 bottom: 20px;
                 background: var(--white-color);
                 padding: 20px;
-                margin: 20px -25px -30px;
+                margin: 20px 0 0;
                 border-radius: 20px 20px 0 0;
                 box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
                 border-top: 1px solid rgba(34, 139, 34, 0.1);
@@ -1863,14 +1876,15 @@
             }
 
             .button-group {
-                margin: 20px -20px -30px;
+                margin: 20px 0 0;
                 padding: 16px;
             }
         }
 
         /* ...existing styles continue... */
     </style>
-    <link rel="stylesheet" href="logo-rounded.css">`n</head>
+    <link rel="stylesheet" href="logo-rounded.css">
+</head>
 <body>
     <header>
         <div class="container">
