@@ -1,0 +1,5 @@
+# Ignore minified vendor files which cause parse errors in the editor/linter
+Frontend/assets/vendor/
+
+# Other common directories
+node_modules/
