@@ -819,19 +819,48 @@ function launchEmbeddedRoom({ token, roomName, url: providedUrl }) {
     }
 
     const joinUrl = resolveJoinUrl({ providedUrl, roomName });
-    const frame = window.DailyIframe.createFrame(container, {
-        showLeaveButton: true,
-        iframeStyle: {
-            width: '100%',
-            height: '100%',
-            border: '0'
+
+    // Defensive guard: if the join URL is missing or not a string, avoid calling
+    // frame.join with an invalid value (Daily will throw). Instead open a fallback
+    // link in a new tab or surface a clear error to the user.
+    if (!joinUrl || typeof joinUrl !== 'string') {
+        console.warn('Daily join aborted: invalid join URL', joinUrl);
+        const fallback = providedUrl || (roomName ? NORMALIZED_BASE.replace(/\/$/, '') + '/live/' + roomName : null);
+        if (fallback) {
+            setStatus('Unable to launch embedded room (invalid join URL). Opening fallback join link...', true);
+            window.open(fallback, '_blank', 'noopener');
+        } else {
+            setStatus('Unable to launch embedded room: no join URL available', true);
+            showToast('No join URL available to open.', 'error');
         }
-    });
-    frame.join({ url: joinUrl, token }).catch((error) => {
-        console.error('Daily join failed:', error);
-        setStatus('Unable to launch embedded room. Opening fallback join link...', true);
-        window.open(joinUrl, '_blank', 'noopener');
-    });
+        return;
+    }
+
+    try {
+        const frame = window.DailyIframe.createFrame(container, {
+            showLeaveButton: true,
+            iframeStyle: {
+                width: '100%',
+                height: '100%',
+                border: '0'
+            }
+        });
+        frame.join({ url: joinUrl, token }).catch((error) => {
+            console.error('Daily join failed:', error);
+            setStatus('Unable to launch embedded room. Opening fallback join link...', true);
+            window.open(joinUrl, '_blank', 'noopener');
+        });
+    } catch (err) {
+        console.error('Daily embed initialization failed:', err);
+        const fallback = providedUrl || (roomName ? NORMALIZED_BASE.replace(/\/$/, '') + '/live/' + roomName : null);
+        if (fallback) {
+            setStatus('Unable to initialize embedded room. Opening fallback join link...', true);
+            window.open(fallback, '_blank', 'noopener');
+        } else {
+            setStatus('Unable to initialize embedded room.', true);
+            showToast('Unable to initialize embedded room.', 'error');
+        }
+    }
 }
 
 function startPolling() {
