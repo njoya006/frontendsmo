@@ -184,6 +184,17 @@ function applyCachedMetadata(sessions = []) {
     });
 }
 
+function resolveJoinUrl({ providedUrl, roomName }) {
+    if (providedUrl) return providedUrl;
+
+    if (roomName) {
+        const baseCandidate = NORMALIZED_BASE.replace('api.', '');
+        return `${baseCandidate.replace(/\/$/, '')}/live/${roomName}`;
+    }
+
+    return null;
+}
+
 function getSessionStatus(session) {
     if (!session) return 'upcoming';
 
@@ -467,19 +478,20 @@ async function handleJoinSession(session) {
             || session.external_room_name
             || session.room_name;
         const participantToken = data.participant_token || data.provider_token || data.token;
+        const resolvedJoinUrl = resolveJoinUrl({ providedUrl: joinUrl, roomName });
 
         showToast('Launching live session...', 'success');
 
         if (participantToken) {
             try {
                 await ensureDailyLoaded();
-                launchEmbeddedRoom({ token: participantToken, roomName, url: joinUrl });
+                launchEmbeddedRoom({ token: participantToken, roomName, url: resolvedJoinUrl });
                 setStatus('Connected to the live session. Enjoy!');
                 return;
             } catch (embedError) {
                 console.warn('Daily embed unavailable, falling back to direct link:', embedError);
-                if (joinUrl) {
-                    window.open(joinUrl, '_blank', 'noopener');
+                if (resolvedJoinUrl) {
+                    window.open(resolvedJoinUrl, '_blank', 'noopener');
                     setStatus('Opened live room in a new tab. Enjoy!');
                     return;
                 }
@@ -487,8 +499,8 @@ async function handleJoinSession(session) {
             }
         }
 
-        if (joinUrl) {
-            window.open(joinUrl, '_blank', 'noopener');
+        if (resolvedJoinUrl) {
+            window.open(resolvedJoinUrl, '_blank', 'noopener');
             setStatus('Opened live room in a new tab. Enjoy!');
             return;
         }
@@ -675,11 +687,7 @@ function launchEmbeddedRoom({ token, roomName, url: providedUrl }) {
         document.body.appendChild(container);
     }
 
-    let joinUrl = providedUrl;
-    if (!joinUrl) {
-        const baseCandidate = NORMALIZED_BASE.replace('api.', '');
-        joinUrl = `${baseCandidate}/live/${roomName}`;
-    }
+    const joinUrl = resolveJoinUrl({ providedUrl, roomName });
     const frame = window.DailyIframe.createFrame(container, {
         showLeaveButton: true,
         iframeStyle: {
