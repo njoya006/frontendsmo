@@ -499,6 +499,64 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
+        .floating-quick-actions {
+            position: fixed;
+            bottom: 28px;
+            left: 28px;
+            display: grid;
+            gap: 14px;
+            z-index: 1200;
+        }
+
+        .floating-quick-actions .fab-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.92) 0%, rgba(34, 197, 94, 0.88) 100%);
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 18px 38px rgba(27, 94, 32, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .floating-quick-actions .fab-button .icon-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.22);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .floating-quick-actions .fab-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 24px 44px rgba(27, 94, 32, 0.42);
+        }
+
+        .floating-quick-actions .fab-button.pricing {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.92) 0%, rgba(14, 165, 233, 0.88) 100%);
+        }
+
+        .floating-quick-actions .fab-button span.label {
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .floating-quick-actions {
+                left: 16px;
+                bottom: 16px;
+            }
+
+            .floating-quick-actions .fab-button {
+                padding: 10px 16px;
+            }
+        }
+
         .dashboard-recent {
             background: var(--white-color);
             padding: 35px;
@@ -1183,7 +1241,20 @@
                 <p>&copy; 2025 ChopSmo. All rights reserved.</p>
             </div>
         </div>
-    </footer>    <!-- Load config and auth helpers before Dashboard.js -->
+    </footer>
+
+    <div class="floating-quick-actions" aria-label="Quick navigation">
+        <a class="fab-button live" href="LiveSessions.html">
+            <span class="icon-circle"><i class="fas fa-video"></i></span>
+            <span class="label">Live Sessions</span>
+        </a>
+        <a class="fab-button pricing" href="ingredient-prices.html">
+            <span class="icon-circle"><i class="fas fa-chart-line"></i></span>
+            <span class="label">Ingredient Prices</span>
+        </a>
+    </div>
+
+    <!-- Load config and auth helpers before Dashboard.js -->
     <script src="chopsmo-config.js"></script>
     <script src="auth-utils.js"></script>
     <script src="csrf-helpers.js"></script>
