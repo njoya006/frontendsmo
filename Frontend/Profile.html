@@ -60,11 +60,11 @@
         }
 
         .profile-hero {
-            display: grid;
-            grid-template-columns: 350px 1fr;
+            display: flex;
             gap: 40px;
             align-items: stretch;
             margin-bottom: 50px;
+            flex-wrap: wrap;
         }
 
         /* 🎨 CUSTOMIZE: Change profile header styling here */
@@ -99,10 +99,27 @@
             margin-top: 20px;
         }
 
+        .profile-hero .user-card {
+            flex: 0 1 350px;
+            max-width: 350px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .profile-hero .profile-header {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
         @media (max-width: 992px) {
             .profile-hero {
-                grid-template-columns: 1fr;
+                flex-direction: column;
                 gap: 24px;
+            }
+
+            .profile-hero .user-card,
+            .profile-hero .profile-header {
+                max-width: 100%;
             }
 
             .profile-header {
