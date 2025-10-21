@@ -8,7 +8,8 @@ const API_BASE_URL = (typeof window !== 'undefined' && typeof window.getChopsmoA
     : 'https://api.chopsmo.site');
 const NORMALIZED_API_BASE = API_BASE_URL.replace(/\/$/, '');
 const INGREDIENTS_ENDPOINT = `${NORMALIZED_API_BASE}/api/ingredients/`;
-const INGREDIENT_PRICES_ENDPOINT = `${NORMALIZED_API_BASE}/api/ingredient-prices/`;
+// Backend exposes ingredient prices under the recipes app namespace
+const INGREDIENT_PRICES_ENDPOINT = `${NORMALIZED_API_BASE}/api/recipes/ingredient-prices/`;
 
 
 export async function fetchAllIngredientNames() {
