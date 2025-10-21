@@ -46,45 +46,60 @@ function formatDate(value) {
 }
 
 function renderTable(results = []) {
-    if (!tableBody) return;
+    const priceList = document.getElementById('priceList');
+    if (!priceList) return;
 
     if (!Array.isArray(results) || results.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No ingredient prices found.</td></tr>';
+        priceList.innerHTML = '<div class="empty">No ingredient prices found.</div>';
         return;
     }
 
-    tableBody.innerHTML = results.map(entry => {
+    priceList.innerHTML = results.map(entry => {
         const ingredientName = entry.ingredient?.name || entry.ingredient_name || 'Unknown';
         const price = formatPrice(entry);
-        const unit = entry.unit || entry.unit_name || entry.unit_label || '—';
-        const vendor = entry.vendor?.name || entry.vendor_name || '—';
-        const city = entry.market?.city || entry.market?.location || entry.city || entry.location || '—';
+        const unit = entry.unit || entry.unit_name || entry.unit_label || '\u2014';
+        const vendor = entry.vendor?.name || entry.vendor_name || '\u2014';
+        const city = entry.market?.city || entry.market?.location || entry.city || entry.location || '\u2014';
         const updated = formatDate(entry.updated_at || entry.modified_at || entry.created_at);
 
         return `
-                <tr>
-                    <td data-label="Ingredient">${ingredientName}</td>
-                    <td data-label="Price">${price}</td>
-                    <td data-label="Unit">${unit}</td>
-                    <td data-label="Vendor">${vendor}</td>
-                    <td data-label="City">${city}</td>
-                    <td data-label="Updated">${updated}</td>
-                    <td class="row-toggle-cell"><button class="row-toggle" aria-expanded="false" aria-label="Show details">Details</button></td>
-                </tr>
-            `;
+            <article class="price-card" role="listitem" tabindex="0">
+                <div class="price-head">
+                    <div>
+                        <div class="ingredient">${escapeHtml(ingredientName)}</div>
+                        <div class="meta"><span class="vendor">${escapeHtml(vendor)}</span><span>${escapeHtml(city)}</span></div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="price-badge">${escapeHtml(price)}</div>
+                        <div class="small">${escapeHtml(unit)}</div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="updated">Updated ${escapeHtml(updated)}</div>
+                    <button class="details-btn" aria-expanded="false">Details</button>
+                </div>
+            </article>
+        `;
     }).join('');
+
+    // Hook up details buttons for accessibility/expand
+    priceList.querySelectorAll('.details-btn').forEach((btn, idx) => {
+        btn.addEventListener('click', (e) => {
+            const card = btn.closest('.price-card');
+            const expanded = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', String(!expanded));
+            btn.textContent = expanded ? 'Details' : 'Hide';
+            card.classList.toggle('expanded', !expanded);
+        });
+    });
 }
 
-// Delegate row toggle clicks for expand/collapse on small screens
-document.addEventListener('click', (e) => {
-    const btn = e.target.closest && e.target.closest('.row-toggle');
-    if (!btn) return;
-    const tr = btn.closest('tr');
-    const expanded = btn.getAttribute('aria-expanded') === 'true';
-    btn.setAttribute('aria-expanded', String(!expanded));
-    btn.textContent = expanded ? 'Details' : 'Hide';
-    if (tr) tr.classList.toggle('expanded');
-});
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text).replace(/[&<>"']/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[m]; });
+}
+
+// No-op: previous table row toggle behavior removed (card-based list now)
 
 // Add ARIA roles/labels for accessibility
 function enhanceAccessibility() {
