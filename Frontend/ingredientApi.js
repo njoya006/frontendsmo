@@ -10,12 +10,6 @@ const NORMALIZED_API_BASE = API_BASE_URL.replace(/\/$/, '');
 const INGREDIENTS_ENDPOINT = `${NORMALIZED_API_BASE}/api/ingredients/`;
 const INGREDIENT_PRICES_ENDPOINT = `${NORMALIZED_API_BASE}/api/ingredient-prices/`;
 
-// Known alternative endpoints to try if the primary path returns 404.
-const ALT_INGREDIENT_PRICES_ENDPOINTS = [
-    `${NORMALIZED_API_BASE}/api/ingredient_price/`,
-    `${NORMALIZED_API_BASE}/api/prices/ingredient/`,
-    `${NORMALIZED_API_BASE}/api/prices/`
-];
 
 export async function fetchAllIngredientNames() {
     try {
@@ -62,50 +56,28 @@ export async function fetchIngredientPrices(options = {}) {
             ? window.authHeaders({ Accept: 'application/json' })
             : { Accept: 'application/json' };
 
-        const headersToUse = headers;
+        const url = `${INGREDIENT_PRICES_ENDPOINT}?${params.toString()}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers
+        });
 
-        async function fetchUrl(urlToFetch) {
-            const res = await fetch(urlToFetch, { method: 'GET', headers: headersToUse });
-            const body = await res.json().catch(() => ({}));
-            return { res, body };
-        }
-
-        const primaryUrl = `${INGREDIENT_PRICES_ENDPOINT}?${params.toString()}`;
-        let { res: response, body: data } = await fetchUrl(primaryUrl);
-
-        // If primary endpoint returned 404, probe alternatives (helpful for older/newer backends)
-        const probe = [];
-        probe.push({ url: primaryUrl, status: response.status, ok: response.ok });
-
-        if (response.status === 404) {
-            for (const altBase of ALT_INGREDIENT_PRICES_ENDPOINTS) {
-                const altUrl = `${altBase}?${params.toString()}`;
-                const { res: altRes, body: altBody } = await fetchUrl(altUrl);
-                probe.push({ url: altUrl, status: altRes.status, ok: altRes.ok });
-                if (altRes.ok) {
-                    response = altRes;
-                    data = altBody;
-                    break;
-                }
-            }
-        }
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            const detail = (data && (data.detail || data.error || data.message)) || `Unable to load ingredient prices (status ${response.status})`;
+            const detail = data.detail || data.error || data.message || `Unable to load ingredient prices (status ${response.status})`;
             return {
                 success: false,
                 error: detail,
                 results: [],
                 count: 0,
                 next: null,
-                previous: null,
-                probe // diagnostic info to help debug missing endpoints
+                previous: null
             };
         }
 
         return {
             success: true,
-            probe: probe || [],
             ...data
         };
     } catch (error) {
