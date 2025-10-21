@@ -39,6 +39,42 @@ function formatPrice(entry) {
         return `${num.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${currency}`.trim();
 }
 
+function getPriceInfo(entry) {
+    // Try numeric price fields first
+    const numericFields = ['price','amount','value','avg_price','unit_price','cost'];
+    for (const f of numericFields) {
+        const v = entry?.[f];
+        if (v !== null && v !== undefined && v !== '') {
+            const n = Number(v);
+            if (!Number.isNaN(n)) {
+                const currency = entry?.currency ?? entry?.currency_code ?? entry?.currency_symbol ?? '';
+                return { displayPrice: `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${currency}`.trim(), unitOverride: null };
+            }
+        }
+    }
+
+    // Fallback: price_per_kg -> compute per default unit weight if present
+    const ppkRaw = entry?.price_per_kg ?? entry?.pricePerKg ?? null;
+    if (ppkRaw !== null && ppkRaw !== undefined) {
+        if (typeof ppkRaw === 'string' && /not\s*set/i.test(ppkRaw)) {
+            // treat as missing
+        } else {
+            const ppk = Number(ppkRaw);
+            if (!Number.isNaN(ppk)) {
+                const grams = entry?.default_unit_weight_g ?? entry?.default_unit_weight ?? null;
+                const currency = entry?.currency ?? entry?.currency_code ?? entry?.currency_symbol ?? '';
+                if (grams && Number(grams) > 0) {
+                    const perUnit = ppk * (Number(grams) / 1000);
+                    return { displayPrice: `${perUnit.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${currency}`.trim(), unitOverride: `${grams} g` };
+                }
+                return { displayPrice: `${ppk.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${currency}`.trim() + ' / kg', unitOverride: 'per kg' };
+            }
+        }
+    }
+
+    return { displayPrice: '—', unitOverride: null };
+}
+
 function formatDate(value) {
     if (!value) return '—';
     try {
@@ -61,8 +97,9 @@ function renderTable(results = []) {
     priceList.innerHTML = results.map(entry => {
         // Be tolerant: try multiple fields for ingredient name
         const ingredientName = entry.ingredient?.name || entry.ingredient_name || entry.name || entry.item_name || entry.title || 'Unknown';
-        const price = formatPrice(entry) || entry.value || entry.amount || entry.price || '\u2014';
-        const unit = entry.unit || entry.unit_name || entry.unit_label || entry.uom || entry.measure || '\u2014';
+    const priceInfo = getPriceInfo(entry);
+    const price = priceInfo.displayPrice;
+    const unit = priceInfo.unitOverride || (entry.unit || entry.unit_name || entry.unit_label || entry.uom || entry.measure || '\u2014');
         const vendor = entry.vendor?.name || entry.vendor_name || entry.seller || entry.supplier || entry.provider || '\u2014';
         const city = entry.market?.city || entry.market?.location || entry.location_city || entry.city || entry.location || '\u2014';
         const updated = formatDate(entry.updated_at || entry.modified_at || entry.created_at || entry.timestamp);
