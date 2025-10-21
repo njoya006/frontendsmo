@@ -69,9 +69,38 @@ function renderTable(results = []) {
                     <td data-label="Vendor">${vendor}</td>
                     <td data-label="City">${city}</td>
                     <td data-label="Updated">${updated}</td>
+                    <td class="row-toggle-cell"><button class="row-toggle" aria-expanded="false" aria-label="Show details">Details</button></td>
                 </tr>
             `;
     }).join('');
+}
+
+// Delegate row toggle clicks for expand/collapse on small screens
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('.row-toggle');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const expanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!expanded));
+    btn.textContent = expanded ? 'Details' : 'Hide';
+    if (tr) tr.classList.toggle('expanded');
+});
+
+// Add ARIA roles/labels for accessibility
+function enhanceAccessibility() {
+    const table = document.querySelector('table');
+    if (table) {
+        table.setAttribute('role', 'table');
+        table.querySelectorAll('th').forEach(th => th.setAttribute('scope', 'col'));
+    }
+    const controls = document.querySelector('.controls');
+    if (controls) controls.setAttribute('role', 'region');
+}
+
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', enhanceAccessibility);
+} else {
+    enhanceAccessibility();
 }
 
 function updatePagination(meta) {

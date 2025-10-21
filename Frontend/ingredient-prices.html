@@ -107,6 +107,13 @@
             .pagination { flex-direction: column; gap: 8px; align-items: stretch; }
             .pagination button { width: 100%; }
         }
+        /* Compact view: hide less-important columns on very small screens */
+        @media (max-width: 420px) {
+            td[data-label="Vendor"], td[data-label="City"] { display: none; }
+        }
+        .row-toggle { background: #007bff; color: #fff; border: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+        tr.expanded { box-shadow: 0 8px 30px rgba(2,6,23,0.08); }
+        tr.expanded td[data-label="Vendor"], tr.expanded td[data-label="City"] { display: flex; }
     </style>
 </head>
 <body>
