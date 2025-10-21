@@ -28,12 +28,15 @@ function setStatus(message, isError = false) {
 }
 
 function formatPrice(entry) {
-    const amount = entry.price ?? entry.amount ?? entry.value ?? null;
-    const currency = entry.currency ?? entry.currency_code ?? entry.currency_symbol ?? '';
-    if (amount === null || amount === undefined) {
-        return '—';
-    }
-    return `${Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${currency}`.trim();
+    // Be tolerant to multiple possible price field names
+    const amount = entry?.price ?? entry?.amount ?? entry?.value ?? entry?.avg_price ?? entry?.unit_price ?? entry?.cost ?? null;
+        const currency = entry?.currency ?? entry?.currency_code ?? entry?.currency_symbol ?? entry?.currency_type ?? '';
+        if (amount === null || amount === undefined || amount === '') {
+            return '—';
+        }
+        const num = Number(amount);
+        if (Number.isNaN(num)) return String(amount);
+        return `${num.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${currency}`.trim();
 }
 
 function formatDate(value) {
@@ -59,10 +62,10 @@ function renderTable(results = []) {
         // Be tolerant: try multiple fields for ingredient name
         const ingredientName = entry.ingredient?.name || entry.ingredient_name || entry.name || entry.item_name || entry.title || 'Unknown';
         const price = formatPrice(entry) || entry.value || entry.amount || entry.price || '\u2014';
-        const unit = entry.unit || entry.unit_name || entry.unit_label || '\u2014';
-        const vendor = entry.vendor?.name || entry.vendor_name || '\u2014';
-        const city = entry.market?.city || entry.market?.location || entry.city || entry.location || '\u2014';
-        const updated = formatDate(entry.updated_at || entry.modified_at || entry.created_at);
+        const unit = entry.unit || entry.unit_name || entry.unit_label || entry.uom || entry.measure || '\u2014';
+        const vendor = entry.vendor?.name || entry.vendor_name || entry.seller || entry.supplier || entry.provider || '\u2014';
+        const city = entry.market?.city || entry.market?.location || entry.location_city || entry.city || entry.location || '\u2014';
+        const updated = formatDate(entry.updated_at || entry.modified_at || entry.created_at || entry.timestamp);
 
         return `
             <article class="price-card" role="listitem" tabindex="0">
@@ -84,19 +87,35 @@ function renderTable(results = []) {
         `;
     }).join('');
 
-    // Log entries that still map to 'Unknown' to help backend debugging
+    // Log items missing name/price for debugging
+    const missingPrice = [];
+    const missingUnit = [];
     results.forEach((entry, idx) => {
         const name = entry.ingredient?.name || entry.ingredient_name || entry.name || entry.item_name || entry.title || null;
-        if (!name) {
-            unknowns.push({ index: idx, entry });
-        }
+        const priceVal = entry?.price ?? entry?.amount ?? entry?.value ?? entry?.avg_price ?? entry?.unit_price ?? entry?.cost ?? null;
+        const unitVal = entry.unit || entry.unit_name || entry.unit_label || entry.uom || entry.measure || null;
+        if (!name) unknowns.push({ index: idx, entry });
+        if (priceVal === null || priceVal === undefined || priceVal === '') missingPrice.push({ index: idx, entry });
+        if (!unitVal) missingUnit.push({ index: idx, entry });
     });
-    if (unknowns.length > 0) {
-        console.group(`Ingredient-prices: ${unknowns.length} entries missing ingredient name`);
-        unknowns.slice(0, 10).forEach(u => console.warn('Missing name at index', u.index, u.entry));
-        if (unknowns.length > 10) console.warn(`...and ${unknowns.length - 10} more`);
+    if (unknowns.length > 0 || missingPrice.length > 0 || missingUnit.length > 0) {
+        console.group(`Ingredient-prices diagnostics: ${results.length} entries`);
+        if (unknowns.length) {
+            console.warn(`${unknowns.length} entries missing ingredient name:`);
+            unknowns.slice(0, 6).forEach(u => console.warn('Missing name at index', u.index, u.entry));
+        }
+        if (missingPrice.length) {
+            console.warn(`${missingPrice.length} entries missing price:`);
+            missingPrice.slice(0, 6).forEach(u => console.warn('Missing price at index', u.index, u.entry));
+        }
+        if (missingUnit.length) {
+            console.warn(`${missingUnit.length} entries missing unit:`);
+            missingUnit.slice(0, 6).forEach(u => console.warn('Missing unit at index', u.index, u.entry));
+        }
+        if ((unknowns.length + missingPrice.length + missingUnit.length) > 18) console.warn('...more entries omitted');
         console.groupEnd();
-        setStatus(`Loaded ${results.length} entries — ${unknowns.length} missing names (see console)`, true);
+
+        setStatus(`Loaded ${results.length} entries — ${unknowns.length} missing names, ${missingPrice.length} missing prices`, true);
     }
 
     // Hook up details buttons for accessibility/expand
