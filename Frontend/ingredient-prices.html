@@ -29,6 +29,7 @@
             flex-wrap: wrap;
             gap: 12px;
             margin-bottom: 18px;
+            align-items: center;
         }
         .controls label {
             font-weight: 600;
@@ -91,6 +92,20 @@
         }
         .status.error {
             color: #b94a48;
+        }
+        /* Responsive: convert table into card-like rows on small screens */
+        @media (max-width: 720px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            table { border: 0; }
+            tbody tr { margin-bottom: 12px; background: #fff; border-radius: 10px; box-shadow: 0 6px 18px rgba(2,6,23,0.06); padding: 12px; }
+            td { padding: 8px 0; border: none; display: flex; justify-content: space-between; }
+            td[data-label]::before { content: attr(data-label); font-weight: 600; color: #5f6b7d; margin-right: 8px; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .controls > div, .controls button { width: 100%; }
+            .controls label { display: block; margin-bottom: 6px; }
+            .pagination { flex-direction: column; gap: 8px; align-items: stretch; }
+            .pagination button { width: 100%; }
         }
     </style>
 </head>

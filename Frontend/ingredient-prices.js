@@ -62,15 +62,15 @@ function renderTable(results = []) {
         const updated = formatDate(entry.updated_at || entry.modified_at || entry.created_at);
 
         return `
-            <tr>
-                <td>${ingredientName}</td>
-                <td>${price}</td>
-                <td>${unit}</td>
-                <td>${vendor}</td>
-                <td>${city}</td>
-                <td>${updated}</td>
-            </tr>
-        `;
+                <tr>
+                    <td data-label="Ingredient">${ingredientName}</td>
+                    <td data-label="Price">${price}</td>
+                    <td data-label="Unit">${unit}</td>
+                    <td data-label="Vendor">${vendor}</td>
+                    <td data-label="City">${city}</td>
+                    <td data-label="Updated">${updated}</td>
+                </tr>
+            `;
     }).join('');
 }
 
