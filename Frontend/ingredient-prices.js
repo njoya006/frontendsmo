@@ -54,9 +54,11 @@ function renderTable(results = []) {
         return;
     }
 
+    const unknowns = [];
     priceList.innerHTML = results.map(entry => {
-        const ingredientName = entry.ingredient?.name || entry.ingredient_name || 'Unknown';
-        const price = formatPrice(entry);
+        // Be tolerant: try multiple fields for ingredient name
+        const ingredientName = entry.ingredient?.name || entry.ingredient_name || entry.name || entry.item_name || entry.title || 'Unknown';
+        const price = formatPrice(entry) || entry.value || entry.amount || entry.price || '\u2014';
         const unit = entry.unit || entry.unit_name || entry.unit_label || '\u2014';
         const vendor = entry.vendor?.name || entry.vendor_name || '\u2014';
         const city = entry.market?.city || entry.market?.location || entry.city || entry.location || '\u2014';
@@ -81,6 +83,21 @@ function renderTable(results = []) {
             </article>
         `;
     }).join('');
+
+    // Log entries that still map to 'Unknown' to help backend debugging
+    results.forEach((entry, idx) => {
+        const name = entry.ingredient?.name || entry.ingredient_name || entry.name || entry.item_name || entry.title || null;
+        if (!name) {
+            unknowns.push({ index: idx, entry });
+        }
+    });
+    if (unknowns.length > 0) {
+        console.group(`Ingredient-prices: ${unknowns.length} entries missing ingredient name`);
+        unknowns.slice(0, 10).forEach(u => console.warn('Missing name at index', u.index, u.entry));
+        if (unknowns.length > 10) console.warn(`...and ${unknowns.length - 10} more`);
+        console.groupEnd();
+        setStatus(`Loaded ${results.length} entries — ${unknowns.length} missing names (see console)`, true);
+    }
 
     // Hook up details buttons for accessibility/expand
     priceList.querySelectorAll('.details-btn').forEach((btn, idx) => {
